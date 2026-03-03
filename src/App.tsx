@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { motion, useReducedMotion, useScroll, useSpring, AnimatePresence } from 'framer-motion';
+import { motion, useReducedMotion, useScroll, useSpring, useTransform, AnimatePresence } from 'framer-motion';
 import {
   about,
   home,
@@ -43,17 +43,14 @@ function SectionShell({
 }
 
 function SectionIntro({
-  page,
   title,
   purpose,
 }: {
-  page: string;
   title: string;
   purpose: string;
 }) {
   return (
     <header className="mb-[var(--space-xl)]">
-      <p className="type-caption mb-[var(--space-sm)]">{page}</p>
       <h2 className="type-h1 mb-[var(--space-sm)]">{title}</h2>
       <p className="type-body max-w-3xl">{purpose}</p>
     </header>
@@ -63,16 +60,13 @@ function SectionIntro({
 function SpineRow({ item }: { item: SpineItem }) {
   return (
     <li className="spine-row">
-      <div>
-        <p className="font-medium text-[var(--color-text)]">{item.title}</p>
-        <p className="type-body">{item.outcome}</p>
-      </div>
-      <div className="flex items-center gap-3">
+      <a href={item.href} className="spine-row-link">
+        <div>
+          <p className="font-medium text-[var(--color-text)]">{item.title}</p>
+          <p className="type-body">{item.outcome}</p>
+        </div>
         <span className="type-caption">{item.role}</span>
-        <a href={item.href} className="spine-open">
-          Open
-        </a>
-      </div>
+      </a>
     </li>
   );
 }
@@ -151,13 +145,56 @@ function App() {
   const [uiDeepOpen, setUiDeepOpen] = useState<string | null>(null);
   const [interactiveOpen, setInteractiveOpen] = useState(interactiveProjects[0].id);
   const [logOpen, setLogOpen] = useState(researchEntries[0].id);
-  const [aboutFold, setAboutFold] = useState(false);
+  const [aboutFoldOpen, setAboutFoldOpen] = useState<'education' | 'paper' | 'other' | null>(null);
   const [spatialOpen, setSpatialOpen] = useState<'installation' | 'coding'>('installation');
-  const [p03ToP06Open, setP03ToP06Open] = useState(false);
+  const WORK_DETAIL_IDS = ['page-03', 'page-03a', 'page-04', 'page-04a', 'page-05', 'page-06', 'page-06a'] as const;
+  const [workDetailId, setWorkDetailId] = useState<string | null>(() => {
+    const id = window.location.hash.slice(1);
+    return WORK_DETAIL_IDS.includes(id as (typeof WORK_DETAIL_IDS)[number]) ? id : null;
+  });
+  const [isAboutView, setIsAboutView] = useState(() => window.location.hash === '#page-01');
+  const [isResumeView, setIsResumeView] = useState(() => window.location.hash === '#page-08');
 
   const sectionIds: SectionId[] = useMemo(() => sectionMeta.map((item) => item.id), []);
+
+  useEffect(() => {
+    const onHashChange = () => {
+      const hash = window.location.hash;
+      const id = hash.slice(1) || 'page-00';
+      const onAbout = hash === '#page-01';
+      const onResume = hash === '#page-08';
+      const onWorkDetail = WORK_DETAIL_IDS.includes(id as (typeof WORK_DETAIL_IDS)[number]);
+      if (id === 'page-02-ui' || id === 'page-02-interactive' || id === 'page-02-research') {
+        const openMap = { 'page-02-ui': 'ui' as const, 'page-02-interactive': 'interactive' as const, 'page-02-research': 'research' as const };
+        setWorkOpen(openMap[id as keyof typeof openMap]);
+        setActiveSection('page-02');
+        setIsAboutView(false);
+        setIsResumeView(false);
+        setWorkDetailId(null);
+        window.history.replaceState(null, '', '#page-02');
+        setTimeout(() => {
+          const el = document.getElementById('page-02');
+          if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 50);
+        return;
+      }
+      setIsAboutView(onAbout);
+      setIsResumeView(onResume);
+      setWorkDetailId(onWorkDetail ? id : null);
+      setActiveSection(
+        onAbout ? 'page-01' : onResume ? 'page-08' : id as SectionId
+      );
+    };
+    onHashChange();
+    window.addEventListener('hashchange', onHashChange);
+    return () => window.removeEventListener('hashchange', onHashChange);
+  }, []);
   const { scrollYProgress } = useScroll();
   const smoothProgress = useSpring(scrollYProgress, { stiffness: 140, damping: 24 });
+  const footerOpacity = useTransform(smoothProgress, [0, 0.5, 1], [0.25, 0.5, 0.7], { clamp: true });
+  const footerPathReveal = useTransform(smoothProgress, [0, 0.2, 0.85, 1], [1, 0.85, 0.15, 0], { clamp: true });
+  const pathLength = 140;
+  const footerDashOffset = useTransform(footerPathReveal, (v) => v * pathLength);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -178,18 +215,7 @@ function App() {
     });
 
     return () => observer.disconnect();
-  }, [sectionIds, p03ToP06Open]);
-
-  useEffect(() => {
-    if (p03ToP06Open) {
-      const isInside = ['page-03', 'page-03a', 'page-04', 'page-04a', 'page-05', 'page-06', 'page-06a'].includes(activeSection);
-      const isAdjacent = ['page-02', 'page-07'].includes(activeSection);
-      
-      if (!isInside && !isAdjacent) {
-        setP03ToP06Open(false);
-      }
-    }
-  }, [activeSection, p03ToP06Open]);
+  }, [sectionIds]);
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
@@ -225,21 +251,11 @@ function App() {
         style={{ scaleY: smoothProgress }}
       />
 
-      <header className="system-shell sticky top-0 z-50 surface-glass border-b border-black/5 py-6 md:py-8">
-        <div className="layout-grid-12 items-end">
-          <div className="col-span-8">
-            <p className="type-caption mb-2">Ryan Yu // Folding Path Portfolio</p>
-            <h1 className="type-h2">Systematic Entry Architecture</h1>
-          </div>
-          <p className="type-caption col-span-4 text-right hidden md:block">Page 00 - 08</p>
-        </div>
-      </header>
-
       <nav aria-label="Section navigation" className="section-nav surface-glass">
         <AnimatePresence>
           {sectionMeta.map((item) => {
             const isNested = ['page-03', 'page-03a', 'page-04', 'page-04a', 'page-05', 'page-06', 'page-06a'].includes(item.id);
-            if (isNested && !p03ToP06Open) return null;
+            if (isNested && !workDetailId) return null;
 
             return (
               <motion.a
@@ -261,92 +277,366 @@ function App() {
       </nav>
 
       <main id="main-content">
+        {isAboutView ? (
+          <section id="page-01" aria-label="About Node" className="system-shell section-shell py-[var(--space-xxxl)]">
+            <a href="#page-00" className="type-caption mb-[var(--space-md)] inline-block">← Back</a>
+            <SectionIntro
+              title="About"
+              purpose="Build credibility in 30 seconds through concise biography, focus, tools, and clear links."
+            />
+            <div className="layout-grid-12 gap-y-[var(--space-lg)]">
+              <div className="col-span-12 md:col-span-7">
+                <ul className="space-y-[var(--space-sm)]">
+                  {about.bio.map((line) => (
+                    <li key={line} className="type-body text-[var(--color-text)]">
+                      {line}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <div className="col-span-12 md:col-span-5">
+                <h3 className="type-caption mb-[var(--space-sm)]">Focus</h3>
+                <ul className="space-y-[var(--space-xs)] mb-[var(--space-md)]">
+                  {about.focus.map((item) => (
+                    <li key={item} className="type-body">
+                      {item}
+                    </li>
+                  ))}
+                </ul>
+                <h3 className="type-caption mb-[var(--space-sm)]">Tools</h3>
+                <div className="flex flex-wrap gap-[var(--space-xs)] mb-[var(--space-md)]">
+                  {about.tools.map((tool) => (
+                    <span key={tool} className="tag-chip">
+                      {tool}
+                    </span>
+                  ))}
+                </div>
+                <div className="flex flex-wrap gap-[var(--space-sm)]">
+                  {about.links.map((link) => (
+                    <a key={link.label} href={link.href} className="spine-open">
+                      {link.label}
+                    </a>
+                  ))}
+                </div>
+              </div>
+            </div>
+            <div className="mt-[var(--space-lg)] space-y-[var(--space-sm)]">
+              <button type="button" className="spine-head" onClick={() => setAboutFoldOpen((v) => (v === 'education' ? null : 'education'))} aria-expanded={aboutFoldOpen === 'education'}>
+                <span className="type-caption">Optional Fold</span>
+                <span className="text-[1rem] font-medium text-[var(--color-text)]">Education / Selected Exhibitions</span>
+                <span className="type-caption">{aboutFoldOpen === 'education' ? 'Fold' : 'Unfold'}</span>
+              </button>
+              {aboutFoldOpen === 'education' && (
+                <div className="spine-body">
+                  <p className="type-body mb-[var(--space-sm)]">{about.fold.education}</p>
+                  <p className="type-body">{about.fold.exhibitions}</p>
+                </div>
+              )}
+              <button type="button" className="spine-head" onClick={() => setAboutFoldOpen((v) => (v === 'paper' ? null : 'paper'))} aria-expanded={aboutFoldOpen === 'paper'}>
+                <span className="type-caption">Optional Fold</span>
+                <span className="text-[1rem] font-medium text-[var(--color-text)]">Paper / Report</span>
+                <span className="type-caption">{aboutFoldOpen === 'paper' ? 'Fold' : 'Unfold'}</span>
+              </button>
+              {aboutFoldOpen === 'paper' && (
+                <div className="spine-body">
+                  <p className="type-body">{about.fold.paperReport}</p>
+                </div>
+              )}
+              <button type="button" className="spine-head" onClick={() => setAboutFoldOpen((v) => (v === 'other' ? null : 'other'))} aria-expanded={aboutFoldOpen === 'other'}>
+                <span className="type-caption">Optional Fold</span>
+                <span className="text-[1rem] font-medium text-[var(--color-text)]">Other Works</span>
+                <span className="type-caption">{aboutFoldOpen === 'other' ? 'Fold' : 'Unfold'}</span>
+              </button>
+              {aboutFoldOpen === 'other' && (
+                <div className="spine-body">
+                  <p className="type-body">{about.fold.otherWorks}</p>
+                </div>
+              )}
+            </div>
+          </section>
+        ) : isResumeView ? (
+          <section id="page-08" aria-label="Resume Page" className="system-shell section-shell py-[var(--space-xxxl)]">
+            <a href="#page-00" className="type-caption mb-[var(--space-md)] inline-block">← Back</a>
+            <SectionIntro
+              title="Resume"
+              purpose="Fast review and download node for hiring contexts with optional highlights."
+            />
+            <div className="spine-body">
+              <div className="image-block h-72 mb-[var(--space-sm)]" />
+              <div className="flex gap-[var(--space-sm)] mb-[var(--space-sm)]">
+                <a href="#" className="spine-open">
+                  Download Resume
+                </a>
+                <a href="#page-01" className="spine-open">
+                  About
+                </a>
+              </div>
+              <div className="pt-[var(--space-md)] pb-[var(--space-md)]" aria-hidden="true" />
+            </div>
+          </section>
+        ) : workDetailId ? (
+          <section id={workDetailId} aria-label="Work detail" className="system-shell section-shell py-[var(--space-xxxl)]">
+            <a href="#page-02" className="type-caption mb-[var(--space-md)] inline-block">← Back to Work Index</a>
+            {workDetailId === 'page-03' && (
+              <>
+                <SectionIntro title="UI Systems" purpose="Core track for product and internship contexts: concise statements, fold-out previews, and clear role ownership." />
+                <p className="type-body mb-[var(--space-lg)] max-w-3xl">I build UI systems through constrained visual language, explicit hierarchy, and reusable interaction logic. I optimize for clarity first, then polish.</p>
+                <ul className="space-y-[var(--space-sm)]">
+                  {uiCaseStudies.map((project) => (
+                    <li key={project.id} className="spine-block">
+                      <button type="button" className="spine-head" onClick={() => setUiOpen(project.id)}>
+                        <span className="type-caption">UI Project</span>
+                        <span className="text-[1rem] font-medium text-[var(--color-text)]">{project.title}</span>
+                        <span className="type-caption">{uiOpen === project.id ? 'Open' : 'Preview'}</span>
+                      </button>
+                      {uiOpen === project.id && (
+                        <div className="spine-body">
+                          <div className="flex flex-wrap items-center gap-[var(--space-sm)] mb-[var(--space-sm)]">
+                            <span className="type-caption">{project.role}</span>
+                            <a className="spine-open" href={project.link}>Link</a>
+                          </div>
+                          <p className="type-body mb-[var(--space-sm)]">{project.problem}</p>
+                          <h4 className="type-caption mb-[var(--space-xs)]">Constraints</h4>
+                          <ul className="space-y-[var(--space-xs)] mb-[var(--space-sm)]">
+                            {project.constraints.map((item) => <li key={item} className="type-body">{item}</li>)}
+                          </ul>
+                          <h4 className="type-caption mb-[var(--space-xs)]">Approach</h4>
+                          <ul className="space-y-[var(--space-xs)] mb-[var(--space-sm)]">
+                            {project.approach.map((item) => <li key={item} className="type-body">{item}</li>)}
+                          </ul>
+                          <button type="button" className="spine-open" onClick={() => setUiDeepOpen((v) => (v === project.id ? null : project.id))}>
+                            {uiDeepOpen === project.id ? 'Hide Iteration Notes' : 'Show Iteration Notes'}
+                          </button>
+                          {uiDeepOpen === project.id && (
+                            <ul className="space-y-[var(--space-xs)] mt-[var(--space-sm)]">
+                              {project.iterations.map((item) => <li key={item} className="type-body">{item}</li>)}
+                            </ul>
+                          )}
+                        </div>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              </>
+            )}
+            {workDetailId === 'page-03a' && (
+              <>
+                <SectionIntro title="UI Case Study" purpose="Map-style unfolding: each fold reveals exactly one stage of the story and collapses the previous stage into a spine." />
+                <div className="spine-body">
+                  <h3 className="type-caption mb-[var(--space-xs)]">Overview</h3>
+                  <p className="type-body mb-[var(--space-sm)]">{currentUi.problem}</p>
+                  <h3 className="type-caption mb-[var(--space-xs)]">Role & Scope</h3>
+                  <p className="type-body mb-[var(--space-sm)]">{currentUi.role}</p>
+                  <h3 className="type-caption mb-[var(--space-xs)]">System</h3>
+                  <ul className="space-y-[var(--space-xs)] mb-[var(--space-sm)]">{currentUi.constraints.map((item) => <li key={item} className="type-body">{item}</li>)}</ul>
+                  <h3 className="type-caption mb-[var(--space-xs)]">Process</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-[var(--space-sm)] mb-[var(--space-sm)]">
+                    {Array.from({ length: 3 }).map((_, idx) => (
+                      <figure key={idx} className="image-placeholder">
+                        <div className="image-block" />
+                        <figcaption className="type-caption mt-1">Process frame {idx + 1}</figcaption>
+                      </figure>
+                    ))}
+                  </div>
+                  <h3 className="type-caption mb-[var(--space-xs)]">Outcome</h3>
+                  <a href={currentUi.link} className="spine-open">Demo / Prototype / Repo</a>
+                </div>
+              </>
+            )}
+            {workDetailId === 'page-04' && (
+              <>
+                <SectionIntro title="Interactive Systems" purpose="Technical rigor over spectacle: chaptered browser and Unity/AR work shown sequentially, never side-by-side noise." />
+                <SpineAccordion title="Chapter Spine 1: Browser Lab" open={currentInteractive.chapter === 'Browser Lab'} onToggle={() => { const m = interactiveProjects.find((p) => p.chapter === 'Browser Lab'); if (m) setInteractiveOpen(m.id); }}>
+                  {interactiveProjects.filter((p) => p.chapter === 'Browser Lab').map((project) => (
+                    <button key={project.id} type="button" className="spine-head mt-[var(--space-xs)]" onClick={() => setInteractiveOpen(project.id)}>
+                      <span className="type-caption">Project</span>
+                      <span className="text-[1rem] font-medium text-[var(--color-text)]">{project.title}</span>
+                      <span className="type-caption">Open</span>
+                    </button>
+                  ))}
+                </SpineAccordion>
+                <SpineAccordion title="Chapter Spine 2: Unity / AR" open={currentInteractive.chapter === 'Unity / AR'} onToggle={() => { const m = interactiveProjects.find((p) => p.chapter === 'Unity / AR'); if (m) setInteractiveOpen(m.id); }}>
+                  {interactiveProjects.filter((p) => p.chapter === 'Unity / AR').map((project) => (
+                    <button key={project.id} type="button" className="spine-head mt-[var(--space-xs)]" onClick={() => setInteractiveOpen(project.id)}>
+                      <span className="type-caption">Project</span>
+                      <span className="text-[1rem] font-medium text-[var(--color-text)]">{project.title}</span>
+                      <span className="type-caption">Open</span>
+                    </button>
+                  ))}
+                </SpineAccordion>
+                <div className="spine-body mt-[var(--space-sm)]">
+                  <h3 className="type-caption mb-[var(--space-xs)]">What it tests</h3>
+                  <p className="type-body mb-[var(--space-sm)]">{currentInteractive.tests}</p>
+                  <h3 className="type-caption mb-[var(--space-xs)]">Inputs / Outputs</h3>
+                  <ul className="space-y-[var(--space-xs)] mb-[var(--space-sm)]">{currentInteractive.inputsOutputs.map((item) => <li key={item} className="type-body">{item}</li>)}</ul>
+                  <h3 className="type-caption mb-[var(--space-xs)]">Interaction model</h3>
+                  <p className="type-body mb-[var(--space-sm)]">{currentInteractive.interaction}</p>
+                  <h3 className="type-caption mb-[var(--space-xs)]">Build notes</h3>
+                  <ul className="space-y-[var(--space-xs)]">{currentInteractive.buildNotes.map((item) => <li key={item} className="type-body">{item}</li>)}</ul>
+                </div>
+              </>
+            )}
+            {workDetailId === 'page-04a' && (
+              <>
+                <SectionIntro title="Interactive Project Detail" purpose="Technical-sheet style: one-sentence purpose, IO logic, concise implementation bullets, evidence, and links." />
+                <div className="spine-body">
+                  <h3 className="type-caption mb-[var(--space-xs)]">Purpose</h3>
+                  <p className="type-body mb-[var(--space-sm)]">{currentInteractive.purpose}</p>
+                  <h3 className="type-caption mb-[var(--space-xs)]">Interaction</h3>
+                  <p className="type-body mb-[var(--space-sm)]">{currentInteractive.interaction}</p>
+                  <h3 className="type-caption mb-[var(--space-xs)]">Implementation</h3>
+                  <ul className="space-y-[var(--space-xs)] mb-[var(--space-sm)]">{currentInteractive.implementation.map((item) => <li key={item} className="type-body">{item}</li>)}</ul>
+                  <h3 className="type-caption mb-[var(--space-xs)]">Evidence</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-[var(--space-sm)] mb-[var(--space-sm)]">
+                    {Array.from({ length: 2 }).map((_, idx) => (
+                      <figure key={idx} className="image-placeholder">
+                        <div className="image-block" />
+                        <figcaption className="type-caption mt-1">Evidence frame {idx + 1}</figcaption>
+                      </figure>
+                    ))}
+                  </div>
+                  <div className="flex gap-[var(--space-sm)]">
+                    <a href={currentInteractive.links.demo} className="spine-open">Demo</a>
+                    <a href={currentInteractive.links.repo} className="spine-open">Repo</a>
+                  </div>
+                </div>
+              </>
+            )}
+            {workDetailId === 'page-05' && (
+              <>
+                <SectionIntro title="Research Log / Rolling Tape" purpose="Receipt-style updates in time order. One entry fully open at a time; all others remain summary strips." />
+                <div className="flex flex-wrap gap-[var(--space-xs)] mb-[var(--space-md)]">
+                  {['UI', 'Unity', 'AR', 'Hardware', 'Notes'].map((tag) => <span key={tag} className="tag-chip">{tag}</span>)}
+                </div>
+                <div className="rolling-tape" role="region" aria-label="Scrollable rolling tape">
+                  <ul className="rolling-tape-track">
+                    {researchEntries.map((entry) => (
+                      <li key={entry.id} className={`tape-receipt ${logOpen === entry.id ? 'is-open' : ''}`}>
+                        <button type="button" className="tape-head" onClick={() => setLogOpen(entry.id)}>
+                          <span className="type-caption">{entry.date}</span>
+                          <span className="text-[1rem] font-medium text-[var(--color-text)]">{entry.title}</span>
+                          <span className="type-caption">{logOpen === entry.id ? 'Open' : 'Summary'}</span>
+                        </button>
+                        {logOpen === entry.id ? (
+                          <div className="tape-body">
+                            <p className="type-body mb-[var(--space-sm)]">{entry.summary}</p>
+                            <div className="grid grid-cols-1 gap-[var(--space-sm)] mb-[var(--space-sm)]">{Array.from({ length: 3 }).map((_, idx) => <div key={idx} className="image-block h-28" />)}</div>
+                            <ul className="space-y-[var(--space-xs)] mb-[var(--space-sm)]">{entry.body.map((line) => <li key={line} className="type-body">{line}</li>)}</ul>
+                            <div className="flex flex-wrap gap-[var(--space-sm)]">{entry.links.map((link) => <a key={link.label} href={link.href} className="spine-open">{link.label}</a>)}</div>
+                          </div>
+                        ) : (
+                          <div className="tape-body"><p className="type-body">{entry.summary}</p></div>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+                <div className="spine-body mt-[var(--space-md)]">
+                  <h3 className="type-caption mb-[var(--space-xs)]">Page 05A - Log Entry Detail</h3>
+                  <p className="type-body mb-[var(--space-sm)]">{currentLog.title}</p>
+                  <p className="type-body">Use this detail page only for larger records that need a complete process trace.</p>
+                </div>
+              </>
+            )}
+            {workDetailId === 'page-06' && (
+              <>
+                <SectionIntro title="Spatial & Code Studies" purpose="Creative work as a structured appendix. Two spines, non-card line previews, consistent system language." />
+                <SpineAccordion title="Installation" open={spatialOpen === 'installation'} onToggle={() => setSpatialOpen('installation')}>
+                  <ul className="spine-list">
+                    {spatialStudies.installation.map((item) => (
+                      <li key={item.title} className="spine-row">
+                        <div>
+                          <p className="font-medium text-[var(--color-text)]">{item.title}</p>
+                          <p className="type-body">{item.intent}</p>
+                          <p className="type-caption">{item.medium} / {item.tools}</p>
+                        </div>
+                        <a href="#page-06a" className="spine-open">Open</a>
+                      </li>
+                    ))}
+                  </ul>
+                </SpineAccordion>
+                <SpineAccordion title="Creative Coding" open={spatialOpen === 'coding'} onToggle={() => setSpatialOpen('coding')}>
+                  <ul className="spine-list">
+                    {spatialStudies.coding.map((item) => (
+                      <li key={item.title} className="spine-row">
+                        <div>
+                          <p className="font-medium text-[var(--color-text)]">{item.title}</p>
+                          <p className="type-body">{item.intent}</p>
+                          <p className="type-caption">{item.medium} / {item.tools}</p>
+                        </div>
+                        <a href="#page-06a" className="spine-open">Open</a>
+                      </li>
+                    ))}
+                  </ul>
+                </SpineAccordion>
+              </>
+            )}
+            {workDetailId === 'page-06a' && (
+              <>
+                <SectionIntro title="Study Detail" purpose="Present artistic studies as verifiable systems through intent, medium, experience, build notes, and documentation links." />
+                <div className="spine-body">
+                  <h3 className="type-caption mb-[var(--space-xs)]">Intent</h3>
+                  <p className="type-body mb-[var(--space-sm)]">Translate coded behavior into perceivable spatial structure.</p>
+                  <h3 className="type-caption mb-[var(--space-xs)]">Form / Medium</h3>
+                  <p className="type-body mb-[var(--space-sm)]">Projection, reactive graphics, and structured timing cues.</p>
+                  <h3 className="type-caption mb-[var(--space-xs)]">Experience</h3>
+                  <p className="type-body mb-[var(--space-sm)]">Viewers move, trigger state transitions, and observe response envelopes.</p>
+                  <button type="button" className="spine-open">Build / Tech (Fold)</button>
+                  <div className="mt-[var(--space-sm)]">
+                    <a href="#" className="spine-open">Documentation Link</a>
+                  </div>
+                </div>
+              </>
+            )}
+          </section>
+        ) : (
+          <>
         <SectionShell id="page-00" label="Home Entry Node">
           <SectionIntro
-            page="Page 00"
             title="a Multidisciplinary Designer"
             purpose="working worldwide"
           />
           <p className="type-display mb-[var(--space-lg)]">{home.name}</p>
           <HorizontalBlackFire />
-          <div className="flex flex-wrap gap-[var(--space-sm)] mb-[var(--space-lg)]">
-            <a href="#page-02" className="spine-open">
-              View Work
-            </a>
-            <a href="#page-07" className="spine-open">
-              Contact
-            </a>
-          </div>
           <ul className="spine-list">
-            {home.featuredSpines.map((spine) => (
-              <li key={spine} className="spine-row">
-                <p className="text-[1.05rem] font-medium text-[var(--color-text)]">{spine}</p>
-                <span className="type-caption">Spine</span>
-              </li>
-            ))}
-          </ul>
-        </SectionShell>
-
-        <SectionShell id="page-01" label="About Node">
-          <SectionIntro
-            page="Page 01"
-            title="About"
-            purpose="Build credibility in 30 seconds through concise biography, focus, tools, and clear links."
-          />
-          <div className="layout-grid-12 gap-y-[var(--space-lg)]">
-            <div className="col-span-12 md:col-span-7">
-              <ul className="space-y-[var(--space-sm)]">
-                {about.bio.map((line) => (
-                  <li key={line} className="type-body text-[var(--color-text)]">
-                    {line}
-                  </li>
-                ))}
-              </ul>
-            </div>
-            <div className="col-span-12 md:col-span-5">
-              <h3 className="type-caption mb-[var(--space-sm)]">Focus</h3>
-              <ul className="space-y-[var(--space-xs)] mb-[var(--space-md)]">
-                {about.focus.map((item) => (
-                  <li key={item} className="type-body">
-                    {item}
-                  </li>
-                ))}
-              </ul>
-              <h3 className="type-caption mb-[var(--space-sm)]">Tools</h3>
-              <div className="flex flex-wrap gap-[var(--space-xs)] mb-[var(--space-md)]">
-                {about.tools.map((tool) => (
-                  <span key={tool} className="tag-chip">
-                    {tool}
-                  </span>
-                ))}
-              </div>
-              <div className="flex flex-wrap gap-[var(--space-sm)]">
-                {about.links.map((link) => (
-                  <a key={link.label} href={link.href} className="spine-open">
-                    {link.label}
+            {home.featuredSpines.map((spine) => {
+              const spineOpen: Record<string, 'ui' | 'interactive' | 'research'> = {
+                'UI Systems': 'ui',
+                'Interactive Systems': 'interactive',
+                'Research Log': 'research',
+              };
+              const open = spineOpen[spine];
+              return (
+                <li key={spine} className="spine-row">
+                  <a
+                    href="#page-02"
+                    className="flex flex-1 items-start justify-between gap-[var(--space-sm)] text-left no-underline text-inherit hover:opacity-80"
+                    onClick={(e) => {
+                      if (open) {
+                        e.preventDefault();
+                        setWorkOpen(open);
+                        setActiveSection('page-02');
+                        setIsAboutView(false);
+                        setIsResumeView(false);
+                        setWorkDetailId(null);
+                        window.history.replaceState(null, '', '#page-02');
+                        setTimeout(() => {
+                          document.getElementById('page-02')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        }, 50);
+                      }
+                    }}
+                  >
+                    <p className="text-[1.05rem] font-medium text-[var(--color-text)]"># {spine}</p>
+                    <span className="type-caption">Spine</span>
                   </a>
-                ))}
-              </div>
-            </div>
-          </div>
-          <div className="mt-[var(--space-lg)]">
-            <button type="button" className="spine-head" onClick={() => setAboutFold((v) => !v)}>
-              <span className="type-caption">Optional Fold</span>
-              <span className="text-[1rem] font-medium text-[var(--color-text)]">Education / Selected Exhibitions</span>
-              <span className="type-caption">{aboutFold ? 'Fold' : 'Unfold'}</span>
-            </button>
-            {aboutFold && (
-              <div className="spine-body">
-                <p className="type-body mb-[var(--space-sm)]">{about.fold.education}</p>
-                <p className="type-body">{about.fold.exhibitions}</p>
-              </div>
-            )}
-          </div>
+                </li>
+              );
+            })}
+          </ul>
         </SectionShell>
 
         <SectionShell id="page-02" label="Work Index Node">
           <SectionIntro
-            page="Page 02"
             title="Work Index"
             purpose="A directory node, not a project wall. Spines unfold into line-based project lists."
           />
@@ -381,365 +671,8 @@ function App() {
           </SpineAccordion>
         </SectionShell>
 
-        <SectionShell
-          id="page-02-work"
-          label="Work details P03–P06"
-          className="p03-p06-section section-shell py-[var(--space-xxxl)]"
-        >
-          <SpineAccordion
-            title="P03 – P06 Work details"
-            open={p03ToP06Open}
-            onToggle={() => setP03ToP06Open((v) => !v)}
-          >
-            <>
-        <SectionShell id="page-03" label="UI Systems Node">
-          <SectionIntro
-            page="Page 03"
-            title="UI Systems"
-            purpose="Core track for product and internship contexts: concise statements, fold-out previews, and clear role ownership."
-          />
-          <p className="type-body mb-[var(--space-lg)] max-w-3xl">
-            I build UI systems through constrained visual language, explicit hierarchy, and reusable interaction logic.
-            I optimize for clarity first, then polish.
-          </p>
-          <ul className="space-y-[var(--space-sm)]">
-            {uiCaseStudies.map((project) => (
-              <li key={project.id} className="spine-block">
-                <button type="button" className="spine-head" onClick={() => setUiOpen(project.id)}>
-                  <span className="type-caption">UI Project</span>
-                  <span className="text-[1rem] font-medium text-[var(--color-text)]">{project.title}</span>
-                  <span className="type-caption">{uiOpen === project.id ? 'Open' : 'Preview'}</span>
-                </button>
-                {uiOpen === project.id && (
-                  <div className="spine-body">
-                    <div className="flex flex-wrap items-center gap-[var(--space-sm)] mb-[var(--space-sm)]">
-                      <span className="type-caption">{project.role}</span>
-                      <a className="spine-open" href={project.link}>
-                        Link
-                      </a>
-                    </div>
-                    <p className="type-body mb-[var(--space-sm)]">{project.problem}</p>
-                    <h4 className="type-caption mb-[var(--space-xs)]">Constraints</h4>
-                    <ul className="space-y-[var(--space-xs)] mb-[var(--space-sm)]">
-                      {project.constraints.map((item) => (
-                        <li key={item} className="type-body">
-                          {item}
-                        </li>
-                      ))}
-                    </ul>
-                    <h4 className="type-caption mb-[var(--space-xs)]">Approach</h4>
-                    <ul className="space-y-[var(--space-xs)] mb-[var(--space-sm)]">
-                      {project.approach.map((item) => (
-                        <li key={item} className="type-body">
-                          {item}
-                        </li>
-                      ))}
-                    </ul>
-                    <button
-                      type="button"
-                      className="spine-open"
-                      onClick={() => setUiDeepOpen((v) => (v === project.id ? null : project.id))}
-                    >
-                      {uiDeepOpen === project.id ? 'Hide Iteration Notes' : 'Show Iteration Notes'}
-                    </button>
-                    {uiDeepOpen === project.id && (
-                      <ul className="space-y-[var(--space-xs)] mt-[var(--space-sm)]">
-                        {project.iterations.map((item) => (
-                          <li key={item} className="type-body">
-                            {item}
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-                  </div>
-                )}
-              </li>
-            ))}
-          </ul>
-        </SectionShell>
-
-        <SectionShell id="page-03a" label="UI Case Study Pages">
-          <SectionIntro
-            page="Page 03A / 03B / 03C"
-            title="UI Case Study"
-            purpose="Map-style unfolding: each fold reveals exactly one stage of the story and collapses the previous stage into a spine."
-          />
-          <div className="spine-body">
-            <h3 className="type-caption mb-[var(--space-xs)]">Overview</h3>
-            <p className="type-body mb-[var(--space-sm)]">{currentUi.problem}</p>
-            <h3 className="type-caption mb-[var(--space-xs)]">Role & Scope</h3>
-            <p className="type-body mb-[var(--space-sm)]">{currentUi.role}</p>
-            <h3 className="type-caption mb-[var(--space-xs)]">System</h3>
-            <ul className="space-y-[var(--space-xs)] mb-[var(--space-sm)]">
-              {currentUi.constraints.map((item) => (
-                <li key={item} className="type-body">
-                  {item}
-                </li>
-              ))}
-            </ul>
-            <h3 className="type-caption mb-[var(--space-xs)]">Process</h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-[var(--space-sm)] mb-[var(--space-sm)]">
-              {Array.from({ length: 3 }).map((_, idx) => (
-                <figure key={idx} className="image-placeholder">
-                  <div className="image-block" />
-                  <figcaption className="type-caption mt-1">Process frame {idx + 1}</figcaption>
-                </figure>
-              ))}
-            </div>
-            <h3 className="type-caption mb-[var(--space-xs)]">Outcome</h3>
-            <a href={currentUi.link} className="spine-open">
-              Demo / Prototype / Repo
-            </a>
-          </div>
-        </SectionShell>
-
-        <SectionShell id="page-04" label="Interactive Systems Node">
-          <SectionIntro
-            page="Page 04"
-            title="Interactive Systems"
-            purpose="Technical rigor over spectacle: chaptered browser and Unity/AR work shown sequentially, never side-by-side noise."
-          />
-          <SpineAccordion
-            title="Chapter Spine 1: Browser Lab"
-            open={currentInteractive.chapter === 'Browser Lab'}
-            onToggle={() => {
-              const match = interactiveProjects.find((p) => p.chapter === 'Browser Lab');
-              if (match) setInteractiveOpen(match.id);
-            }}
-          >
-            {interactiveProjects
-              .filter((p) => p.chapter === 'Browser Lab')
-              .map((project) => (
-                <button key={project.id} type="button" className="spine-head mt-[var(--space-xs)]" onClick={() => setInteractiveOpen(project.id)}>
-                  <span className="type-caption">Project</span>
-                  <span className="text-[1rem] font-medium text-[var(--color-text)]">{project.title}</span>
-                  <span className="type-caption">Open</span>
-                </button>
-              ))}
-          </SpineAccordion>
-          <SpineAccordion
-            title="Chapter Spine 2: Unity / AR"
-            open={currentInteractive.chapter === 'Unity / AR'}
-            onToggle={() => {
-              const match = interactiveProjects.find((p) => p.chapter === 'Unity / AR');
-              if (match) setInteractiveOpen(match.id);
-            }}
-          >
-            {interactiveProjects
-              .filter((p) => p.chapter === 'Unity / AR')
-              .map((project) => (
-                <button key={project.id} type="button" className="spine-head mt-[var(--space-xs)]" onClick={() => setInteractiveOpen(project.id)}>
-                  <span className="type-caption">Project</span>
-                  <span className="text-[1rem] font-medium text-[var(--color-text)]">{project.title}</span>
-                  <span className="type-caption">Open</span>
-                </button>
-              ))}
-          </SpineAccordion>
-          <div className="spine-body mt-[var(--space-sm)]">
-            <h3 className="type-caption mb-[var(--space-xs)]">What it tests</h3>
-            <p className="type-body mb-[var(--space-sm)]">{currentInteractive.tests}</p>
-            <h3 className="type-caption mb-[var(--space-xs)]">Inputs / Outputs</h3>
-            <ul className="space-y-[var(--space-xs)] mb-[var(--space-sm)]">
-              {currentInteractive.inputsOutputs.map((item) => (
-                <li key={item} className="type-body">
-                  {item}
-                </li>
-              ))}
-            </ul>
-            <h3 className="type-caption mb-[var(--space-xs)]">Interaction model</h3>
-            <p className="type-body mb-[var(--space-sm)]">{currentInteractive.interaction}</p>
-            <h3 className="type-caption mb-[var(--space-xs)]">Build notes</h3>
-            <ul className="space-y-[var(--space-xs)]">
-              {currentInteractive.buildNotes.map((item) => (
-                <li key={item} className="type-body">
-                  {item}
-                </li>
-              ))}
-            </ul>
-          </div>
-        </SectionShell>
-
-        <SectionShell id="page-04a" label="Interactive Project Pages">
-          <SectionIntro
-            page="Page 04A / 04B / 04C"
-            title="Interactive Project Detail"
-            purpose="Technical-sheet style: one-sentence purpose, IO logic, concise implementation bullets, evidence, and links."
-          />
-          <div className="spine-body">
-            <h3 className="type-caption mb-[var(--space-xs)]">Purpose</h3>
-            <p className="type-body mb-[var(--space-sm)]">{currentInteractive.purpose}</p>
-            <h3 className="type-caption mb-[var(--space-xs)]">Interaction</h3>
-            <p className="type-body mb-[var(--space-sm)]">{currentInteractive.interaction}</p>
-            <h3 className="type-caption mb-[var(--space-xs)]">Implementation</h3>
-            <ul className="space-y-[var(--space-xs)] mb-[var(--space-sm)]">
-              {currentInteractive.implementation.map((item) => (
-                <li key={item} className="type-body">
-                  {item}
-                </li>
-              ))}
-            </ul>
-            <h3 className="type-caption mb-[var(--space-xs)]">Evidence</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-[var(--space-sm)] mb-[var(--space-sm)]">
-              {Array.from({ length: 2 }).map((_, idx) => (
-                <figure key={idx} className="image-placeholder">
-                  <div className="image-block" />
-                  <figcaption className="type-caption mt-1">Evidence frame {idx + 1}</figcaption>
-                </figure>
-              ))}
-            </div>
-            <div className="flex gap-[var(--space-sm)]">
-              <a href={currentInteractive.links.demo} className="spine-open">
-                Demo
-              </a>
-              <a href={currentInteractive.links.repo} className="spine-open">
-                Repo
-              </a>
-            </div>
-          </div>
-        </SectionShell>
-
-        <SectionShell id="page-05" label="Research Log Node">
-          <SectionIntro
-            page="Page 05"
-            title="Research Log / Rolling Tape"
-            purpose="Receipt-style updates in time order. One entry fully open at a time; all others remain summary strips."
-          />
-          <div className="flex flex-wrap gap-[var(--space-xs)] mb-[var(--space-md)]">
-            {['UI', 'Unity', 'AR', 'Hardware', 'Notes'].map((tag) => (
-              <span key={tag} className="tag-chip">
-                {tag}
-              </span>
-            ))}
-          </div>
-          <div className="rolling-tape" role="region" aria-label="Scrollable rolling tape">
-            <ul className="rolling-tape-track">
-              {researchEntries.map((entry) => (
-                <li
-                  key={entry.id}
-                  className={`tape-receipt ${logOpen === entry.id ? 'is-open' : ''}`}
-                >
-                  <button type="button" className="tape-head" onClick={() => setLogOpen(entry.id)}>
-                    <span className="type-caption">{entry.date}</span>
-                    <span className="text-[1rem] font-medium text-[var(--color-text)]">{entry.title}</span>
-                    <span className="type-caption">{logOpen === entry.id ? 'Open' : 'Summary'}</span>
-                  </button>
-                  {logOpen === entry.id ? (
-                    <div className="tape-body">
-                      <p className="type-body mb-[var(--space-sm)]">{entry.summary}</p>
-                      <div className="grid grid-cols-1 gap-[var(--space-sm)] mb-[var(--space-sm)]">
-                        {Array.from({ length: 3 }).map((_, idx) => (
-                          <div key={idx} className="image-block h-28" />
-                        ))}
-                      </div>
-                      <ul className="space-y-[var(--space-xs)] mb-[var(--space-sm)]">
-                        {entry.body.map((line) => (
-                          <li key={line} className="type-body">
-                            {line}
-                          </li>
-                        ))}
-                      </ul>
-                      <div className="flex flex-wrap gap-[var(--space-sm)]">
-                        {entry.links.map((link) => (
-                          <a key={link.label} href={link.href} className="spine-open">
-                            {link.label}
-                          </a>
-                        ))}
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="tape-body">
-                      <p className="type-body">{entry.summary}</p>
-                    </div>
-                  )}
-                </li>
-              ))}
-            </ul>
-          </div>
-          <div className="spine-body mt-[var(--space-md)]">
-            <h3 className="type-caption mb-[var(--space-xs)]">Page 05A - Log Entry Detail</h3>
-            <p className="type-body mb-[var(--space-sm)]">{currentLog.title}</p>
-            <p className="type-body">Use this detail page only for larger records that need a complete process trace.</p>
-          </div>
-        </SectionShell>
-
-        <SectionShell id="page-06" label="Spatial and Code Studies Node">
-          <SectionIntro
-            page="Page 06"
-            title="Spatial & Code Studies"
-            purpose="Creative work as a structured appendix. Two spines, non-card line previews, consistent system language."
-          />
-          <SpineAccordion
-            title="Installation"
-            open={spatialOpen === 'installation'}
-            onToggle={() => setSpatialOpen('installation')}
-          >
-            <ul className="spine-list">
-              {spatialStudies.installation.map((item) => (
-                <li key={item.title} className="spine-row">
-                  <div>
-                    <p className="font-medium text-[var(--color-text)]">{item.title}</p>
-                    <p className="type-body">{item.intent}</p>
-                    <p className="type-caption">{item.medium} / {item.tools}</p>
-                  </div>
-                  <a href="#page-06a" className="spine-open">
-                    Open
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </SpineAccordion>
-          <SpineAccordion
-            title="Creative Coding"
-            open={spatialOpen === 'coding'}
-            onToggle={() => setSpatialOpen('coding')}
-          >
-            <ul className="spine-list">
-              {spatialStudies.coding.map((item) => (
-                <li key={item.title} className="spine-row">
-                  <div>
-                    <p className="font-medium text-[var(--color-text)]">{item.title}</p>
-                    <p className="type-body">{item.intent}</p>
-                    <p className="type-caption">{item.medium} / {item.tools}</p>
-                  </div>
-                  <a href="#page-06a" className="spine-open">
-                    Open
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </SpineAccordion>
-        </SectionShell>
-
-        <SectionShell id="page-06a" label="Study Detail Page">
-          <SectionIntro
-            page="Page 06A"
-            title="Study Detail"
-            purpose="Present artistic studies as verifiable systems through intent, medium, experience, build notes, and documentation links."
-          />
-          <div className="spine-body">
-            <h3 className="type-caption mb-[var(--space-xs)]">Intent</h3>
-            <p className="type-body mb-[var(--space-sm)]">Translate coded behavior into perceivable spatial structure.</p>
-            <h3 className="type-caption mb-[var(--space-xs)]">Form / Medium</h3>
-            <p className="type-body mb-[var(--space-sm)]">Projection, reactive graphics, and structured timing cues.</p>
-            <h3 className="type-caption mb-[var(--space-xs)]">Experience</h3>
-            <p className="type-body mb-[var(--space-sm)]">Viewers move, trigger state transitions, and observe response envelopes.</p>
-            <button type="button" className="spine-open">
-              Build / Tech (Fold)
-            </button>
-            <div className="mt-[var(--space-sm)]">
-              <a href="#" className="spine-open">
-                Documentation Link
-              </a>
-            </div>
-          </div>
-        </SectionShell>
-            </>
-          </SpineAccordion>
-        </SectionShell>
-
         <SectionShell id="page-07" label="Contact Exit Node">
           <SectionIntro
-            page="Page 07"
             title="Contact / Exit Node"
             purpose="Clean ending: direct contact, core links, and minimal form fields only."
           />
@@ -761,31 +694,38 @@ function App() {
             </form>
           </div>
         </SectionShell>
-
-        <SectionShell id="page-08" label="Resume Page">
-          <SectionIntro
-            page="Page 08"
-            title="Resume"
-            purpose="Fast review and download node for hiring contexts with optional highlights."
-          />
-          <div className="spine-body">
-            <div className="image-block h-72 mb-[var(--space-sm)]" />
-            <div className="flex gap-[var(--space-sm)] mb-[var(--space-sm)]">
-              <a href="#" className="spine-open">
-                Download Resume
-              </a>
-              <a href="#page-01" className="spine-open">
-                Back to About
-              </a>
-            </div>
-            <div className="pt-[var(--space-md)] pb-[var(--space-md)]" aria-hidden="true" />
-          </div>
-        </SectionShell>
+          </>
+        )}
       </main>
 
-      <footer className="system-shell py-[var(--space-xl)]">
-        <p className="type-caption text-center">Navigation tips: [ and ] move by section, Enter follows links, Esc reduces interaction load.</p>
-      </footer>
+      <motion.footer
+        className="system-shell site-footer py-[var(--space-xl)] flex items-center justify-between gap-4"
+        aria-hidden
+        style={{ opacity: footerOpacity }}
+      >
+        <svg className="footer-ornament-svg footer-ornament-svg--left" viewBox="0 0 140 50" fill="none" aria-hidden>
+          <motion.path
+            d="M 0 25 L 55 25 Q 90 25 105 42"
+            stroke="var(--color-accent-primary)"
+            strokeWidth="2"
+            strokeLinecap="round"
+            pathLength={pathLength}
+            strokeDasharray={pathLength}
+            style={{ strokeDashoffset: footerDashOffset }}
+          />
+        </svg>
+        <svg className="footer-ornament-svg footer-ornament-svg--right" viewBox="0 0 140 50" fill="none" aria-hidden>
+          <motion.path
+            d="M 140 25 L 85 25 Q 50 25 35 42"
+            stroke="var(--color-accent-primary)"
+            strokeWidth="2"
+            strokeLinecap="round"
+            pathLength={pathLength}
+            strokeDasharray={pathLength}
+            style={{ strokeDashoffset: footerDashOffset }}
+          />
+        </svg>
+      </motion.footer>
     </div>
   );
 }

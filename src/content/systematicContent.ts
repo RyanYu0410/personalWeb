@@ -40,18 +40,18 @@ export type ResearchEntry = {
 };
 
 export const sectionMeta = [
-  { id: 'page-00', label: 'P00 Home' },
-  { id: 'page-01', label: 'P01 About' },
-  { id: 'page-02', label: 'P02 Work Index' },
-  { id: 'page-03', label: 'P03 UI Systems' },
-  { id: 'page-03a', label: 'P03A UI Case' },
-  { id: 'page-04', label: 'P04 Interactive' },
-  { id: 'page-04a', label: 'P04A Int Project' },
-  { id: 'page-05', label: 'P05 Research' },
-  { id: 'page-06', label: 'P06 Spatial' },
-  { id: 'page-06a', label: 'P06A Study' },
-  { id: 'page-07', label: 'P07 Contact' },
-  { id: 'page-08', label: 'P08 Resume' },
+  { id: 'page-00', label: 'Home' },
+  { id: 'page-01', label: 'About' },
+  { id: 'page-02', label: 'Work Index' },
+  { id: 'page-03', label: 'UI Systems' },
+  { id: 'page-03a', label: 'UI Case' },
+  { id: 'page-04', label: 'Interactive' },
+  { id: 'page-04a', label: 'Int Project' },
+  { id: 'page-05', label: 'Research' },
+  { id: 'page-06', label: 'Spatial' },
+  { id: 'page-06a', label: 'Study' },
+  { id: 'page-07', label: 'Contact' },
+  { id: 'page-08', label: 'Resume' },
 ] as const;
 
 export const home = {
@@ -84,6 +84,8 @@ export const about = {
   fold: {
     education: 'BFA candidate focused on creative technology and interaction systems.',
     exhibitions: 'Selected student showcases, browser interaction demos, and spatial prototype reviews.',
+    paperReport: 'Published and in-progress papers, reports, and written documentation.',
+    otherWorks: 'Additional projects, collaborations, and side work outside main tracks.',
   },
 };
 
