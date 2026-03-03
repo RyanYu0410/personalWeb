@@ -44,9 +44,9 @@ export default function HorizontalBlackFire() {
       life: number;
       maxLife: number;
 
-      constructor() {
+      constructor(canvasEl: HTMLCanvasElement) {
         this.x = 0;
-        this.y = Math.random() * canvas.height;
+        this.y = Math.random() * canvasEl.height;
         this.size = Math.random() * 4 + 2;
         this.speedX = Math.random() * 2.5 + 1.2;
         this.speedY = (Math.random() - 0.5) * 1.2;
@@ -99,7 +99,7 @@ export default function HorizontalBlackFire() {
       
       // Spawn new particles (left edge)
       for (let i = 0; i < 3; i++) {
-        particles.push(new Particle());
+        particles.push(new Particle(canvas));
       }
       
       for (let i = 0; i < particles.length; i++) {
