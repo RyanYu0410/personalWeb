@@ -3,9 +3,8 @@ import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 
 // https://vite.dev/config/
-// For GitHub Pages project site (username.github.io/repo-name/), base must be '/repo-name/'
-// Change to '' for user/org site (username.github.io)
+// Relative base works for any GitHub Pages URL (root or /repo-name/)
 export default defineConfig({
-  base: '/personalWeb/',
+  base: './',
   plugins: [react(), tailwindcss()],
 })
