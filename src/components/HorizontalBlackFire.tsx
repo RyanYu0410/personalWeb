@@ -124,10 +124,13 @@ export default function HorizontalBlackFire() {
   }, []);
 
   return (
-    <div className="w-full max-w-2xl mb-[var(--space-lg)]" style={{ height: '120px' }}>
+    <div
+      className="w-full max-w-2xl my-[var(--space-xxxl)]"
+      style={{ height: 'clamp(72px, 15vw, 120px)' }}
+    >
       <canvas
         ref={canvasRef}
-        style={{ width: '100%', height: '100%', display: 'block', cursor: 'crosshair', borderRadius: '8px' }}
+        style={{ width: '100%', height: '100%', display: 'block', cursor: 'crosshair' }}
       />
     </div>
   );

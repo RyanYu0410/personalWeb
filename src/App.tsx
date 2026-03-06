@@ -240,14 +240,14 @@ function App() {
   const currentLog = researchEntries.find((p) => p.id === logOpen) ?? researchEntries[0];
 
   return (
-    <div className="min-h-screen selection:bg-black selection:text-white pb-[var(--space-xxxl)]">
+    <div className="min-h-screen selection:bg-black selection:text-white pb-16 md:pb-[var(--space-xxxl)]">
       <a href="#main-content" className="skip-link">
         Skip to main content
       </a>
       <PrecisionCursor />
 
       <motion.div
-        className="fixed right-4 top-0 h-full w-[2px] bg-black/10 origin-top z-[60]"
+        className="fixed right-2 md:right-4 top-0 h-full w-[2px] bg-black/10 origin-top z-[60]"
         style={{ scaleY: smoothProgress }}
       />
 
@@ -280,21 +280,20 @@ function App() {
         {isAboutView ? (
           <section id="page-01" aria-label="About Node" className="system-shell section-shell py-[var(--space-xxxl)]">
             <a href="#page-00" className="type-caption mb-[var(--space-md)] inline-block">← Back</a>
-            <SectionIntro
-              title="About"
-              purpose="Build credibility in 30 seconds through concise biography, focus, tools, and clear links."
-            />
-            <div className="layout-grid-12 gap-y-[var(--space-lg)]">
-              <div className="col-span-12 md:col-span-7">
-                <ul className="space-y-[var(--space-sm)]">
-                  {about.bio.map((line) => (
-                    <li key={line} className="type-body text-[var(--color-text)]">
-                      {line}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-              <div className="col-span-12 md:col-span-5">
+            <div className="flex flex-col md:flex-row gap-[var(--space-lg)] items-start">
+              <div className="flex-1 min-w-0">
+                <h2 className="type-h1 mb-[var(--space-sm)]">I'm Ryan Yu,</h2>
+                <p
+                  className="type-body max-w-xl my-[var(--space-lg)]"
+                  style={{
+                    paddingBlock: 'var(--space-md)',
+                    borderTop: '1px solid var(--color-accent-primary)',
+                    borderBottom: '1px solid var(--color-accent-primary)',
+                    fontStyle: 'italic',
+                    letterSpacing: '0.01em',
+                    color: 'var(--color-text)',
+                  }}
+                >a multidisciplinary designer working at the intersection of product UI, interactive prototyping, and spatial computing.</p>
                 <h3 className="type-caption mb-[var(--space-sm)]">Focus</h3>
                 <ul className="space-y-[var(--space-xs)] mb-[var(--space-md)]">
                   {about.focus.map((item) => (
@@ -319,8 +318,16 @@ function App() {
                   ))}
                 </div>
               </div>
+              <div className="w-4/5 mx-auto md:mx-0 md:w-80 lg:w-88 shrink-0">
+                <img
+                  src="./about-photo.jpg"
+                  alt="Portrait of Ryan Yu"
+                  className="w-full rounded-xl object-cover"
+                  style={{ aspectRatio: '3 / 4' }}
+                />
+              </div>
             </div>
-            <div className="mt-[var(--space-lg)] space-y-[var(--space-sm)]">
+            <div className="mt-[var(--space-xxxl)] space-y-[var(--space-sm)]">
               <button type="button" className="spine-head" onClick={() => setAboutFoldOpen((v) => (v === 'education' ? null : 'education'))} aria-expanded={aboutFoldOpen === 'education'}>
                 <span className="type-caption">Optional Fold</span>
                 <span className="text-[1rem] font-medium text-[var(--color-text)]">Education / Selected Exhibitions</span>
@@ -596,7 +603,7 @@ function App() {
             title="a Multidisciplinary Designer"
             purpose="working worldwide"
           />
-          <p className="type-display mb-[var(--space-lg)]">{home.name}</p>
+          <p className="type-display mb-[var(--space-lg)] break-words">{home.name}</p>
           <HorizontalBlackFire />
           <ul className="spine-list">
             {home.featuredSpines.map((spine) => {

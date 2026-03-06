@@ -52,6 +52,11 @@
   box-sizing: border-box;
 }
 
+img, video {
+  max-width: 100%;
+  height: auto;
+}
+
 html,
 body {
   margin: 0;
@@ -228,6 +233,7 @@ button:focus-visible {
   box-shadow: var(--shadow-subtle);
 }
 
+/* ── Tablet ────────────────────────────────── */
 @media (max-width: 1024px) {
   :root {
     --grid-gutter: 20px;
@@ -236,6 +242,7 @@ button:focus-visible {
   }
 }
 
+/* ── Mobile ────────────────────────────────── */
 @media (max-width: 768px) {
   :root {
     --space-unit: 6px;
@@ -249,12 +256,109 @@ button:focus-visible {
   }
 
   .section-nav {
-    top: var(--space-sm);
+    top: auto;
+    bottom: var(--space-sm);
     right: var(--space-sm);
-    max-width: min(96vw, 320px);
+    left: var(--space-sm);
+    max-width: 100%;
     overflow-x: auto;
-    justify-content: flex-end;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    justify-content: flex-start;
     padding-inline: var(--space-sm);
+    border-radius: 20px;
+    gap: 2px;
+  }
+
+  .section-nav::-webkit-scrollbar {
+    display: none;
+  }
+
+  .section-nav-item {
+    min-width: max-content;
+    padding: 6px var(--space-sm);
+    font-size: 0.58rem;
+  }
+
+  .section-shell {
+    scroll-margin-top: 16px;
+  }
+
+  .spine-head {
+    padding: var(--space-sm);
+    gap: var(--space-xs);
+    min-height: 44px;
+  }
+
+  .spine-body {
+    padding: var(--space-sm);
+  }
+
+  .spine-row-link {
+    flex-direction: column;
+    gap: var(--space-xs);
+    padding: var(--space-sm);
+    min-height: 44px;
+  }
+
+  .spine-open {
+    padding: 8px 12px;
+    font-size: 0.62rem;
+    min-height: 36px;
+  }
+
+  .layout-grid-12 {
+    grid-template-columns: 1fr;
+    gap: var(--space-md);
+  }
+
+  .footer-ornament-svg {
+    max-width: 80px;
+    height: 30px;
+  }
+
+  .site-footer {
+    padding-bottom: 56px;
+  }
+}
+
+/* ── Small phone ──────────────────────────── */
+@media (max-width: 480px) {
+  :root {
+    --grid-margin: 12px;
+    --type-display: clamp(1.75rem, 12vw, 2.4rem);
+    --type-h1: clamp(1.35rem, 8vw, 1.8rem);
+    --type-body: 0.9rem;
+  }
+
+  .spine-head {
+    flex-wrap: wrap;
+  }
+
+  .image-block {
+    height: 6rem;
+  }
+
+  .field {
+    font-size: 16px;
+  }
+
+  .tag-chip {
+    font-size: 0.6rem;
+    padding: 3px 6px;
+  }
+
+  .tape-receipt {
+    width: min(85vw, 300px);
+  }
+
+  .tape-receipt.is-open {
+    width: min(90vw, 340px);
+  }
+
+  .footer-ornament-svg {
+    max-width: 50px;
+    height: 24px;
   }
 }
 
@@ -476,5 +580,33 @@ button:focus-visible {
 
   .tape-receipt.is-open {
     width: min(92vw, 430px);
+  }
+
+  .tape-head {
+    padding: var(--space-sm);
+    gap: var(--space-xs);
+  }
+
+  .tape-body {
+    padding: var(--space-sm);
+  }
+
+  .rolling-tape {
+    margin-inline: calc(-1 * var(--grid-margin));
+    padding-inline: var(--grid-margin);
+  }
+
+  .p03-p06-section {
+    padding-block: var(--space-lg);
+  }
+}
+
+@media (max-width: 480px) {
+  .spine-block {
+    border-radius: 8px;
+  }
+
+  .rolling-tape-track {
+    gap: var(--space-xs);
   }
 }
