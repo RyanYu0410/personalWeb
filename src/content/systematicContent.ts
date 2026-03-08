@@ -77,7 +77,7 @@ export const about = {
   tools: ['Figma', 'React', 'Houdini', 'Unity', 'p5.js', 'ml5.js', 'TouchDesigner'],
   links: [
     { label: 'Resume', href: '#page-08' },
-    { label: 'Email', href: 'mailto:ryan@example.com' },
+    { label: 'Email', href: 'mailto:hryanyu@gmail.com' },
     { label: 'GitHub', href: 'https://github.com/' },
     { label: 'LinkedIn', href: 'https://www.linkedin.com/' },
   ],
