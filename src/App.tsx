@@ -1,17 +1,17 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { motion, useReducedMotion, useScroll, useSpring, useTransform, AnimatePresence } from 'framer-motion';
 import {
   about,
   home,
+  housingProject,
   interactiveProjects,
   researchEntries,
   sectionMeta,
   spatialStudies,
   uiCaseStudies,
   workIndex,
-  type SpineItem,
 } from './content/systematicContent';
-import HorizontalBlackFire from './components/HorizontalBlackFire';
+import InteractiveThreeSpine from './components/InteractiveThreeSpine';
 import { useT } from './i18n/useT';
 import { useLang } from './i18n/context';
 import type { TranslationKey } from './i18n/translations';
@@ -48,29 +48,21 @@ function SectionShell({
 function SectionIntro({
   title,
   purpose,
+  purposeAsLine,
 }: {
   title: string;
   purpose: string;
+  purposeAsLine?: boolean;
 }) {
   return (
     <header className="mb-[var(--space-xl)]">
       <h2 className="type-h1 mb-[var(--space-sm)]">{title}</h2>
-      <p className="type-body max-w-3xl">{purpose}</p>
+      {purposeAsLine ? (
+        <div className="section-intro-line" aria-hidden />
+      ) : (
+        <p className="type-body max-w-3xl">{purpose}</p>
+      )}
     </header>
-  );
-}
-
-function SpineRow({ item }: { item: SpineItem }) {
-  return (
-    <li className="spine-row">
-      <a href={item.href} className="spine-row-link">
-        <div>
-          <p className="font-medium text-[var(--color-text)]">{item.title}</p>
-          <p className="type-body">{item.outcome}</p>
-        </div>
-        <span className="type-caption">{item.role}</span>
-      </a>
-    </li>
   );
 }
 
@@ -101,7 +93,11 @@ function SpineAccordion({
 
 function PrecisionCursor() {
   const [pos, setPos] = useState({ x: 0, y: 0 });
+  const [size, setSize] = useState(16);
   const [enabled, setEnabled] = useState(false);
+  const prevPos = useRef({ x: 0, y: 0 });
+  const smoothSpeed = useRef(0);
+  const rafId = useRef(0);
 
   useEffect(() => {
     const media = window.matchMedia('(pointer:fine)');
@@ -110,34 +106,56 @@ function PrecisionCursor() {
     media.addEventListener('change', update);
 
     const onMove = (event: MouseEvent) => {
-      setPos({ x: event.clientX, y: event.clientY });
+      const dx = event.clientX - prevPos.current.x;
+      const dy = event.clientY - prevPos.current.y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      prevPos.current = { x: event.clientX, y: event.clientY };
+
+      smoothSpeed.current += (dist - smoothSpeed.current) * 0.3;
+
+      cancelAnimationFrame(rafId.current);
+      rafId.current = requestAnimationFrame(() => {
+        const baseSize = 16;
+        const maxExtra = 60;
+        const logSize = baseSize + maxExtra * (Math.log1p(smoothSpeed.current * 0.5) / Math.log1p(50));
+        setSize(Math.min(logSize, baseSize + maxExtra));
+        setPos({ x: event.clientX, y: event.clientY });
+      });
     };
+
+    const decay = () => {
+      smoothSpeed.current *= 0.92;
+      if (smoothSpeed.current > 0.3) {
+        const baseSize = 16;
+        const maxExtra = 60;
+        const logSize = baseSize + maxExtra * (Math.log1p(smoothSpeed.current * 0.5) / Math.log1p(50));
+        setSize(Math.min(logSize, baseSize + maxExtra));
+      } else {
+        setSize(16);
+      }
+      requestAnimationFrame(decay);
+    };
+    const decayFrame = requestAnimationFrame(decay);
 
     window.addEventListener('mousemove', onMove);
     return () => {
       media.removeEventListener('change', update);
       window.removeEventListener('mousemove', onMove);
+      cancelAnimationFrame(rafId.current);
+      cancelAnimationFrame(decayFrame);
     };
   }, []);
 
   if (!enabled) return null;
 
+  const half = size / 2;
+
   return (
     <div className="pointer-events-none fixed inset-0 z-[70] hidden md:block" aria-hidden="true">
       <motion.div
-        className="absolute h-11 w-11 rounded-full border border-[var(--color-accent-primary)]/55 bg-white/15 backdrop-blur-[2px]"
-        animate={{ x: pos.x - 22, y: pos.y - 22 }}
+        className="absolute rounded-full border border-[var(--color-accent-primary)]/55 bg-white/15 backdrop-blur-[2px]"
+        animate={{ x: pos.x - half, y: pos.y - half, width: size, height: size }}
         transition={{ type: 'spring', stiffness: 420, damping: 32, mass: 0.35 }}
-      />
-      <motion.div
-        className="absolute h-[1px] w-7 bg-[var(--color-accent-primary)]/80"
-        animate={{ x: pos.x - 14, y: pos.y }}
-        transition={{ type: 'spring', stiffness: 520, damping: 35, mass: 0.2 }}
-      />
-      <motion.div
-        className="absolute h-7 w-[1px] bg-[var(--color-accent-primary)]/80"
-        animate={{ x: pos.x, y: pos.y - 14 }}
-        transition={{ type: 'spring', stiffness: 520, damping: 35, mass: 0.2 }}
       />
     </div>
   );
@@ -146,9 +164,9 @@ function PrecisionCursor() {
 const navLabelKeys: Record<string, TranslationKey> = {
   'page-00': 'navHome',
   'page-01': 'navAbout',
-  'page-02': 'navWorkIndex',
   'page-03': 'navUISystems',
   'page-03a': 'navUICase',
+  'page-housing': 'navHousing',
   'page-04': 'navInteractive',
   'page-04a': 'navIntProject',
   'page-05': 'navResearch',
@@ -169,7 +187,7 @@ function App() {
   const [logOpen, setLogOpen] = useState(researchEntries[0].id);
   const [aboutFoldOpen, setAboutFoldOpen] = useState<'education' | 'paper' | 'other' | null>(null);
   const [spatialOpen, setSpatialOpen] = useState<'installation' | 'coding'>('installation');
-  const WORK_DETAIL_IDS = ['page-03', 'page-03a', 'page-04', 'page-04a', 'page-05', 'page-06', 'page-06a'] as const;
+  const WORK_DETAIL_IDS = ['page-03', 'page-03a', 'page-housing', 'page-04', 'page-04a', 'page-05', 'page-06', 'page-06a'] as const;
   const [workDetailId, setWorkDetailId] = useState<string | null>(() => {
     const id = window.location.hash.slice(1);
     return WORK_DETAIL_IDS.includes(id as (typeof WORK_DETAIL_IDS)[number]) ? id : null;
@@ -189,13 +207,13 @@ function App() {
       if (id === 'page-02-ui' || id === 'page-02-interactive' || id === 'page-02-research') {
         const openMap = { 'page-02-ui': 'ui' as const, 'page-02-interactive': 'interactive' as const, 'page-02-research': 'research' as const };
         setWorkOpen(openMap[id as keyof typeof openMap]);
-        setActiveSection('page-02');
+        setActiveSection('page-00');
         setIsAboutView(false);
         setIsResumeView(false);
         setWorkDetailId(null);
-        window.history.replaceState(null, '', '#page-02');
+        window.history.replaceState(null, '', '#page-00');
         setTimeout(() => {
-          const el = document.getElementById('page-02');
+          const el = document.getElementById('page-00');
           if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }, 50);
         return;
@@ -283,36 +301,38 @@ function App() {
       />
 
       <nav aria-label="Section navigation" className="section-nav surface-glass">
+        <div className="section-nav-links">
+          <AnimatePresence>
+            {sectionMeta.map((item) => {
+              const isNested = ['page-03', 'page-03a', 'page-housing', 'page-04', 'page-04a', 'page-05', 'page-06', 'page-06a'].includes(item.id);
+              if (isNested && !workDetailId) return null;
+
+              return (
+                <motion.a
+                  key={item.id}
+                  href={`#${item.id}`}
+                  className={`section-nav-item ${activeSection === item.id ? 'is-active' : ''}`}
+                  aria-current={activeSection === item.id ? 'location' : undefined}
+                  initial={isNested ? { opacity: 0, width: 0, paddingLeft: 0, paddingRight: 0, overflow: 'hidden', marginLeft: -4 } : false}
+                  animate={isNested ? { opacity: 1, width: 'auto', paddingLeft: 8, paddingRight: 8, marginLeft: 0 } : false}
+                  exit={isNested ? { opacity: 0, width: 0, paddingLeft: 0, paddingRight: 0, overflow: 'hidden', marginLeft: -4 } : undefined}
+                  transition={{ duration: 0.3, ease: 'easeInOut' }}
+                  style={{ whiteSpace: 'nowrap' }}
+                >
+                  {String(t(navLabelKeys[item.id]))}
+                </motion.a>
+              );
+            })}
+          </AnimatePresence>
+        </div>
         <button
           type="button"
-          className="section-nav-item"
+          className="section-nav-lang"
           onClick={() => setLang(lang === 'en' ? 'zh' : 'en')}
-          style={{ fontFamily: 'var(--font-mono)', cursor: 'pointer' }}
+          aria-label={lang === 'en' ? 'Switch to Chinese' : 'Switch to English'}
         >
           {lang === 'en' ? '中' : 'EN'}
         </button>
-        <AnimatePresence>
-          {sectionMeta.map((item) => {
-            const isNested = ['page-03', 'page-03a', 'page-04', 'page-04a', 'page-05', 'page-06', 'page-06a'].includes(item.id);
-            if (isNested && !workDetailId) return null;
-
-            return (
-              <motion.a
-                key={item.id}
-                href={`#${item.id}`}
-                className={`section-nav-item ${activeSection === item.id ? 'is-active' : ''}`}
-                aria-current={activeSection === item.id ? 'location' : undefined}
-                initial={isNested ? { opacity: 0, width: 0, paddingLeft: 0, paddingRight: 0, overflow: 'hidden', marginLeft: -4 } : false}
-                animate={isNested ? { opacity: 1, width: 'auto', paddingLeft: 8, paddingRight: 8, marginLeft: 0 } : false}
-                exit={isNested ? { opacity: 0, width: 0, paddingLeft: 0, paddingRight: 0, overflow: 'hidden', marginLeft: -4 } : undefined}
-                transition={{ duration: 0.3, ease: 'easeInOut' }}
-                style={{ whiteSpace: 'nowrap' }}
-              >
-                {String(t(navLabelKeys[item.id]))}
-              </motion.a>
-            );
-          })}
-        </AnimatePresence>
       </nav>
 
       <main id="main-content">
@@ -422,7 +442,7 @@ function App() {
           </section>
         ) : workDetailId ? (
           <section id={workDetailId} aria-label="Work detail" className="system-shell section-shell py-[var(--space-xxxl)]">
-            <a href="#page-02" className="type-caption mb-[var(--space-md)] inline-block">{t('backToWorkIndex')}</a>
+            <a href="#page-00" className="type-caption mb-[var(--space-md)] inline-block">{t('back')}</a>
             {workDetailId === 'page-03' && (
               <>
                 <SectionIntro title={String(t('uiSystemsDetailTitle'))} purpose={String(t('uiSystemsDetailPurpose'))} />
@@ -487,6 +507,154 @@ function App() {
                   <h3 className="type-caption mb-[var(--space-xs)]">{t('outcome')}</h3>
                   <a href={currentUi.link} className="spine-open">{t('demoPrototypeRepo')}</a>
                 </div>
+              </>
+            )}
+            {workDetailId === 'page-housing' && (
+              <>
+                {/* Hero */}
+                <div className="flex flex-col md:flex-row gap-[var(--space-lg)] mb-[var(--space-xxxl)] items-start">
+                  <div className="flex-1 min-w-0 pt-[var(--space-md)]">
+                    <h1 className="type-h1">{String(t('housingHeroName'))}</h1>
+                    <p className="type-body text-[var(--color-text-muted)] mt-[var(--space-sm)] max-w-md">{String(t('housingSubtitle'))}</p>
+                    <div className="flex gap-[var(--space-md)] mt-[var(--space-lg)]">
+                      <span className="type-caption">{String(t('housingYear'))}</span>
+                      <span className="type-caption">{String(t('housingRole'))}</span>
+                    </div>
+                  </div>
+                  <div className="w-full md:w-[55%] shrink-0">
+                    <img
+                      src="./housing-hero.png"
+                      alt="Housing Solutions hero"
+                      className="w-full rounded-xl object-cover"
+                      style={{ aspectRatio: '4 / 3' }}
+                    />
+                  </div>
+                </div>
+
+                {/* Overview */}
+                <div className="flex flex-col md:flex-row gap-[var(--space-lg)] mt-[var(--space-xxxl)] mb-[var(--space-xxxl)] items-start py-[var(--space-xxl)] px-[var(--space-md)] border-t border-b border-black/8">
+                  <h3 className="shrink-0 pt-[3px] text-[var(--color-text-muted)]" style={{ fontSize: 'clamp(1.05rem, 1.5vw, 1.25rem)', letterSpacing: '0.04em' }}>{String(t('housingOverviewLabel'))}</h3>
+                  <p className="leading-relaxed max-w-2xl ml-auto" style={{ fontSize: 'clamp(1rem, 1.3vw, 1.15rem)' }}>{String(t('housingOverview'))}</p>
+                </div>
+
+                {/* Large scroll-reveal statement */}
+                <motion.div
+                  className="mb-[var(--space-xxxl)]"
+                  initial={{ opacity: 0, y: 60 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, margin: '-15% 0px' }}
+                  transition={{ duration: 0.8, ease: [0.25, 0.1, 0.25, 1] }}
+                >
+                  <p className="font-bold leading-[1.1] tracking-tight text-[var(--color-text)]" style={{ fontSize: 'clamp(2.5rem, 8vw, 6rem)' }}>
+                    How to
+                  </p>
+                  <p className="font-bold leading-[1.1] tracking-tight text-[var(--color-accent-primary)]" style={{ fontSize: 'clamp(2.5rem, 8vw, 6rem)' }}>
+                    Rent &amp; Save Rent
+                  </p>
+                  <p className="text-right mt-[var(--space-xs)]">
+                    <span className="text-[var(--color-accent-secondary)] font-semibold tracking-wide" style={{ fontSize: 'clamp(0.85rem, 1.5vw, 1.1rem)' }}>for Students</span>
+                  </p>
+                  <p className="font-bold leading-[1.1] tracking-tight text-[var(--color-text)] text-right mt-[var(--space-xs)]" style={{ fontSize: 'clamp(2.5rem, 8vw, 6rem)' }}>
+                    in NYCity
+                  </p>
+                  <img
+                    src="./housing-skyline.png"
+                    alt="NYC Skyline overview"
+                    className="w-full rounded-xl object-cover mt-[var(--space-lg)]"
+                    style={{ maxHeight: 'clamp(200px, 35vw, 420px)' }}
+                  />
+                </motion.div>
+
+                {/* Problem Framing */}
+                <section className="mb-[var(--space-xxl)]">
+                  <h3 className="type-caption mb-[var(--space-sm)]">{String(t('housingProblemLabel'))}</h3>
+                  <ul className="space-y-[var(--space-xs)] max-w-3xl">
+                    {(t('housingProblemItems') as readonly string[]).map((item) => (
+                      <li key={item} className="type-body">— {item}</li>
+                    ))}
+                  </ul>
+                  <h3 className="type-caption mb-[var(--space-sm)] mt-[var(--space-lg)]">{String(t('housingGoalLabel'))}</h3>
+                  <ul className="space-y-[var(--space-xs)] max-w-3xl">
+                    {(t('housingGoalItems') as readonly string[]).map((item) => (
+                      <li key={item} className="type-body">— {item}</li>
+                    ))}
+                  </ul>
+                </section>
+
+                {/* Solution / System */}
+                <section className="mb-[var(--space-xxl)]">
+                  <h3 className="type-caption mb-[var(--space-sm)]">{String(t('housingSolutionLabel'))}</h3>
+                  <p className="type-body mb-[var(--space-lg)] max-w-3xl leading-relaxed">{String(t('housingSolution'))}</p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-[var(--space-sm)] mb-[var(--space-lg)]">
+                    {Array.from({ length: 4 }).map((_, idx) => (
+                      <div key={idx} className="image-block" style={{ height: 'clamp(120px, 20vw, 200px)' }} />
+                    ))}
+                  </div>
+                  <ul className="space-y-[var(--space-xs)] max-w-3xl">
+                    {(t('housingSolutionPrinciples') as readonly string[]).map((item) => (
+                      <li key={item} className="type-body">— {item}</li>
+                    ))}
+                  </ul>
+                </section>
+
+                {/* Experience / Use Scenarios */}
+                <section className="mb-[var(--space-xxl)]">
+                  <h3 className="type-caption mb-[var(--space-sm)]">{String(t('housingExperienceLabel'))}</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-[var(--space-md)]">
+                    {(t('housingExperienceItems') as readonly string[]).map((scenario, idx) => (
+                      <div key={idx}>
+                        <div className="image-block mb-[var(--space-sm)]" style={{ height: 'clamp(100px, 18vw, 180px)' }} />
+                        <p className="type-body text-[var(--color-text-muted)]">{scenario}</p>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+
+                {/* Process */}
+                <section className="mb-[var(--space-xxl)]">
+                  <h3 className="type-caption mb-[var(--space-sm)]">{String(t('housingProcessLabel'))}</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-[var(--space-sm)]">
+                    {(t('housingProcessSteps') as readonly string[]).map((step, idx) => (
+                      <figure key={idx} className="image-placeholder">
+                        <div className="image-block" />
+                        <figcaption className="type-caption mt-1">{idx + 1}. {step}</figcaption>
+                      </figure>
+                    ))}
+                  </div>
+                </section>
+
+                {/* Credits */}
+                <section className="mb-[var(--space-xxl)]">
+                  <h3 className="type-caption mb-[var(--space-sm)]">{String(t('housingCreditsLabel'))}</h3>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-[var(--space-md)]">
+                    <div>
+                      <p className="type-caption mb-[var(--space-xs)]">{String(t('housingCreditsTeam'))}</p>
+                      <p className="type-body">{housingProject.credits.team.join(', ')}</p>
+                    </div>
+                    <div>
+                      <p className="type-caption mb-[var(--space-xs)]">{String(t('housingCreditsRole'))}</p>
+                      <p className="type-body">{housingProject.credits.role}</p>
+                    </div>
+                    <div>
+                      <p className="type-caption mb-[var(--space-xs)]">{String(t('housingCreditsYear'))}</p>
+                      <p className="type-body">{housingProject.credits.year}</p>
+                    </div>
+                    <div>
+                      <p className="type-caption mb-[var(--space-xs)]">{String(t('housingCreditsTools'))}</p>
+                      <p className="type-body">{housingProject.credits.tools.join(', ')}</p>
+                    </div>
+                  </div>
+                </section>
+
+                {/* Gallery */}
+                <section>
+                  <h3 className="type-caption mb-[var(--space-sm)]">{String(t('housingGalleryLabel'))}</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-[var(--space-sm)]">
+                    {Array.from({ length: housingProject.galleryCount }).map((_, idx) => (
+                      <div key={idx} className="image-block" style={{ height: 'clamp(120px, 20vw, 200px)' }} />
+                    ))}
+                  </div>
+                </section>
               </>
             )}
             {workDetailId === 'page-04' && (
@@ -638,79 +806,17 @@ function App() {
         ) : (
           <>
         <SectionShell id="page-00" label="Home Entry Node">
-          <SectionIntro
-            title={String(t('homeTitle'))}
-            purpose={String(t('homePurpose'))}
-          />
-          <p className="type-display mb-[var(--space-lg)] break-words">{home.name}</p>
-          <HorizontalBlackFire />
-          <ul className="spine-list mt-[var(--space-xxxl)]">
-            {([
-              { key: 'spineUI' as const, open: 'ui' as const },
-              { key: 'spineInteractive' as const, open: 'interactive' as const },
-              { key: 'spineResearch' as const, open: 'research' as const },
-            ]).map(({ key, open }) => (
-              <li key={key} className="spine-row">
-                <a
-                  href="#page-02"
-                  className="flex flex-1 items-start justify-between gap-[var(--space-sm)] text-left no-underline text-inherit hover:opacity-80"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    setWorkOpen(open);
-                    setActiveSection('page-02');
-                    setIsAboutView(false);
-                    setIsResumeView(false);
-                    setWorkDetailId(null);
-                    window.history.replaceState(null, '', '#page-02');
-                    setTimeout(() => {
-                      document.getElementById('page-02')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                    }, 50);
-                  }}
-                >
-                  <p className="text-[1.05rem] font-medium text-[var(--color-text)]"># {t(key)}</p>
-                  <span className="type-caption">{t('spine')}</span>
-                </a>
-              </li>
-            ))}
-          </ul>
-        </SectionShell>
-
-        <SectionShell id="page-02" label="Work Index Node">
-          <SectionIntro
-            title={String(t('workIndexTitle'))}
-            purpose={String(t('workIndexPurpose'))}
-          />
-          <SpineAccordion t={t} title={String(t('uiSystemsTitle'))} open={workOpen === 'ui'} onToggle={() => setWorkOpen('ui')}>
-            <ul className="spine-list">
-              {workIndex.ui.map((item) => (
-                <SpineRow key={item.title} item={item} />
-              ))}
-            </ul>
-          </SpineAccordion>
-          <SpineAccordion
+          <div className="mb-[var(--space-md)]">
+            <h2 className="text-[clamp(1rem,2.2vw,1.35rem)] font-medium text-[var(--color-text)] mb-[var(--space-xs)]">{String(t('homeTitle'))}</h2>
+            <p className="type-caption text-[var(--color-text-muted)]">{String(t('homePurpose'))}</p>
+          </div>
+          <p className="text-[clamp(2rem,5vw,3.5rem)] font-bold leading-tight mb-[var(--space-sm)] break-words">{home.name}</p>
+          <InteractiveThreeSpine 
             t={t}
-            title={String(t('interactiveTitle'))}
-            open={workOpen === 'interactive'}
-            onToggle={() => setWorkOpen('interactive')}
-          >
-            <ul className="spine-list">
-              {workIndex.interactive.map((item) => (
-                <SpineRow key={item.title} item={item} />
-              ))}
-            </ul>
-          </SpineAccordion>
-          <SpineAccordion
-            t={t}
-            title={String(t('dataResearchTitle'))}
-            open={workOpen === 'research'}
-            onToggle={() => setWorkOpen('research')}
-          >
-            <ul className="spine-list">
-              {workIndex.research.map((item) => (
-                <SpineRow key={item.title} item={item} />
-              ))}
-            </ul>
-          </SpineAccordion>
+            workIndex={workIndex}
+            workOpen={workOpen}
+            onToggleWork={setWorkOpen}
+          />
         </SectionShell>
 
         <SectionShell id="page-07" label="Contact Exit Node">

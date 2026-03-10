@@ -42,9 +42,9 @@ export type ResearchEntry = {
 export const sectionMeta = [
   { id: 'page-00', label: 'Home' },
   { id: 'page-01', label: 'About' },
-  { id: 'page-02', label: 'Work Index' },
   { id: 'page-03', label: 'UI Systems' },
   { id: 'page-03a', label: 'UI Case' },
+  { id: 'page-housing', label: 'Housing' },
   { id: 'page-04', label: 'Interactive' },
   { id: 'page-04a', label: 'Int Project' },
   { id: 'page-05', label: 'Research' },
@@ -92,7 +92,7 @@ export const about = {
 export const workIndex = {
   ui: [
     { title: 'Transit UI Refresh', outcome: 'Reduced interaction steps for trip planning.', role: 'UI System', href: '#page-03a' },
-    { title: 'Control Panel IA', outcome: 'Improved scanability for operations dashboard.', role: 'UX + Frontend', href: '#page-03a' },
+    { title: 'Housing Solutions', outcome: 'Tools and Insights for a Smoother Housing Searching Experiences', role: 'UI System + UX', href: '#page-housing' },
   ],
   interactive: [
     { title: 'Gesture Type Lab', outcome: 'Mapped body input to kinetic typography states.', role: 'Prototype', href: '#page-04a' },
@@ -217,6 +217,61 @@ export const researchEntries: ResearchEntry[] = [
     links: [{ label: 'Related: About', href: '#page-01' }],
   },
 ];
+
+export const housingProject = {
+  title: 'Housing Solutions',
+  subtitle: 'Tools and Insights for a Smoother Housing Searching Experience',
+  year: '2025',
+  role: 'UI System + UX Research',
+  team: ['Ryan Yu'],
+  institution: '',
+  program: '',
+  summary:
+    'A research-driven design project addressing friction in the housing search process. Through user interviews, competitive analysis, and iterative prototyping, the project delivers a set of interface tools that help renters compare listings, understand neighborhoods, and make confident decisions with less cognitive load.',
+  problemSpace: [
+    'Overwhelming volume of listings across fragmented platforms',
+    'Lack of structured comparison tools for non-expert renters',
+    'Hidden costs and inconsistent listing quality erode trust',
+    'Emotional stress and time pressure in housing decisions',
+    'Poor mobile experiences for on-the-go searching',
+  ],
+  designGoals: [
+    'Reduce cognitive load during listing comparison',
+    'Surface neighborhood context alongside unit details',
+    'Build trust through transparent data presentation',
+    'Support mobile-first search workflows',
+    'Create a calm, non-overwhelming visual experience',
+  ],
+  solutionDescription:
+    'The system introduces a structured comparison view, neighborhood insight cards, and a personalized shortlist that syncs across devices. Each feature was designed to reduce decision fatigue and bring relevant context forward at the moment of need.',
+  interactionPrinciples: [
+    'Progressive disclosure of listing details',
+    'Side-by-side comparison with highlighted differences',
+    'Map-integrated neighborhood context',
+    'Saved search with smart notification thresholds',
+    'Accessible, high-contrast interface components',
+  ],
+  processSteps: [
+    'User interviews & pain-point mapping',
+    'Competitive audit of 8 housing platforms',
+    'Information architecture & flow diagrams',
+    'Low-fidelity wireframes & concept testing',
+    'High-fidelity prototypes in Figma',
+    'Usability testing with 5 participants',
+  ],
+  experienceScenarios: [
+    'A first-time renter filters by commute time and compares three shortlisted apartments side by side.',
+    'A relocating professional reviews neighborhood safety scores and nearby amenities before scheduling tours.',
+    'A couple collaborates on a shared shortlist, each adding notes and ratings from their own device.',
+  ],
+  credits: {
+    team: ['Ryan Yu'],
+    role: 'UI System + UX Research',
+    year: '2025',
+    tools: ['Figma', 'React', 'User Interviews', 'Usability Testing'],
+  },
+  galleryCount: 6,
+};
 
 export const spatialStudies = {
   installation: [
