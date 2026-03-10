@@ -250,7 +250,7 @@ export default function InteractiveThreeSpine({ workIndex, workOpen, onToggleWor
               {isOpen && (
                 <div className="spine-body">
                   <ul className="spine-list">
-                    {cat.items.map((item, itemIdx) => {
+                    {cat.items.map((item) => {
                       const gIdx = allRows.findIndex(
                         (r) => r.catIdx === categories.indexOf(cat) && r.item.title === item.title
                       );
