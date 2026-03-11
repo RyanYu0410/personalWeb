@@ -195,6 +195,27 @@ html {
   background: var(--color-accent-primary);
 }
 
+.work-detail-zone {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 90px;
+  z-index: 55;
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  padding-bottom: var(--space-md);
+  pointer-events: auto;
+}
+
+.work-detail-nav-animated {
+  display: flex;
+  gap: var(--space-xs);
+  padding: var(--space-xs) var(--space-sm);
+  border-radius: 999px;
+}
+
 .section-shell {
   border-top: 1px solid rgb(0 0 0 / 0.08);
   scroll-margin-top: 110px;
@@ -424,6 +445,16 @@ button:focus-visible {
     font-size: 0.58rem;
   }
 
+  .work-detail-zone {
+    height: auto;
+    padding-bottom: var(--space-sm);
+  }
+
+  .work-detail-nav-animated {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
   .section-shell {
     scroll-margin-top: 16px;
   }
@@ -541,18 +572,8 @@ button:focus-visible {
   width: 100%;
   display: flex;
   align-items: center;
-  justify-content: space-between;
   gap: var(--space-sm);
-  background: transparent;
-  border: 0;
   padding: var(--space-md);
-  text-align: left;
-  cursor: pointer;
-  transition: filter 0.15s ease;
-}
-
-.spine-head:hover {
-  filter: blur(2px);
 }
 
 .spine-body {

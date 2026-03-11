@@ -50,7 +50,6 @@ export const sectionMeta = [
   { id: 'page-05', label: 'Research' },
   { id: 'page-06', label: 'Spatial' },
   { id: 'page-06a', label: 'Study' },
-  { id: 'page-07', label: 'Contact' },
   { id: 'page-08', label: 'Resume' },
 ] as const;
 

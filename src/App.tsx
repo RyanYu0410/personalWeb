@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { motion, useReducedMotion, useScroll, useSpring, useTransform, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useReducedMotion, useScroll, useSpring, useTransform } from 'framer-motion';
 import {
   about,
   home,
@@ -172,7 +172,6 @@ const navLabelKeys: Record<string, TranslationKey> = {
   'page-05': 'navResearch',
   'page-06': 'navSpatial',
   'page-06a': 'navStudy',
-  'page-07': 'navContact',
   'page-08': 'navResume',
 };
 
@@ -180,7 +179,7 @@ function App() {
   const t = useT();
   const { lang, setLang } = useLang();
   const [activeSection, setActiveSection] = useState<SectionId>('page-00');
-  const [workOpen, setWorkOpen] = useState<'ui' | 'interactive' | 'research'>('ui');
+
   const [uiOpen, setUiOpen] = useState(uiCaseStudies[0].id);
   const [uiDeepOpen, setUiDeepOpen] = useState<string | null>(null);
   const [interactiveOpen, setInteractiveOpen] = useState(interactiveProjects[0].id);
@@ -194,6 +193,8 @@ function App() {
   });
   const [isAboutView, setIsAboutView] = useState(() => window.location.hash === '#page-01');
   const [isResumeView, setIsResumeView] = useState(() => window.location.hash === '#page-08');
+  const [bottomNavOpen, setBottomNavOpen] = useState(false);
+  const bottomNavTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const sectionIds: SectionId[] = useMemo(() => sectionMeta.map((item) => item.id), []);
 
@@ -205,8 +206,6 @@ function App() {
       const onResume = hash === '#page-08';
       const onWorkDetail = WORK_DETAIL_IDS.includes(id as (typeof WORK_DETAIL_IDS)[number]);
       if (id === 'page-02-ui' || id === 'page-02-interactive' || id === 'page-02-research') {
-        const openMap = { 'page-02-ui': 'ui' as const, 'page-02-interactive': 'interactive' as const, 'page-02-research': 'research' as const };
-        setWorkOpen(openMap[id as keyof typeof openMap]);
         setActiveSection('page-00');
         setIsAboutView(false);
         setIsResumeView(false);
@@ -302,28 +301,21 @@ function App() {
 
       <nav aria-label="Section navigation" className="section-nav surface-glass">
         <div className="section-nav-links">
-          <AnimatePresence>
-            {sectionMeta.map((item) => {
-              const isNested = ['page-03', 'page-03a', 'page-housing', 'page-04', 'page-04a', 'page-05', 'page-06', 'page-06a'].includes(item.id);
-              if (isNested && !workDetailId) return null;
-
-              return (
-                <motion.a
-                  key={item.id}
-                  href={`#${item.id}`}
-                  className={`section-nav-item ${activeSection === item.id ? 'is-active' : ''}`}
-                  aria-current={activeSection === item.id ? 'location' : undefined}
-                  initial={isNested ? { opacity: 0, width: 0, paddingLeft: 0, paddingRight: 0, overflow: 'hidden', marginLeft: -4 } : false}
-                  animate={isNested ? { opacity: 1, width: 'auto', paddingLeft: 8, paddingRight: 8, marginLeft: 0 } : false}
-                  exit={isNested ? { opacity: 0, width: 0, paddingLeft: 0, paddingRight: 0, overflow: 'hidden', marginLeft: -4 } : undefined}
-                  transition={{ duration: 0.3, ease: 'easeInOut' }}
-                  style={{ whiteSpace: 'nowrap' }}
-                >
-                  {String(t(navLabelKeys[item.id]))}
-                </motion.a>
-              );
-            })}
-          </AnimatePresence>
+          {sectionMeta.map((item) => {
+            const isNested = ['page-03', 'page-03a', 'page-housing', 'page-04', 'page-04a', 'page-05', 'page-06', 'page-06a'].includes(item.id);
+            if (isNested) return null;
+            return (
+              <a
+                key={item.id}
+                href={`#${item.id}`}
+                className={`section-nav-item ${activeSection === item.id ? 'is-active' : ''}`}
+                aria-current={activeSection === item.id ? 'location' : undefined}
+                style={{ whiteSpace: 'nowrap' }}
+              >
+                {String(t(navLabelKeys[item.id]))}
+              </a>
+            );
+          })}
         </div>
         <button
           type="button"
@@ -334,6 +326,56 @@ function App() {
           {lang === 'en' ? '中' : 'EN'}
         </button>
       </nav>
+
+      {/* Bottom work detail nav — appears when hovering near bottom */}
+      {workDetailId && (
+        <div
+          className="work-detail-zone"
+          onMouseEnter={() => {
+            if (bottomNavTimer.current) clearTimeout(bottomNavTimer.current);
+            setBottomNavOpen(true);
+          }}
+          onMouseLeave={() => {
+            bottomNavTimer.current = setTimeout(() => setBottomNavOpen(false), 300);
+          }}
+        >
+          <AnimatePresence>
+            {bottomNavOpen && (
+              <motion.nav
+                aria-label="Work detail navigation"
+                className="work-detail-nav-animated surface-glass"
+                initial={{ y: 24, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                exit={{ y: 16, opacity: 0 }}
+                transition={{ duration: 0.28, ease: [0.25, 0.1, 0.25, 1] }}
+              >
+                {(() => {
+                  let idx = 0;
+                  return sectionMeta.map((item) => {
+                    const isNested = ['page-03', 'page-03a', 'page-housing', 'page-04', 'page-04a', 'page-05', 'page-06', 'page-06a'].includes(item.id);
+                    if (!isNested) return null;
+                    const i = idx++;
+                    return (
+                      <motion.a
+                        key={item.id}
+                        href={`#${item.id}`}
+                        className={`section-nav-item ${activeSection === item.id ? 'is-active' : ''}`}
+                        aria-current={activeSection === item.id ? 'location' : undefined}
+                        style={{ whiteSpace: 'nowrap' }}
+                        initial={{ opacity: 0, y: 8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: i * 0.03, duration: 0.22, ease: 'easeOut' }}
+                      >
+                        {String(t(navLabelKeys[item.id]))}
+                      </motion.a>
+                    );
+                  });
+                })()}
+              </motion.nav>
+            )}
+          </AnimatePresence>
+        </div>
+      )}
 
       <main id="main-content">
         {isAboutView ? (
@@ -369,12 +411,34 @@ function App() {
                     </span>
                   ))}
                 </div>
-                <div className="flex flex-wrap gap-[var(--space-sm)]">
-                  {about.links.map((link) => (
-                    <a key={link.label} href={link.href} className="spine-open">
-                      {link.label}
-                    </a>
-                  ))}
+                <div className="mt-[var(--space-xl)] pt-[var(--space-md)] border-t border-black/8">
+                  <p className="type-body mb-[var(--space-xs)]">{t('email')}</p>
+                  <p className="type-body mb-[var(--space-md)] text-[var(--color-text-muted)]">{t('availability')}</p>
+                  <form
+                    className="grid grid-cols-1 md:grid-cols-3 gap-[var(--space-sm)] mb-[var(--space-md)]"
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      const form = e.currentTarget;
+                      const name = (form.elements.namedItem('contact-name') as HTMLInputElement).value;
+                      const email = (form.elements.namedItem('contact-email') as HTMLInputElement).value;
+                      const message = (form.elements.namedItem('contact-message') as HTMLInputElement).value;
+                      if (name && email && message) {
+                        window.location.href = `mailto:hryanyu@gmail.com?subject=Message from ${encodeURIComponent(name)}&body=${encodeURIComponent(message)}%0A%0AFrom: ${encodeURIComponent(name)} (${encodeURIComponent(email)})`;
+                      }
+                    }}
+                  >
+                    <input name="contact-name" className="field" placeholder={String(t('placeholderName'))} aria-label={String(t('placeholderName'))} required />
+                    <input name="contact-email" type="email" className="field" placeholder={String(t('placeholderEmail'))} aria-label={String(t('placeholderEmail'))} required />
+                    <input name="contact-message" className="field" placeholder={String(t('placeholderMessage'))} aria-label={String(t('placeholderMessage'))} required />
+                    <button type="submit" className="spine-open" style={{ justifySelf: 'start' }}>SEND</button>
+                  </form>
+                  <div className="flex flex-wrap gap-[var(--space-sm)]">
+                    {about.links.map((link) => (
+                      <a key={link.label} href={link.href} className="spine-open">
+                        {link.label}
+                      </a>
+                    ))}
+                  </div>
                 </div>
               </div>
               <div className="w-4/5 mx-auto md:mx-0 md:w-80 lg:w-88 shrink-0">
@@ -387,7 +451,7 @@ function App() {
               </div>
             </div>
             <div className="mt-[var(--space-xxxl)] space-y-[var(--space-sm)]">
-              <button type="button" className="spine-head" onClick={() => setAboutFoldOpen((v) => (v === 'education' ? null : 'education'))} aria-expanded={aboutFoldOpen === 'education'}>
+              <button type="button" className="spine-head home-spine-link" onClick={() => setAboutFoldOpen((v) => (v === 'education' ? null : 'education'))} aria-expanded={aboutFoldOpen === 'education'}>
                 <span className="type-caption">{t('optionalFold')}</span>
                 <span className="text-[1rem] font-medium text-[var(--color-text)]">{t('educationFold')}</span>
                 <span className="type-caption">{aboutFoldOpen === 'education' ? t('fold') : t('unfold')}</span>
@@ -398,7 +462,7 @@ function App() {
                   <p className="type-body">{about.fold.exhibitions}</p>
                 </div>
               )}
-              <button type="button" className="spine-head" onClick={() => setAboutFoldOpen((v) => (v === 'paper' ? null : 'paper'))} aria-expanded={aboutFoldOpen === 'paper'}>
+              <button type="button" className="spine-head home-spine-link" onClick={() => setAboutFoldOpen((v) => (v === 'paper' ? null : 'paper'))} aria-expanded={aboutFoldOpen === 'paper'}>
                 <span className="type-caption">{t('optionalFold')}</span>
                 <span className="text-[1rem] font-medium text-[var(--color-text)]">{t('paperFold')}</span>
                 <span className="type-caption">{aboutFoldOpen === 'paper' ? t('fold') : t('unfold')}</span>
@@ -408,7 +472,7 @@ function App() {
                   <p className="type-body">{about.fold.paperReport}</p>
                 </div>
               )}
-              <button type="button" className="spine-head" onClick={() => setAboutFoldOpen((v) => (v === 'other' ? null : 'other'))} aria-expanded={aboutFoldOpen === 'other'}>
+              <button type="button" className="spine-head home-spine-link" onClick={() => setAboutFoldOpen((v) => (v === 'other' ? null : 'other'))} aria-expanded={aboutFoldOpen === 'other'}>
                 <span className="type-caption">{t('optionalFold')}</span>
                 <span className="text-[1rem] font-medium text-[var(--color-text)]">{t('otherFold')}</span>
                 <span className="type-caption">{aboutFoldOpen === 'other' ? t('fold') : t('unfold')}</span>
@@ -814,31 +878,9 @@ function App() {
           <InteractiveThreeSpine 
             t={t}
             workIndex={workIndex}
-            workOpen={workOpen}
-            onToggleWork={setWorkOpen}
           />
         </SectionShell>
 
-        <SectionShell id="page-07" label="Contact Exit Node">
-          <h2 className="type-h1 mb-[var(--space-xl)]">{t('navContact')}</h2>
-          <div className="spine-body">
-            <p className="type-body mb-[var(--space-sm)]">{t('email')}</p>
-            <p className="type-body mb-[var(--space-md)]">{t('availability')}</p>
-            <div className="flex flex-wrap gap-[var(--space-sm)] mb-[var(--space-md)]">
-              <a href="#page-01" className="spine-open">
-                {t('navAbout')}
-              </a>
-              <a href="#page-08" className="spine-open">
-                {t('navResume')}
-              </a>
-            </div>
-            <form className="grid grid-cols-1 md:grid-cols-3 gap-[var(--space-sm)]">
-              <input className="field" placeholder={String(t('placeholderName'))} aria-label={String(t('placeholderName'))} />
-              <input className="field" placeholder={String(t('placeholderEmail'))} aria-label={String(t('placeholderEmail'))} />
-              <input className="field" placeholder={String(t('placeholderMessage'))} aria-label={String(t('placeholderMessage'))} />
-            </form>
-          </div>
-        </SectionShell>
           </>
         )}
       </main>

@@ -168,12 +168,10 @@ interface InteractiveThreeSpineProps {
     interactive: SpineItem[];
     research: SpineItem[];
   };
-  workOpen: 'ui' | 'interactive' | 'research';
-  onToggleWork: (category: 'ui' | 'interactive' | 'research') => void;
   t: (k: TranslationKey) => string | readonly string[];
 }
 
-export default function InteractiveThreeSpine({ workIndex, workOpen, onToggleWork, t }: InteractiveThreeSpineProps) {
+export default function InteractiveThreeSpine({ workIndex, t }: InteractiveThreeSpineProps) {
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const pointerPos = useRef({ x: -9999, y: -9999 });
@@ -196,17 +194,13 @@ export default function InteractiveThreeSpine({ workIndex, workOpen, onToggleWor
     { key: 'research' as const, titleKey: 'dataResearchTitle' as TranslationKey, items: workIndex.research },
   ];
 
-  // Build flat list of visible rows for hover index mapping
   const allRows: { catIdx: number; item: SpineItem; globalIdx: number }[] = [];
   let gi = 0;
   categories.forEach((cat, catIdx) => {
-    // The category header itself
     allRows.push({ catIdx, item: { title: '', outcome: '', role: '', href: '' }, globalIdx: gi++ });
-    if (workOpen === cat.key) {
-      cat.items.forEach((item) => {
-        allRows.push({ catIdx, item, globalIdx: gi++ });
-      });
-    }
+    cat.items.forEach((item) => {
+      allRows.push({ catIdx, item, globalIdx: gi++ });
+    });
   });
   const totalVisibleRows = gi;
 
@@ -218,7 +212,6 @@ export default function InteractiveThreeSpine({ workIndex, workOpen, onToggleWor
       onPointerMove={handlePointerMove}
       onPointerLeave={handlePointerLeave}
     >
-      {/* Background Three.js Canvas */}
       <div className="absolute inset-0 z-0 pointer-events-none rounded-xl overflow-hidden" style={{ background: 'rgba(240, 239, 233, 0.12)' }}>
         <Canvas camera={{ position: [0, 0, 5], fov: 50 }}>
           <ambientLight intensity={1} />
@@ -226,57 +219,47 @@ export default function InteractiveThreeSpine({ workIndex, workOpen, onToggleWor
         </Canvas>
       </div>
 
-      {/* Foreground DOM Content */}
       <div className="relative z-10 py-[var(--space-sm)]">
-        {categories.map((cat) => {
-          const isOpen = workOpen === cat.key;
-          return (
-            <section key={cat.key} className="spine-block">
-              <button
-                type="button"
-                className="spine-head home-spine-link"
-                onClick={() => onToggleWork(cat.key)}
-                onMouseEnter={() => {
-                  const idx = allRows.findIndex((r) => r.catIdx === categories.indexOf(cat) && r.item.title === '');
-                  setHoveredIndex(idx >= 0 ? idx : null);
-                }}
-                onMouseLeave={() => setHoveredIndex(null)}
-                aria-expanded={isOpen}
-              >
-                <span className="type-caption">#</span>
-                <span className="text-[1.05rem] font-semibold text-[var(--color-text)]">{String(t(cat.titleKey))}</span>
-                <span className="type-caption">{isOpen ? t('fold') : t('unfold')}</span>
-              </button>
-              {isOpen && (
-                <div className="spine-body">
-                  <ul className="spine-list">
-                    {cat.items.map((item) => {
-                      const gIdx = allRows.findIndex(
-                        (r) => r.catIdx === categories.indexOf(cat) && r.item.title === item.title
-                      );
-                      return (
-                        <li
-                          key={item.title}
-                          className="spine-row"
-                          onMouseEnter={() => setHoveredIndex(gIdx >= 0 ? gIdx : null)}
-                          onMouseLeave={() => setHoveredIndex(null)}
-                        >
-                          <a href={item.href} className="spine-row-link">
-                            <div>
-                              <p className="font-medium text-[var(--color-text)]">{item.title}</p>
-                              <p className="type-body">{item.outcome}</p>
-                            </div>
-                            <span className="type-caption">{item.role}</span>
-                          </a>
-                        </li>
-                      );
-                    })}
-                  </ul>
-                </div>
-              )}
-            </section>
-          );
-        })}
+        {categories.map((cat) => (
+          <section key={cat.key} className="spine-block">
+            <div
+              className="spine-head"
+              onMouseEnter={() => {
+                const idx = allRows.findIndex((r) => r.catIdx === categories.indexOf(cat) && r.item.title === '');
+                setHoveredIndex(idx >= 0 ? idx : null);
+              }}
+              onMouseLeave={() => setHoveredIndex(null)}
+            >
+              <span className="type-caption">#</span>
+              <span className="text-[1.05rem] font-semibold text-[var(--color-text)]">{String(t(cat.titleKey))}</span>
+            </div>
+            <div className="spine-body">
+              <ul className="spine-list">
+                {cat.items.map((item) => {
+                  const gIdx = allRows.findIndex(
+                    (r) => r.catIdx === categories.indexOf(cat) && r.item.title === item.title
+                  );
+                  return (
+                    <li
+                      key={item.title}
+                      className="spine-row"
+                      onMouseEnter={() => setHoveredIndex(gIdx >= 0 ? gIdx : null)}
+                      onMouseLeave={() => setHoveredIndex(null)}
+                    >
+                      <a href={item.href} className="spine-row-link">
+                        <div>
+                          <p className="font-medium text-[var(--color-text)]">{item.title}</p>
+                          <p className="type-body">{item.outcome}</p>
+                        </div>
+                        <span className="type-caption">{item.role}</span>
+                      </a>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          </section>
+        ))}
       </div>
     </div>
   );

@@ -6,7 +6,7 @@ const translations = {
     spine: 'Spine',
     fold: 'Fold',
     unfold: 'Unfold',
-    optionalFold: 'Optional Fold',
+    optionalFold: '#',
     open: 'Open',
     preview: 'Preview',
     summary: 'Summary',
@@ -32,7 +32,7 @@ const translations = {
 
     // Home
     homeTitle: 'a Multidisciplinary Designer',
-    homePurpose: 'working worldwide',
+    homePurpose: 'working with passion',
     spineUI: 'UI Systems',
     spineInteractive: 'Interactive Systems',
     spineResearch: 'Research Log',
@@ -48,7 +48,7 @@ const translations = {
       'Tooling and reusable component logic',
       'Documentation for handoff and evaluation',
     ],
-    educationFold: 'Education / Selected Exhibitions',
+    educationFold: 'Education',
     paperFold: 'Paper / Report',
     otherFold: 'Other Works',
 
@@ -200,7 +200,7 @@ const translations = {
     spine: '脊柱',
     fold: '收起',
     unfold: '展开',
-    optionalFold: '可选内容',
+    optionalFold: '#',
     open: '打开',
     preview: '预览',
     summary: '摘要',
@@ -224,7 +224,7 @@ const translations = {
     navResume: '简历',
 
     homeTitle: '一位跨学科设计师',
-    homePurpose: '面向全球工作',
+    homePurpose: '以热情工作',
     spineUI: 'UI 系统',
     spineInteractive: '交互系统',
     spineResearch: '研究日志',
@@ -239,7 +239,7 @@ const translations = {
       '工具化与可复用组件逻辑',
       '用于交付和评估的文档',
     ],
-    educationFold: '教育 / 精选展览',
+    educationFold: '教育',
     paperFold: '论文 / 报告',
     otherFold: '其他作品',
 
