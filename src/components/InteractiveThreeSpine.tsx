@@ -8,6 +8,7 @@ interface SpineItem {
   outcome: string;
   role: string;
   href: string;
+  thumb?: string;
 }
 
 function Particles({ hoveredIndex, rowCount, pointerPos }: { hoveredIndex: number | null; rowCount: number; pointerPos: React.RefObject<{ x: number; y: number }> }) {
@@ -247,7 +248,15 @@ export default function InteractiveThreeSpine({ workIndex, t }: InteractiveThree
                       onMouseLeave={() => setHoveredIndex(null)}
                     >
                       <a href={item.href} className="spine-row-link">
-                        <div>
+                        {item.thumb && (
+                          <img
+                            src={item.thumb}
+                            alt=""
+                            className="shrink-0 rounded-md object-cover"
+                            style={{ width: '48px', height: '48px' }}
+                          />
+                        )}
+                        <div className="flex-1 min-w-0">
                           <p className="font-medium text-[var(--color-text)]">{item.title}</p>
                           <p className="type-body">{item.outcome}</p>
                         </div>

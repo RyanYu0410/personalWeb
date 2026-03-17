@@ -185,6 +185,8 @@ function App() {
   const [interactiveOpen, setInteractiveOpen] = useState(interactiveProjects[0].id);
   const [logOpen, setLogOpen] = useState(researchEntries[0].id);
   const [aboutFoldOpen, setAboutFoldOpen] = useState<'education' | 'paper' | 'other' | null>(null);
+  const [focusOpen, setFocusOpen] = useState(false);
+  const [toolsOpen, setToolsOpen] = useState(false);
   const [spatialOpen, setSpatialOpen] = useState<'installation' | 'coding'>('installation');
   const WORK_DETAIL_IDS = ['page-03', 'page-03a', 'page-housing', 'page-04', 'page-04a', 'page-05', 'page-06', 'page-06a'] as const;
   const [workDetailId, setWorkDetailId] = useState<string | null>(() => {
@@ -380,66 +382,70 @@ function App() {
       <main id="main-content">
         {isAboutView ? (
           <section id="page-01" aria-label="About Node" className="system-shell section-shell py-[var(--space-xxxl)]">
-            <a href="#page-00" className="type-caption mb-[var(--space-md)] inline-block">{t('back')}</a>
             <div className="flex flex-col md:flex-row gap-[var(--space-lg)] items-start">
               <div className="flex-1 min-w-0">
                 <h2 className="type-h1 mb-[var(--space-sm)]">{t('aboutTitle')}</h2>
-                <p
-                  className="type-body max-w-xl my-[var(--space-lg)]"
+                <motion.p
+                  className="max-w-xl"
                   style={{
-                    paddingBlock: 'var(--space-md)',
                     borderTop: '1px solid var(--color-accent-primary)',
                     borderBottom: '1px solid var(--color-accent-primary)',
                     fontStyle: 'italic',
                     letterSpacing: '0.01em',
                     color: 'var(--color-text)',
                   }}
-                >{t('aboutDesc')}</p>
-                <h3 className="type-caption mb-[var(--space-sm)]">{t('focus')}</h3>
-                <ul className="space-y-[var(--space-xs)] mb-[var(--space-md)]">
+                  initial={false}
+                  animate={{
+                    fontSize: (focusOpen || toolsOpen) ? 'clamp(1rem, 1.4vw, 1.15rem)' : 'clamp(1.3rem, 2.2vw, 1.7rem)',
+                    lineHeight: (focusOpen || toolsOpen) ? '1.6' : '1.8',
+                    marginTop: (focusOpen || toolsOpen) ? '16px' : '48px',
+                    marginBottom: (focusOpen || toolsOpen) ? '16px' : '48px',
+                    paddingTop: (focusOpen || toolsOpen) ? '12px' : '24px',
+                    paddingBottom: (focusOpen || toolsOpen) ? '12px' : '24px',
+                  }}
+                  transition={{ duration: 0.5, ease: [0.25, 0.1, 0.25, 1] }}
+                >
+                  <span style={{ color: 'var(--color-text-muted)' }}>{String(t('aboutDescPrefix'))}</span>{' '}
+                  <span style={{ textDecoration: 'underline', textDecorationThickness: '1px', textUnderlineOffset: '3px' }}>{String(t('aboutDescHighlight'))}</span>
+                </motion.p>
+                <button
+                  type="button"
+                  className="type-caption mt-[var(--space-lg)] mb-[var(--space-sm)] cursor-pointer bg-transparent border-0 p-0 text-left"
+                  onClick={() => setFocusOpen((v) => !v)}
+                >
+                  {t('focus')}{focusOpen ? ' −' : ' +'}
+                </button>
+                <motion.ul
+                  className="space-y-[var(--space-xs)] mb-[var(--space-md)] overflow-hidden"
+                  initial={false}
+                  animate={{ height: focusOpen ? 'auto' : 0, opacity: focusOpen ? 1 : 0 }}
+                  transition={{ duration: 0.4, ease: [0.25, 0.1, 0.25, 1] }}
+                >
                   {(t('focusItems') as readonly string[]).map((item) => (
                     <li key={item} className="type-body">
                       {item}
                     </li>
                   ))}
-                </ul>
-                <h3 className="type-caption mb-[var(--space-sm)]">{t('tools')}</h3>
-                <div className="flex flex-wrap gap-[var(--space-xs)] mb-[var(--space-md)]">
+                </motion.ul>
+                <button
+                  type="button"
+                  className="type-caption mb-[var(--space-sm)] cursor-pointer bg-transparent border-0 p-0 text-left"
+                  onClick={() => setToolsOpen((v) => !v)}
+                >
+                  {t('tools')}{toolsOpen ? ' −' : ' +'}
+                </button>
+                <motion.div
+                  className="flex flex-wrap gap-[var(--space-xs)] mb-[var(--space-md)] overflow-hidden"
+                  initial={false}
+                  animate={{ height: toolsOpen ? 'auto' : 0, opacity: toolsOpen ? 1 : 0 }}
+                  transition={{ duration: 0.4, ease: [0.25, 0.1, 0.25, 1] }}
+                >
                   {about.tools.map((tool) => (
                     <span key={tool} className="tag-chip">
                       {tool}
                     </span>
                   ))}
-                </div>
-                <div className="mt-[var(--space-xl)] pt-[var(--space-md)] border-t border-black/8">
-                  <p className="type-body mb-[var(--space-xs)]">{t('email')}</p>
-                  <p className="type-body mb-[var(--space-md)] text-[var(--color-text-muted)]">{t('availability')}</p>
-                  <form
-                    className="grid grid-cols-1 md:grid-cols-3 gap-[var(--space-sm)] mb-[var(--space-md)]"
-                    onSubmit={(e) => {
-                      e.preventDefault();
-                      const form = e.currentTarget;
-                      const name = (form.elements.namedItem('contact-name') as HTMLInputElement).value;
-                      const email = (form.elements.namedItem('contact-email') as HTMLInputElement).value;
-                      const message = (form.elements.namedItem('contact-message') as HTMLInputElement).value;
-                      if (name && email && message) {
-                        window.location.href = `mailto:hryanyu@gmail.com?subject=Message from ${encodeURIComponent(name)}&body=${encodeURIComponent(message)}%0A%0AFrom: ${encodeURIComponent(name)} (${encodeURIComponent(email)})`;
-                      }
-                    }}
-                  >
-                    <input name="contact-name" className="field" placeholder={String(t('placeholderName'))} aria-label={String(t('placeholderName'))} required />
-                    <input name="contact-email" type="email" className="field" placeholder={String(t('placeholderEmail'))} aria-label={String(t('placeholderEmail'))} required />
-                    <input name="contact-message" className="field" placeholder={String(t('placeholderMessage'))} aria-label={String(t('placeholderMessage'))} required />
-                    <button type="submit" className="spine-open" style={{ justifySelf: 'start' }}>SEND</button>
-                  </form>
-                  <div className="flex flex-wrap gap-[var(--space-sm)]">
-                    {about.links.map((link) => (
-                      <a key={link.label} href={link.href} className="spine-open">
-                        {link.label}
-                      </a>
-                    ))}
-                  </div>
-                </div>
+                </motion.div>
               </div>
               <div className="w-4/5 mx-auto md:mx-0 md:w-80 lg:w-88 shrink-0">
                 <img
@@ -450,7 +456,38 @@ function App() {
                 />
               </div>
             </div>
-            <div className="mt-[var(--space-xxxl)] space-y-[var(--space-sm)]">
+            <div className="flex flex-col md:flex-row gap-[var(--space-xxl)] items-start my-[var(--space-xxxl)] py-[var(--space-xxl)] border-t border-b border-black/8">
+              <div className="flex-1 min-w-0">
+                <p className="type-body mb-[var(--space-xs)]">{t('email')}</p>
+                <p className="type-body text-[var(--color-text-muted)] mb-[var(--space-lg)]">{t('availability')}</p>
+                <div className="flex flex-wrap gap-[var(--space-sm)]">
+                  {about.links.map((link) => (
+                    <a key={link.label} href={link.href} className="spine-open">
+                      {link.label}
+                    </a>
+                  ))}
+                </div>
+              </div>
+              <form
+                className="flex-1 min-w-0 grid grid-cols-1 gap-[var(--space-sm)]"
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  const form = e.currentTarget;
+                  const name = (form.elements.namedItem('contact-name') as HTMLInputElement).value;
+                  const email = (form.elements.namedItem('contact-email') as HTMLInputElement).value;
+                  const message = (form.elements.namedItem('contact-message') as HTMLInputElement).value;
+                  if (name && email && message) {
+                    window.location.href = `mailto:hryanyu@gmail.com?subject=Message from ${encodeURIComponent(name)}&body=${encodeURIComponent(message)}%0A%0AFrom: ${encodeURIComponent(name)} (${encodeURIComponent(email)})`;
+                  }
+                }}
+              >
+                <input name="contact-name" className="field" placeholder={String(t('placeholderName'))} aria-label={String(t('placeholderName'))} required />
+                <input name="contact-email" type="email" className="field" placeholder={String(t('placeholderEmail'))} aria-label={String(t('placeholderEmail'))} required />
+                <input name="contact-message" className="field" placeholder={String(t('placeholderMessage'))} aria-label={String(t('placeholderMessage'))} required />
+                <button type="submit" className="spine-open" style={{ justifySelf: 'start' }}>SEND</button>
+              </form>
+            </div>
+            <div className="space-y-[var(--space-sm)]">
               <button type="button" className="spine-head home-spine-link" onClick={() => setAboutFoldOpen((v) => (v === 'education' ? null : 'education'))} aria-expanded={aboutFoldOpen === 'education'}>
                 <span className="type-caption">{t('optionalFold')}</span>
                 <span className="text-[1rem] font-medium text-[var(--color-text)]">{t('educationFold')}</span>
@@ -458,8 +495,8 @@ function App() {
               </button>
               {aboutFoldOpen === 'education' && (
                 <div className="spine-body">
-                  <p className="type-body mb-[var(--space-sm)]">{about.fold.education}</p>
-                  <p className="type-body">{about.fold.exhibitions}</p>
+                  <p className="type-body">{about.fold.education}</p>
+                  {about.fold.exhibitions && <p className="type-body mt-[var(--space-sm)]">{about.fold.exhibitions}</p>}
                 </div>
               )}
               <button type="button" className="spine-head home-spine-link" onClick={() => setAboutFoldOpen((v) => (v === 'paper' ? null : 'paper'))} aria-expanded={aboutFoldOpen === 'paper'}>
@@ -616,7 +653,7 @@ function App() {
                     Rent &amp; Save Rent
                   </p>
                   <p className="text-right mt-[var(--space-xs)]">
-                    <span className="text-[var(--color-accent-secondary)] font-semibold tracking-wide" style={{ fontSize: 'clamp(0.85rem, 1.5vw, 1.1rem)' }}>for Students</span>
+                    <span className="text-[var(--color-accent-secondary)] font-semibold tracking-wide" style={{ fontSize: 'clamp(1.2rem, 2.5vw, 1.8rem)' }}>for Students</span>
                   </p>
                   <p className="font-bold leading-[1.1] tracking-tight text-[var(--color-text)] text-right mt-[var(--space-xs)]" style={{ fontSize: 'clamp(2.5rem, 8vw, 6rem)' }}>
                     in NYCity

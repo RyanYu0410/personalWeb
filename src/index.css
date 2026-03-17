@@ -577,7 +577,6 @@ button:focus-visible {
 }
 
 .spine-body {
-  border-top: 1px solid rgb(0 0 0 / 0.08);
   padding: var(--space-md);
 }
 

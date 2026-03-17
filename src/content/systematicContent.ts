@@ -81,8 +81,8 @@ export const about = {
     { label: 'LinkedIn', href: 'https://www.linkedin.com/' },
   ],
   fold: {
-    education: 'BFA candidate focused on creative technology and interaction systems.',
-    exhibitions: 'Selected student showcases, browser interaction demos, and spatial prototype reviews.',
+    education: 'PRATT BFA Digital Arts Art & Technology focused on creative technology and interaction systems.',
+    exhibitions: '',
     paperReport: 'Published and in-progress papers, reports, and written documentation.',
     otherWorks: 'Additional projects, collaborations, and side work outside main tracks.',
   },
@@ -91,7 +91,7 @@ export const about = {
 export const workIndex = {
   ui: [
     { title: 'Transit UI Refresh', outcome: 'Reduced interaction steps for trip planning.', role: 'UI System', href: '#page-03a' },
-    { title: 'Housing Solutions', outcome: 'Tools and Insights for a Smoother Housing Searching Experiences', role: 'UI System + UX', href: '#page-housing' },
+    { title: 'Housing Solutions', outcome: 'Tools and Insights for a Smoother Housing Searching Experiences', role: 'UI System + UX', href: '#page-housing', thumb: './housing-hero.png' },
   ],
   interactive: [
     { title: 'Gesture Type Lab', outcome: 'Mapped body input to kinetic typography states.', role: 'Prototype', href: '#page-04a' },

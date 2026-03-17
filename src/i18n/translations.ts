@@ -40,6 +40,8 @@ const translations = {
     // About
     aboutTitle: "I'm Ryan Yu,",
     aboutDesc: 'a multidisciplinary designer working at the intersection of product UI, interactive prototyping, and spatial computing.',
+    aboutDescPrefix: 'a multidisciplinary designer working at the intersection of',
+    aboutDescHighlight: 'product UI, interactive prototyping, and spatial computing.',
     focus: 'Focus',
     tools: 'Tools',
     focusItems: [
@@ -231,6 +233,8 @@ const translations = {
 
     aboutTitle: '我是 Ryan Yu，',
     aboutDesc: '一位跨学科设计师，专注于产品 UI、交互原型设计和空间计算的交叉领域。',
+    aboutDescPrefix: '一位跨学科设计师，专注于',
+    aboutDescHighlight: '产品 UI、交互原型设计和空间计算的交叉领域。',
     focus: '专注领域',
     tools: '工具',
     focusItems: [
