@@ -220,9 +220,9 @@ export const researchEntries: ResearchEntry[] = [
 export const housingProject = {
   title: 'Housing Solutions',
   subtitle: 'Tools and Insights for a Smoother Housing Searching Experience',
-  year: '2025',
+  year: '2025 Oct. to Dec.',
   role: 'UI System + UX Research',
-  team: ['Ryan Yu'],
+  team: ['Ryan Yu', 'Donald Zhang'],
   institution: '',
   program: '',
   summary:
@@ -264,9 +264,9 @@ export const housingProject = {
     'A couple collaborates on a shared shortlist, each adding notes and ratings from their own device.',
   ],
   credits: {
-    team: ['Ryan Yu'],
+    team: ['Ryan Yu', 'Donald Zhang'],
     role: 'UI System + UX Research',
-    year: '2025',
+    year: '2025 Oct. to Dec.',
     tools: ['Figma', 'React', 'User Interviews', 'Usability Testing'],
   },
   galleryCount: 6,

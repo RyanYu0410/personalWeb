@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { motion, AnimatePresence, useReducedMotion, useScroll, useSpring, useTransform } from 'framer-motion';
+import { motion, AnimatePresence, useReducedMotion, useScroll, useSpring, useTransform, useMotionValueEvent } from 'framer-motion';
 import {
   about,
   home,
@@ -15,6 +15,13 @@ import InteractiveThreeSpine from './components/InteractiveThreeSpine';
 import { useT } from './i18n/useT';
 import { useLang } from './i18n/context';
 import type { TranslationKey } from './i18n/translations';
+
+/** Public folder URL (respects `vite.config.ts` `base`, e.g. GitHub Pages). */
+function publicUrl(file: string) {
+  const base = import.meta.env.BASE_URL;
+  const path = file.startsWith('/') ? file.slice(1) : file;
+  return `${base}${path}`;
+}
 
 type SectionId = (typeof sectionMeta)[number]['id'];
 
@@ -240,11 +247,31 @@ function App() {
     return () => window.removeEventListener('hashchange', onHashChange);
   }, []);
   const { scrollYProgress } = useScroll();
+
+  // Housing Timeline Horizontal Scroll
+  const housingTimelineRef = useRef<HTMLDivElement>(null);
+  const { scrollYProgress: housingTimelineScrollY } = useScroll({
+    target: housingTimelineRef,
+    offset: ["start start", "end end"]
+  });
+  const housingTimelineX = useTransform(housingTimelineScrollY, [0, 1], ["0%", "-75%"]);
   const smoothProgress = useSpring(scrollYProgress, { stiffness: 140, damping: 24 });
   const footerOpacity = useTransform(smoothProgress, [0, 0.5, 1], [0.25, 0.5, 0.7], { clamp: true });
   const footerPathReveal = useTransform(smoothProgress, [0, 0.2, 0.85, 1], [1, 0.85, 0.15, 0], { clamp: true });
   const pathLength = 140;
   const footerDashOffset = useTransform(footerPathReveal, (v) => v * pathLength);
+
+  // Housing Journey chart — scroll-driven compression
+  const journeyChartRef = useRef<HTMLDivElement>(null);
+  const { scrollYProgress: journeyChartScroll } = useScroll({
+    target: journeyChartRef,
+    offset: ['start end', 'end start']
+  });
+  const [journeyCompress, setJourneyCompress] = useState(0);
+  useMotionValueEvent(journeyChartScroll, 'change', (v) => {
+    const mapped = Math.min(1, Math.max(0, (v - 0.3) / 0.4));
+    setJourneyCompress(mapped);
+  });
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -616,7 +643,6 @@ function App() {
                 <div className="flex flex-col md:flex-row gap-[var(--space-lg)] mb-[var(--space-xxxl)] items-start">
                   <div className="flex-1 min-w-0 pt-[var(--space-md)]">
                     <h1 className="type-h1">{String(t('housingHeroName'))}</h1>
-                    <p className="type-body text-[var(--color-text-muted)] mt-[var(--space-sm)] max-w-md">{String(t('housingSubtitle'))}</p>
                     <div className="flex gap-[var(--space-md)] mt-[var(--space-lg)]">
                       <span className="type-caption">{String(t('housingYear'))}</span>
                       <span className="type-caption">{String(t('housingRole'))}</span>
@@ -664,65 +690,250 @@ function App() {
                     className="w-full rounded-xl object-cover mt-[var(--space-lg)]"
                     style={{ maxHeight: 'clamp(200px, 35vw, 420px)' }}
                   />
+                  <div className="mt-[calc(var(--space-xxxl)*2)] mb-[calc(var(--space-xxxl)*2)]">
+                    <div className="flex flex-col items-center gap-[var(--space-sm)]">
+                      <h3 className="type-caption m-0 w-full text-left" style={{ maxWidth: 'min(100%, 32rem)' }}>{String(t('housingVideoLabel'))}</h3>
+                      <div
+                        className="housing-video-frame relative overflow-hidden bg-black"
+                        style={{ width: 'min(100%, 32rem)', aspectRatio: '2002 / 1346' }}
+                      >
+                        <video
+                          className="absolute inset-0 box-border object-cover"
+                          autoPlay
+                          muted
+                          loop
+                          playsInline
+                          preload="auto"
+                          controls={false}
+                          disablePictureInPicture
+                          tabIndex={-1}
+                          src={publicUrl('housing-walkthrough.mp4')}
+                          aria-label={String(t('housingVideoEmbedTitle'))}
+                        >
+                          <source src={publicUrl('housing-walkthrough.mp4')} type="video/mp4" />
+                        </video>
+                      </div>
+                      <div className="flex items-center justify-between w-full" style={{ maxWidth: 'min(100%, 32rem)' }}>
+                        <a
+                          className="spine-open"
+                          href="https://youtu.be/lzFJf66C4xs"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          {String(t('housingVideoOpenYouTube'))}
+                        </a>
+                        <span className="type-caption m-0">0:55</span>
+                      </div>
+                    </div>
+                  </div>
                 </motion.div>
 
-                {/* Problem Framing */}
-                <section className="mb-[var(--space-xxl)]">
-                  <h3 className="type-caption mb-[var(--space-sm)]">{String(t('housingProblemLabel'))}</h3>
-                  <ul className="space-y-[var(--space-xs)] max-w-3xl">
-                    {(t('housingProblemItems') as readonly string[]).map((item) => (
-                      <li key={item} className="type-body">— {item}</li>
-                    ))}
-                  </ul>
-                  <h3 className="type-caption mb-[var(--space-sm)] mt-[var(--space-lg)]">{String(t('housingGoalLabel'))}</h3>
-                  <ul className="space-y-[var(--space-xs)] max-w-3xl">
-                    {(t('housingGoalItems') as readonly string[]).map((item) => (
-                      <li key={item} className="type-body">— {item}</li>
-                    ))}
-                  </ul>
-                </section>
+                {/* ── User Interviews ── */}
+                <motion.section
+                  className="mb-[var(--space-xxl)]"
+                  initial={{ opacity: 0, y: 40 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, margin: '-10% 0px' }}
+                  transition={{ duration: 0.6, ease: [0.25, 0.1, 0.25, 1] }}
+                >
+                  <h3 className="type-caption text-[1.1rem] tracking-wider mb-[var(--space-md)]">{String(t('housingInterviewsLabel'))}</h3>
+                  <p className="text-[1.1rem] text-[var(--color-text-muted)] mb-[var(--space-lg)]">{String(t('housingInterviewsMethod'))}</p>
 
-                {/* Solution / System */}
-                <section className="mb-[var(--space-xxl)]">
-                  <h3 className="type-caption mb-[var(--space-sm)]">{String(t('housingSolutionLabel'))}</h3>
-                  <p className="type-body mb-[var(--space-lg)] max-w-3xl leading-relaxed">{String(t('housingSolution'))}</p>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-[var(--space-sm)] mb-[var(--space-lg)]">
-                    {Array.from({ length: 4 }).map((_, idx) => (
-                      <div key={idx} className="image-block" style={{ height: 'clamp(120px, 20vw, 200px)' }} />
-                    ))}
-                  </div>
-                  <ul className="space-y-[var(--space-xs)] max-w-3xl">
-                    {(t('housingSolutionPrinciples') as readonly string[]).map((item) => (
-                      <li key={item} className="type-body">— {item}</li>
-                    ))}
-                  </ul>
-                </section>
-
-                {/* Experience / Use Scenarios */}
-                <section className="mb-[var(--space-xxl)]">
-                  <h3 className="type-caption mb-[var(--space-sm)]">{String(t('housingExperienceLabel'))}</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-[var(--space-md)]">
-                    {(t('housingExperienceItems') as readonly string[]).map((scenario, idx) => (
-                      <div key={idx}>
-                        <div className="image-block mb-[var(--space-sm)]" style={{ height: 'clamp(100px, 18vw, 180px)' }} />
-                        <p className="type-body text-[var(--color-text-muted)]">{scenario}</p>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-[var(--space-md)] mb-[var(--space-xl)]">
+                    {(t('housingTakeawayItems') as readonly string[]).map((item, idx) => (
+                      <div key={idx} className="border-t border-black/10 pt-[var(--space-sm)]">
+                        <span className="type-caption text-[var(--color-text-muted)] block mb-[var(--space-xs)]">0{idx + 1}</span>
+                        <p className="text-[1.1rem] leading-snug">{item}</p>
                       </div>
                     ))}
                   </div>
-                </section>
 
-                {/* Process */}
-                <section className="mb-[var(--space-xxl)]">
-                  <h3 className="type-caption mb-[var(--space-sm)]">{String(t('housingProcessLabel'))}</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-[var(--space-sm)]">
-                    {(t('housingProcessSteps') as readonly string[]).map((step, idx) => (
-                      <figure key={idx} className="image-placeholder">
-                        <div className="image-block" />
-                        <figcaption className="type-caption mt-1">{idx + 1}. {step}</figcaption>
-                      </figure>
-                    ))}
+                  {/* Persona */}
+                  <p className="font-bold text-[1.5rem] mb-[var(--space-xxs)]">{String(t('housingPersonaName'))}</p>
+                  <p className="text-[1.1rem] text-[var(--color-text-muted)] mb-[var(--space-sm)]">{String(t('housingPersonaRole'))}</p>
+                  <blockquote className="border-l-4 border-[var(--color-accent-primary)] pl-[var(--space-md)] mb-[var(--space-lg)]">
+                    <p className="text-[1.2rem] italic leading-relaxed">&ldquo;{String(t('housingPersonaQuote'))}&rdquo;</p>
+                  </blockquote>
+                  <div className="flex flex-col sm:flex-row gap-[var(--space-lg)] border-t border-black/10 pt-[var(--space-md)]">
+                    <div className="flex-1">
+                      <h4 className="type-caption text-[1rem] mb-[var(--space-sm)]">Pain Points</h4>
+                      <ul className="space-y-[var(--space-sm)]">
+                        {(t('housingPersonaPainItems') as readonly string[]).map((item, idx) => (
+                          <li key={idx} className="flex items-start gap-[var(--space-xs)] text-[1.05rem] text-[var(--color-text-muted)]">
+                            <span className="text-[var(--color-accent-primary)] mt-[2px]">×</span>
+                            <span>{item}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="type-caption text-[1rem] mb-[var(--space-sm)]">Behaviors</h4>
+                      <ul className="space-y-[var(--space-sm)]">
+                        {(t('housingPersonaBehaviorItems') as readonly string[]).map((item, idx) => (
+                          <li key={idx} className="flex items-start gap-[var(--space-xs)] text-[1.05rem] text-[var(--color-text-muted)]">
+                            <span className="text-[var(--color-accent-primary)] mt-[2px]">→</span>
+                            <span>{item}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
                   </div>
-                </section>
+                </motion.section>
+
+                {/* ── Typical Housing Journey (scroll-compressed) ── */}
+                <div ref={journeyChartRef} className="my-[var(--space-xxl)] pt-[var(--space-lg)]">
+                  <motion.div
+                    initial={{ opacity: 0, y: 30 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true, margin: '-10% 0px' }}
+                    transition={{ duration: 0.7, ease: [0.25, 0.1, 0.25, 1] }}
+                  >
+                    <h3 className="type-caption text-[1.1rem] tracking-wider mb-[var(--space-md)]">TYPICAL HOUSING JOURNEY</h3>
+                    <div className="overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
+                      {(() => {
+                        const weeks = ['8w', '7w', '6w', '5w', '4w', '3w', '2w', '1w', '0', '+1', '+2', '+3', '+4'];
+                        const phases: { label: string; active: number[] }[] = [
+                          { label: 'Prep',       active: [0, 1, 2] },
+                          { label: 'Search',     active: [2, 3, 4] },
+                          { label: 'Shortlist',  active: [4, 5] },
+                          { label: 'Tours',      active: [5, 6] },
+                          { label: 'Screening',  active: [5, 6, 7] },
+                          { label: 'Lease',      active: [6, 7] },
+                          { label: 'Move-in',    active: [7, 8] },
+                          { label: 'Setup',      active: [8, 9, 10, 11] },
+                          { label: 'Transition', active: [11, 12] },
+                        ];
+                        const colW = 28;
+                        const rowH = 24;
+                        const labelW = 80;
+                        const headerH = 20;
+                        const c = journeyCompress;
+                        const getX = (col: number) => {
+                          if (col <= 7) return labelW + col * colW * (1 - 0.625 * c) + colW / 2;
+                          return labelW + colW * (col - 5 * c) + colW / 2;
+                        };
+                        const w = labelW + weeks.length * colW + 10;
+                        const h = headerH + phases.length * rowH + 8;
+                        return (
+                          <svg viewBox={`0 0 ${w} ${h}`} fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full min-w-[480px]" aria-label="Typical Housing Journey — calendar view">
+                            {weeks.map((wk, i) => {
+                              const fade = i > 0 && i < 7 ? 1 - c : 1;
+                              return (
+                                <text key={wk} x={getX(i)} y={12} textAnchor="middle" fill="currentColor" fontSize="7" opacity={0.35 * fade} dominantBaseline="central">{wk}</text>
+                              );
+                            })}
+                            <line x1={getX(8)} y1={headerH - 2} x2={getX(8)} y2={h - 4} stroke="var(--color-accent-primary)" strokeWidth="1" opacity="0.25" strokeDasharray="3 3" />
+                            {phases.map((phase, row) => {
+                              const y = headerH + row * rowH + rowH / 2;
+                              return (
+                                <g key={phase.label}>
+                                  <text x={labelW - 6} y={y + 1} textAnchor="end" fill="currentColor" fontSize="9" fontWeight="500" dominantBaseline="central">{phase.label}</text>
+                                  {weeks.map((_, col) => {
+                                    const cx = getX(col);
+                                    const isActive = phase.active.includes(col);
+                                    return (
+                                      <circle key={col} cx={cx} cy={y} r={isActive ? 5 : 2.5} fill={isActive ? 'var(--color-accent-primary)' : 'currentColor'} opacity={isActive ? 1 : 0.1} />
+                                    );
+                                  })}
+                                </g>
+                              );
+                            })}
+                            {c > 0.2 && (
+                              <text x={(getX(0) + getX(7)) / 2} y={h + 2} textAnchor="middle" fill="var(--color-accent-primary)" fontSize="8" opacity={Math.min(1, (c - 0.2) * 1.5)} fontWeight="500">↑ compressed with app</text>
+                            )}
+                          </svg>
+                        );
+                      })()}
+                    </div>
+                  </motion.div>
+                </div>
+
+                {/* ── Competitive Analysis ── */}
+                <motion.section
+                  className="mb-[var(--space-xxl)]"
+                  initial={{ opacity: 0, y: 40 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, margin: '-10% 0px' }}
+                  transition={{ duration: 0.6, ease: [0.25, 0.1, 0.25, 1] }}
+                >
+                  <h3 className="type-caption text-[1.1rem] tracking-wider mb-[var(--space-md)]">{String(t('housingCompetitiveLabel'))}</h3>
+                  <p className="text-[1.2rem] mb-[var(--space-lg)] max-w-4xl leading-relaxed">{String(t('housingCompetitiveDesc'))}</p>
+                  
+                  <div className="border border-black/10 rounded-xl overflow-hidden max-w-4xl">
+                    <div className="bg-black/5 px-[var(--space-md)] py-[var(--space-sm)] border-b border-black/10">
+                      <p className="type-caption text-[var(--color-text-muted)]">Industry Gaps</p>
+                    </div>
+                    <div className="divide-y divide-black/10">
+                      {(t('housingGapItems') as readonly string[]).map((item, idx) => (
+                        <div key={idx} className="px-[var(--space-md)] py-[var(--space-sm)] flex items-start gap-[var(--space-md)]">
+                          <span className="text-[var(--color-text-muted)] mt-[2px]">✕</span>
+                          <p className="text-[1.1rem] leading-snug">{item}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </motion.section>
+
+                <div className="border-t border-black/8 my-[var(--space-xxl)]" />
+
+                {/* ── Iterative Prototyping ── */}
+                <motion.section
+                  className="mb-[var(--space-xxl)]"
+                  initial={{ opacity: 0, y: 40 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, margin: '-10% 0px' }}
+                  transition={{ duration: 0.6, ease: [0.25, 0.1, 0.25, 1] }}
+                >
+                  <h3 className="type-caption text-[1.1rem] tracking-wider mb-[var(--space-md)]">{String(t('housingPrototypingLabel'))}</h3>
+
+                  <blockquote className="border-l-4 border-[var(--color-accent-primary)] pl-[var(--space-md)] mb-[var(--space-xl)] max-w-4xl">
+                    <p className="text-[1.3rem] italic leading-relaxed">&ldquo;{String(t('housingPivotInsight'))}&rdquo;</p>
+                  </blockquote>
+
+                  <h4 className="type-caption text-[1rem] mb-[var(--space-md)]">{String(t('housingTimelineLabel'))}</h4>
+                  <img
+                    src={publicUrl('housing-slide-timeline.jpg')}
+                    alt="Account and overall timeline view"
+                    className="w-full rounded-xl object-cover mb-[var(--space-lg)] shadow-lg"
+                  />
+                </motion.section>
+
+                <div ref={housingTimelineRef} className="relative h-[400vh] my-[var(--space-xxxl)] w-screen" style={{ marginLeft: 'calc(50% - 50vw)' }}>
+                  <div className="sticky top-0 h-screen flex items-center overflow-hidden bg-[var(--color-bg)] z-10">
+                    <motion.div style={{ x: housingTimelineX }} className="flex w-[400vw] h-full">
+                      {[
+                        { label: 'housingExploreLabel' as const, desc: 'housingExploreDesc' as const, img: 'housing-slide-explore.jpg', alt: 'Explore section' },
+                        { label: 'housingNewStartLabel' as const, desc: 'housingNewStartDesc' as const, img: 'housing-slide-newstart.jpg', alt: 'A New Start' },
+                        { label: 'housingSubletLabel' as const, desc: 'housingSubletDesc' as const, img: 'housing-slide-sublet.jpg', alt: 'Break sublet' },
+                        { label: 'housingMoveinLabel' as const, desc: 'housingMoveinDesc' as const, img: 'housing-slide-movein.jpg', alt: 'Move-in' },
+                      ].map(({ label, desc, img, alt }) => (
+                        <div key={label} className="w-screen h-full flex flex-col justify-center items-center px-[var(--space-xl)] py-[var(--space-xxxl)]">
+                          <div className="max-w-5xl w-full">
+                            <img src={publicUrl(img)} alt={alt} className="w-full rounded-2xl shadow-2xl object-cover mb-[var(--space-lg)]" style={{ maxHeight: '70vh' }} />
+                            <div className="max-w-3xl">
+                              <h4 className="type-caption text-[1.5rem] mb-[var(--space-xs)]">{String(t(label))}</h4>
+                              <p className="type-body text-[1.2rem] text-[var(--color-text-muted)] leading-relaxed">{String(t(desc))}</p>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </motion.div>
+                  </div>
+                </div>
+
+                {/* Reflection */}
+                <motion.section
+                  className="mb-[var(--space-xxl)]"
+                  initial={{ opacity: 0, y: 40 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, margin: '-10% 0px' }}
+                  transition={{ duration: 0.6, ease: [0.25, 0.1, 0.25, 1] }}
+                >
+                  <h3 className="type-caption text-[1.1rem] tracking-wider mb-[var(--space-sm)]">{String(t('housingReflectionLabel'))}</h3>
+                  <p className="text-[1.2rem] max-w-4xl leading-relaxed">{String(t('housingReflectionDesc'))}</p>
+                </motion.section>
+
+                <div className="border-t border-black/8 my-[var(--space-xxl)]" />
 
                 {/* Credits */}
                 <section className="mb-[var(--space-xxl)]">
@@ -744,16 +955,6 @@ function App() {
                       <p className="type-caption mb-[var(--space-xs)]">{String(t('housingCreditsTools'))}</p>
                       <p className="type-body">{housingProject.credits.tools.join(', ')}</p>
                     </div>
-                  </div>
-                </section>
-
-                {/* Gallery */}
-                <section>
-                  <h3 className="type-caption mb-[var(--space-sm)]">{String(t('housingGalleryLabel'))}</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-[var(--space-sm)]">
-                    {Array.from({ length: housingProject.galleryCount }).map((_, idx) => (
-                      <div key={idx} className="image-block" style={{ height: 'clamp(120px, 20vw, 200px)' }} />
-                    ))}
                   </div>
                 </section>
               </>
