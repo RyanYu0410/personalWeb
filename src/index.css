@@ -57,6 +57,12 @@ img, video {
   height: auto;
 }
 
+/* Keep SVG box model consistent across browsers and previews */
+svg {
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
 /* Housing walkthrough: full-bleed frame; override global video sizing so <video> can fill absolute box */
 .housing-video-frame video {
   max-width: none;
@@ -606,6 +612,139 @@ button:focus-visible {
 
 .spine-row:last-child {
   border-bottom: 0;
+}
+
+/* Featured spine row — large image card with white text overlay */
+.spine-row--featured {
+  border-bottom: 0;
+}
+
+/* Card wrapper: compact in resting state, expands to image height on hover */
+.spine-row-link--featured {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  border-radius: 10px;
+  height: 108px;
+  text-decoration: none;
+  color: var(--color-text);
+  cursor: pointer;
+  background: rgb(0 0 0 / 0.04);
+  transition: height 0.52s cubic-bezier(0.4, 0, 0.2, 1),
+              border-radius 0.52s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.spine-row-link--featured:hover {
+  height: 224px;
+  border-radius: 14px;
+}
+
+/* Image absolutely fills the card; object-fit crops the portrait into the landscape frame */
+.spine-featured-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 20%;
+  opacity: 0;
+  transform: scale(1.06);
+  transition: opacity 0.6s cubic-bezier(0.25, 0.1, 0.25, 1),
+              transform 0.75s cubic-bezier(0.25, 0.1, 0.25, 1);
+}
+
+.spine-row-link--featured:hover .spine-featured-img {
+  opacity: 1;
+  transform: scale(1.0);
+}
+
+/* Overlay — covers the full card, sits above the image */
+.spine-featured-overlay {
+  position: absolute;
+  inset: 0;
+  background: transparent;
+  pointer-events: none;
+  transition: background 0.5s cubic-bezier(0.25, 0.1, 0.25, 1);
+}
+
+.spine-row-link--featured:hover .spine-featured-overlay {
+  background: linear-gradient(
+    to top,
+    rgba(0, 0, 0, 0.72) 0%,
+    rgba(0, 0, 0, 0.32) 45%,
+    rgba(0, 0, 0, 0.06) 75%,
+    transparent 100%
+  );
+}
+
+/* Content — always pinned to card bottom; shifts up gently as card expands */
+.spine-featured-content {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: var(--space-md);
+  gap: 3px;
+  transform: translateY(0);
+  transition: transform 0.52s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.spine-row-link--featured:hover .spine-featured-content {
+  transform: translateY(-4px);
+}
+
+/* Role pill — hidden in resting state, slides up on hover */
+.spine-featured-role {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 999px;
+  padding: 2px 8px;
+  display: inline-block;
+  margin-bottom: 4px;
+  opacity: 0;
+  transform: translateY(10px);
+  transition: opacity 0.32s ease 0.18s,
+              transform 0.4s cubic-bezier(0.22, 1, 0.36, 1) 0.14s;
+}
+
+.spine-row-link--featured:hover .spine-featured-role {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Title — dark in resting, white on hover */
+.spine-featured-title {
+  font-size: 1.35rem;
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--color-text);
+  margin: 0;
+  transition: color 0.42s ease;
+}
+
+.spine-row-link--featured:hover .spine-featured-title {
+  color: #fff;
+}
+
+/* Outcome — muted in resting, light white on hover */
+.spine-featured-outcome {
+  font-size: 0.85rem;
+  line-height: 1.4;
+  color: var(--color-text-muted);
+  margin: 0;
+  transition: color 0.42s ease;
+}
+
+.spine-row-link--featured:hover .spine-featured-outcome {
+  color: rgba(255, 255, 255, 0.58);
 }
 
 .spine-row-link {

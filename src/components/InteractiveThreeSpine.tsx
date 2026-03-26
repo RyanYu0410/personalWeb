@@ -1,5 +1,6 @@
 import { useRef, useState, useMemo } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
+import { motion } from 'framer-motion';
 import * as THREE from 'three';
 import type { TranslationKey } from '../i18n/translations';
 
@@ -9,6 +10,7 @@ interface SpineItem {
   role: string;
   href: string;
   thumb?: string;
+  featured?: boolean;
 }
 
 function Particles({ hoveredIndex, rowCount, pointerPos }: { hoveredIndex: number | null; rowCount: number; pointerPos: React.RefObject<{ x: number; y: number }> }) {
@@ -204,6 +206,7 @@ export default function InteractiveThreeSpine({ workIndex, t }: InteractiveThree
     });
   });
   const totalVisibleRows = gi;
+  const enterEase: [number, number, number, number] = [0.22, 1, 0.36, 1];
 
   return (
     <div
@@ -221,53 +224,137 @@ export default function InteractiveThreeSpine({ workIndex, t }: InteractiveThree
       </div>
 
       <div className="relative z-10 py-[var(--space-sm)]">
-        {categories.map((cat) => (
-          <section key={cat.key} className="spine-block">
-            <div
+        {categories.map((cat, catIdx) => (
+          <motion.section
+            key={cat.key}
+            className="spine-block"
+            initial={{ opacity: 0, y: 16 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.2 }}
+            transition={{ duration: 0.45, delay: catIdx * 0.08, ease: enterEase }}
+          >
+            <motion.div
               className="spine-head"
               onMouseEnter={() => {
                 const idx = allRows.findIndex((r) => r.catIdx === categories.indexOf(cat) && r.item.title === '');
                 setHoveredIndex(idx >= 0 ? idx : null);
               }}
               onMouseLeave={() => setHoveredIndex(null)}
+              whileHover={{ x: 2 }}
+              transition={{ duration: 0.22, ease: 'easeOut' }}
             >
               <span className="type-caption">#</span>
               <span className="text-[1.05rem] font-semibold text-[var(--color-text)]">{String(t(cat.titleKey))}</span>
-            </div>
+            </motion.div>
             <div className="spine-body">
-              <ul className="spine-list">
-                {cat.items.map((item) => {
+              <motion.ul
+                className="spine-list"
+                initial="hidden"
+                whileInView="show"
+                viewport={{ once: true, amount: 0.2 }}
+                variants={{
+                  hidden: {},
+                  show: {
+                    transition: {
+                      staggerChildren: 0.08,
+                      delayChildren: 0.06 + catIdx * 0.04,
+                    },
+                  },
+                }}
+              >
+                {cat.items.map((item, itemIdx) => {
                   const gIdx = allRows.findIndex(
                     (r) => r.catIdx === categories.indexOf(cat) && r.item.title === item.title
                   );
                   return (
-                    <li
+                    <motion.li
                       key={item.title}
-                      className="spine-row"
+                      className={item.featured ? 'spine-row spine-row--featured' : 'spine-row'}
                       onMouseEnter={() => setHoveredIndex(gIdx >= 0 ? gIdx : null)}
                       onMouseLeave={() => setHoveredIndex(null)}
+                      variants={{
+                        hidden: { opacity: 0, y: 10 },
+                        show: {
+                          opacity: 1,
+                          y: 0,
+                          transition: { duration: 0.38, ease: enterEase },
+                        },
+                      }}
+                      whileHover={{ y: -1 }}
                     >
-                      <a href={item.href} className="spine-row-link">
-                        {item.thumb && (
+                      {item.featured && item.thumb ? (
+                        <motion.a
+                          href={item.href}
+                          className="spine-row-link--featured"
+                          whileHover={{ scale: 1.004 }}
+                          whileTap={{ scale: 0.996 }}
+                          transition={{ duration: 0.25, ease: 'easeOut' }}
+                        >
                           <img
                             src={item.thumb}
-                            alt=""
-                            className="shrink-0 rounded-md object-cover"
-                            style={{ width: '48px', height: '48px' }}
+                            alt={item.title}
+                            className="spine-featured-img"
                           />
-                        )}
-                        <div className="flex-1 min-w-0">
-                          <p className="font-medium text-[var(--color-text)]">{item.title}</p>
-                          <p className="type-body">{item.outcome}</p>
-                        </div>
-                        <span className="type-caption">{item.role}</span>
-                      </a>
-                    </li>
+                          <div className="spine-featured-overlay" />
+                          <div className="spine-featured-content">
+                            <motion.span
+                              className="spine-featured-role"
+                              initial={{ opacity: 0, y: 10 }}
+                              whileInView={{ opacity: 1, y: 0 }}
+                              viewport={{ once: true, amount: 0.4 }}
+                              transition={{ duration: 0.35, delay: 0.1 + itemIdx * 0.04, ease: enterEase }}
+                            >
+                              {item.role}
+                            </motion.span>
+                            <motion.p
+                              className="spine-featured-title"
+                              initial={{ opacity: 0, y: 10 }}
+                              whileInView={{ opacity: 1, y: 0 }}
+                              viewport={{ once: true, amount: 0.4 }}
+                              transition={{ duration: 0.4, delay: 0.14 + itemIdx * 0.04, ease: enterEase }}
+                            >
+                              {item.title}
+                            </motion.p>
+                            <motion.p
+                              className="spine-featured-outcome"
+                              initial={{ opacity: 0, y: 10 }}
+                              whileInView={{ opacity: 1, y: 0 }}
+                              viewport={{ once: true, amount: 0.4 }}
+                              transition={{ duration: 0.4, delay: 0.18 + itemIdx * 0.04, ease: enterEase }}
+                            >
+                              {item.outcome}
+                            </motion.p>
+                          </div>
+                        </motion.a>
+                      ) : (
+                        <motion.a
+                          href={item.href}
+                          className="spine-row-link"
+                          whileHover={{ x: 3 }}
+                          whileTap={{ scale: 0.995 }}
+                          transition={{ duration: 0.22, ease: 'easeOut' }}
+                        >
+                          {item.thumb && (
+                            <img
+                              src={item.thumb}
+                              alt=""
+                              className="shrink-0 rounded-md object-cover"
+                              style={{ width: '48px', height: '48px' }}
+                            />
+                          )}
+                          <div className="flex-1 min-w-0">
+                            <p className="font-medium text-[var(--color-text)]">{item.title}</p>
+                            <p className="type-body">{item.outcome}</p>
+                          </div>
+                          <span className="type-caption">{item.role}</span>
+                        </motion.a>
+                      )}
+                    </motion.li>
                   );
                 })}
-              </ul>
+              </motion.ul>
             </div>
-          </section>
+          </motion.section>
         ))}
       </div>
     </div>

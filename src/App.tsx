@@ -246,7 +246,15 @@ function App() {
     window.addEventListener('hashchange', onHashChange);
     return () => window.removeEventListener('hashchange', onHashChange);
   }, []);
-  const { scrollYProgress } = useScroll();
+  const { scrollYProgress, scrollY: globalScrollY } = useScroll();
+
+  // Persona pill drag container + scroll-physics
+  const personaCardRef = useRef<HTMLDivElement>(null);
+  const scrollSmooth = useSpring(globalScrollY, { stiffness: 80, damping: 20 });
+  const pillPhysicsY = useTransform(
+    [globalScrollY, scrollSmooth],
+    ([actual, smooth]: number[]) => (actual - smooth) * 0.25
+  );
 
   // Housing Timeline Horizontal Scroll
   const housingTimelineRef = useRef<HTMLDivElement>(null);
@@ -261,17 +269,17 @@ function App() {
   const pathLength = 140;
   const footerDashOffset = useTransform(footerPathReveal, (v) => v * pathLength);
 
-  // Housing Journey chart — scroll-driven compression
-  const journeyChartRef = useRef<HTMLDivElement>(null);
-  const { scrollYProgress: journeyChartScroll } = useScroll({
-    target: journeyChartRef,
-    offset: ['start end', 'end start']
+  // Housing Journey compression — same sticky-scroll pattern as timeline.
+  const journeyStickyRef = useRef<HTMLDivElement>(null);
+  const { scrollYProgress: journeyScrollY } = useScroll({
+    target: journeyStickyRef,
+    offset: ['start start', 'end end'],
   });
+  // Narrow active range (0.3→0.58) = fast snap in. Long hold after (0.58→1) = slow out feel.
+  const journeyCompressMV = useTransform(journeyScrollY, [0, 0.3, 0.58, 1], [0, 0, 1, 1], { clamp: true });
+  const journeyCompressSmooth = useSpring(journeyCompressMV, { stiffness: 260, damping: 38 });
   const [journeyCompress, setJourneyCompress] = useState(0);
-  useMotionValueEvent(journeyChartScroll, 'change', (v) => {
-    const mapped = Math.min(1, Math.max(0, (v - 0.3) / 0.4));
-    setJourneyCompress(mapped);
-  });
+  useMotionValueEvent(journeyCompressSmooth, 'change', (v) => setJourneyCompress(v));
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -685,8 +693,8 @@ function App() {
                     in NYCity
                   </p>
                   <img
-                    src="./housing-skyline.png"
-                    alt="NYC Skyline overview"
+                    src="./Housing_people.png"
+                    alt="NYC student people overview"
                     className="w-full rounded-xl object-cover mt-[var(--space-lg)]"
                     style={{ maxHeight: 'clamp(200px, 35vw, 420px)' }}
                   />
@@ -730,161 +738,633 @@ function App() {
 
                 {/* ── User Interviews ── */}
                 <motion.section
-                  className="mb-[var(--space-xxl)]"
+                  className="mb-[var(--space-xxxl)]"
                   initial={{ opacity: 0, y: 40 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true, margin: '-10% 0px' }}
                   transition={{ duration: 0.6, ease: [0.25, 0.1, 0.25, 1] }}
                 >
-                  <h3 className="type-caption text-[1.1rem] tracking-wider mb-[var(--space-md)]">{String(t('housingInterviewsLabel'))}</h3>
-                  <p className="text-[1.1rem] text-[var(--color-text-muted)] mb-[var(--space-lg)]">{String(t('housingInterviewsMethod'))}</p>
+                  {/* Research Goals */}
+                  <div className="mb-[var(--space-lg)]">
+                    <h4 className="type-caption text-[1.1rem] tracking-wider mb-[var(--space-md)]">{String(t('housingResearchGoalsLabel'))}</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-[var(--space-lg)]">
+                      <div className="border border-black/10 rounded-2xl px-[var(--space-lg)] py-[var(--space-md)] bg-black/[0.03]">
+                        <p className="type-caption text-[0.9rem] text-[var(--color-accent-primary)] mb-[var(--space-xs)]">Goal A</p>
+                        <p className="text-[1.1rem] leading-relaxed">{String(t('housingResearchGoalA'))}</p>
+                      </div>
+                      <div className="border border-black/10 rounded-2xl px-[var(--space-lg)] py-[var(--space-md)] bg-black/[0.03]">
+                        <p className="type-caption text-[0.9rem] text-[var(--color-accent-primary)] mb-[var(--space-xs)]">Goal B</p>
+                        <p className="text-[1.1rem] leading-relaxed">{String(t('housingResearchGoalB'))}</p>
+                      </div>
+                    </div>
+                  </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-[var(--space-md)] mb-[var(--space-xl)]">
-                    {(t('housingTakeawayItems') as readonly string[]).map((item, idx) => (
-                      <div key={idx} className="border-t border-black/10 pt-[var(--space-sm)]">
-                        <span className="type-caption text-[var(--color-text-muted)] block mb-[var(--space-xs)]">0{idx + 1}</span>
-                        <p className="text-[1.1rem] leading-snug">{item}</p>
+                  {/* Stakeholder diagram */}
+                  <h4 className="type-caption text-[1.1rem] tracking-wider mb-[var(--space-md)] mt-[var(--space-xxl)]">
+                    STAKEHOLDERS
+                  </h4>
+                  <div className="mb-[var(--space-xl)]">
+                    <svg viewBox="0 0 620 185" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full" aria-label="Stakeholder diagram: Partners, Students, Landlords">
+                      <defs>
+                        <marker id="sh-arrow" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto-start-reverse">
+                          <path d="M0,0.5 L0,5.5 L6.5,3 z" fill="currentColor" fillOpacity="0.45" />
+                        </marker>
+                        <marker id="sh-arrow-dash" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto-start-reverse">
+                          <path d="M0,0.5 L0,5.5 L6.5,3 z" fill="currentColor" fillOpacity="0.3" />
+                        </marker>
+                      </defs>
+
+                      {/* Partners */}
+                      <motion.g initial={{ opacity: 0, y: 10 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.45, delay: 0, ease: [0.22, 1, 0.36, 1] }}>
+                        <rect x="8" y="42" width="132" height="78" rx="14" fill="currentColor" fillOpacity="0.04" stroke="currentColor" strokeOpacity="0.18" />
+                        <text x="74" y="72" textAnchor="middle" dominantBaseline="central" fill="currentColor" fontSize="13" fontWeight="600">Partners</text>
+                        <text x="74" y="91" textAnchor="middle" dominantBaseline="central" fill="currentColor" fontSize="8.5" opacity="0.45">Universities</text>
+                        <text x="74" y="106" textAnchor="middle" dominantBaseline="central" fill="currentColor" fontSize="8.5" opacity="0.45">NGOs</text>
+                      </motion.g>
+
+                      {/* Students — center, highlighted */}
+                      <motion.g initial={{ opacity: 0, y: 10 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.45, delay: 0.28, ease: [0.22, 1, 0.36, 1] }}>
+                        <rect x="244" y="30" width="132" height="100" rx="14" fill="var(--color-accent-primary)" fillOpacity="0.08" stroke="var(--color-accent-primary)" strokeOpacity="0.35" />
+                        <text x="310" y="62" textAnchor="middle" dominantBaseline="central" fill="currentColor" fontSize="13" fontWeight="700">Students</text>
+                        <text x="310" y="80" textAnchor="middle" dominantBaseline="central" fill="currentColor" fontSize="8.5" opacity="0.45">International</text>
+                        <text x="310" y="95" textAnchor="middle" dominantBaseline="central" fill="currentColor" fontSize="8.5" opacity="0.45">College Students</text>
+                        <text x="310" y="110" textAnchor="middle" dominantBaseline="central" fill="currentColor" fontSize="8.5" opacity="0.45">NYC · 18–25</text>
+                      </motion.g>
+
+                      {/* Landlords */}
+                      <motion.g initial={{ opacity: 0, y: 10 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.45, delay: 0.56, ease: [0.22, 1, 0.36, 1] }}>
+                        <rect x="480" y="42" width="132" height="78" rx="14" fill="currentColor" fillOpacity="0.04" stroke="currentColor" strokeOpacity="0.18" />
+                        <text x="546" y="72" textAnchor="middle" dominantBaseline="central" fill="currentColor" fontSize="13" fontWeight="600">Landlords</text>
+                        <text x="546" y="91" textAnchor="middle" dominantBaseline="central" fill="currentColor" fontSize="8.5" opacity="0.45">Private Owners</text>
+                        <text x="546" y="106" textAnchor="middle" dominantBaseline="central" fill="currentColor" fontSize="8.5" opacity="0.45">Management Cos.</text>
+                      </motion.g>
+
+                      {/* Arrow: Partners → Students */}
+                      <motion.path d="M140,81 L244,81" stroke="currentColor" strokeWidth="1.2" strokeOpacity="0.4" markerStart="url(#sh-arrow)" markerEnd="url(#sh-arrow)" initial={{ pathLength: 0, opacity: 0 }} whileInView={{ pathLength: 1, opacity: 1 }} viewport={{ once: true }} transition={{ duration: 0.35, delay: 0.95 }} />
+                      <motion.text x="192" y="73" textAnchor="middle" fill="currentColor" fontSize="8" initial={{ opacity: 0 }} whileInView={{ opacity: 0.5 }} viewport={{ once: true }} transition={{ delay: 1.28, duration: 0.25 }}>Support</motion.text>
+
+                      {/* Arrow: Students → Landlords */}
+                      <motion.path d="M376,81 L480,81" stroke="currentColor" strokeWidth="1.2" strokeOpacity="0.4" markerStart="url(#sh-arrow)" markerEnd="url(#sh-arrow)" initial={{ pathLength: 0, opacity: 0 }} whileInView={{ pathLength: 1, opacity: 1 }} viewport={{ once: true }} transition={{ duration: 0.35, delay: 1.3 }} />
+                      <motion.text x="428" y="73" textAnchor="middle" fill="currentColor" fontSize="8" initial={{ opacity: 0 }} whileInView={{ opacity: 0.5 }} viewport={{ once: true }} transition={{ delay: 1.62, duration: 0.25 }}>Housing &amp; Rent</motion.text>
+
+                      {/* Arc: Partners → Landlords (dashed, below) */}
+                      <motion.path d="M74,120 C74,162 546,162 546,120" stroke="currentColor" strokeWidth="1" strokeOpacity="0.28" strokeDasharray="4 3" fill="none" markerStart="url(#sh-arrow-dash)" markerEnd="url(#sh-arrow-dash)" initial={{ pathLength: 0, opacity: 0 }} whileInView={{ pathLength: 1, opacity: 1 }} viewport={{ once: true }} transition={{ duration: 0.65, delay: 1.7 }} />
+                      <motion.text x="310" y="174" textAnchor="middle" fill="currentColor" fontSize="8" initial={{ opacity: 0 }} whileInView={{ opacity: 0.45 }} viewport={{ once: true }} transition={{ delay: 2.3, duration: 0.3 }}>Outreach &amp; Services</motion.text>
+                    </svg>
+                  </div>
+
+                  <h3 className="type-caption text-[1.1rem] tracking-wider mb-[var(--space-lg)]">{String(t('housingInterviewsLabel'))}</h3>
+
+                  {/* Research process steps */}
+                  <div className="flex flex-col sm:flex-row gap-0 mb-[var(--space-xl)] border-t border-black/10">
+                    {[
+                      { n: '01', head: '10+ surveyed', sub: 'NYC residents\naged 18–25' },
+                      { n: '02', head: '4 interviewed', sub: 'College students\nin person' },
+                      { n: '03', head: 'Notes organized', sub: 'Transcribed &\ncategorised themes' },
+                    ].map(({ n, head, sub }, i, arr) => (
+                      <div key={n} className={`flex-1 pl-[14px] pt-[var(--space-md)] pb-[var(--space-md)] pr-[var(--space-lg)] ${i < arr.length - 1 ? 'sm:border-r border-black/10' : ''}`}>
+                        <span className="type-caption text-[0.8rem] text-[var(--color-accent-primary)] block mb-[var(--space-xs)]">{n}</span>
+                        <p className="text-[1.1rem] font-medium leading-snug mb-[2px]">{head}</p>
+                        <p className="text-[0.95rem] text-[var(--color-text-muted)] leading-snug whitespace-pre-line">{sub}</p>
                       </div>
                     ))}
                   </div>
 
-                  {/* Persona */}
-                  <p className="font-bold text-[1.5rem] mb-[var(--space-xxs)]">{String(t('housingPersonaName'))}</p>
-                  <p className="text-[1.1rem] text-[var(--color-text-muted)] mb-[var(--space-sm)]">{String(t('housingPersonaRole'))}</p>
-                  <blockquote className="border-l-4 border-[var(--color-accent-primary)] pl-[var(--space-md)] mb-[var(--space-lg)]">
-                    <p className="text-[1.2rem] italic leading-relaxed">&ldquo;{String(t('housingPersonaQuote'))}&rdquo;</p>
-                  </blockquote>
-                  <div className="flex flex-col sm:flex-row gap-[var(--space-lg)] border-t border-black/10 pt-[var(--space-md)]">
-                    <div className="flex-1">
-                      <h4 className="type-caption text-[1rem] mb-[var(--space-sm)]">Pain Points</h4>
-                      <ul className="space-y-[var(--space-sm)]">
-                        {(t('housingPersonaPainItems') as readonly string[]).map((item, idx) => (
-                          <li key={idx} className="flex items-start gap-[var(--space-xs)] text-[1.05rem] text-[var(--color-text-muted)]">
-                            <span className="text-[var(--color-accent-primary)] mt-[2px]">×</span>
-                            <span>{item}</span>
-                          </li>
-                        ))}
-                      </ul>
+                  {/* Key Takeaways bubble map — full width, large */}
+                  <motion.div
+                    className="mb-[var(--space-xxl)]"
+                    initial={{ opacity: 0, y: 16 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true, amount: 0.3 }}
+                    transition={{ duration: 0.6, ease: [0.25, 0.1, 0.25, 1] }}
+                  >
+                    <p className="type-caption text-[0.85rem] text-[var(--color-text-muted)] mb-[var(--space-md)]">KEY TAKEAWAYS</p>
+                    {(() => {
+                      const bubbles = [
+                        { key: 'core',        x: 210, y: 165, r: 58,  label: 'Key\nTakeaways',          accent: true  },
+                        { key: 'roommates',   x:  82, y:  88, r: 42,  label: 'Finding\nRoommates'                     },
+                        { key: 'guarantor',   x:  88, y: 232, r: 36,  label: 'Guarantor'                              },
+                        { key: 'document',    x: 270, y:  72, r: 36,  label: 'Document'                               },
+                        { key: 'rent',        x: 320, y: 218, r: 46,  label: 'High\nRents',             accent: true  },
+                        { key: 'cost',        x: 186, y: 278, r: 34,  label: '$500+\nutilities'                       },
+                        { key: 'intl',        x: 136, y: 165, r: 30,  label: 'Language\nBarrier'                      },
+                      ];
+                      const W = 400; const H = 300;
+                      return (
+                        <svg
+                          viewBox={`0 0 ${W} ${H}`}
+                          fill="none"
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="w-full max-w-lg mx-auto pt-[13px] pb-[13px] overflow-visible"
+                          aria-label="Key takeaways bubble map"
+                          preserveAspectRatio="xMidYMid meet"
+                        >
+                          {bubbles.map((b, i) => {
+                            const fs = b.r >= 50 ? 11 : b.r >= 40 ? 9.5 : b.r >= 34 ? 8.5 : 7.5;
+                            const fw = b.accent || b.r >= 50 ? '600' : '500';
+                            return (
+                              <motion.g
+                                key={b.key}
+                                initial={{ opacity: 0, scale: 0.7 }}
+                                whileInView={{ opacity: 1, scale: 1 }}
+                                viewport={{ once: true, amount: 0.3 }}
+                                transition={{ duration: 0.5, delay: i * 0.06, ease: [0.22, 1, 0.36, 1] }}
+                                style={{ transformOrigin: `${b.x}px ${b.y}px` }}
+                              >
+                                <circle
+                                  cx={b.x} cy={b.y} r={b.r}
+                                  fill={b.accent ? 'var(--color-accent-primary)' : 'currentColor'}
+                                  opacity={b.accent ? 0.13 : 0.07}
+                                  stroke={b.accent ? 'var(--color-accent-primary)' : 'currentColor'}
+                                  strokeOpacity={b.accent ? 0.4 : 0.22}
+                                />
+                                {b.label.split('\n').map((line, li, lines) => (
+                                  <text
+                                    key={li}
+                                    x={b.x}
+                                    y={b.y + (li - (lines.length - 1) / 2) * (fs * 1.35)}
+                                    textAnchor="middle"
+                                    dominantBaseline="central"
+                                    fill="currentColor"
+                                    fontSize={fs}
+                                    fontWeight={fw}
+                                    opacity={0.85}
+                                  >
+                                    {line}
+                                  </text>
+                                ))}
+                              </motion.g>
+                            );
+                          })}
+                        </svg>
+                      );
+                    })()}
+                  </motion.div>
+
+                  {/* Takeaway cage frames — interactive */}
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-[var(--space-md)] mb-[var(--space-xxl)]">
+                    {([
+                      { label: t('housingTakeawayItems')[0] as string, detail: 'Avg. NYC rent exceeds $2,800/mo. Students often share with strangers just to afford it.' },
+                      { label: t('housingTakeawayItems')[1] as string, detail: 'Multiple platforms, repeated document uploads, no status tracking across portals.' },
+                      { label: t('housingTakeawayItems')[2] as string, detail: 'No centralized resource for international students navigating the housing process.' },
+                    ]).map(({ label, detail }, idx) => (
+                      <motion.div
+                        key={idx}
+                        className="group relative rounded-2xl p-[var(--space-md)] overflow-hidden cursor-pointer select-none border border-black/12 hover:border-[var(--color-accent-primary)]/40 hover:bg-[var(--color-accent-primary)]/5"
+                        style={{
+                          minHeight: '9rem',
+                          transition: 'border-color 0.25s, background 0.25s',
+                        }}
+                        initial={{ opacity: 0, y: 16 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true, amount: 0.4 }}
+                        transition={{ duration: 0.5, delay: idx * 0.08, ease: [0.22, 1, 0.36, 1] }}
+                        whileHover={{ y: -4, transition: { duration: 0.22, ease: 'easeOut' } }}
+                        whileTap={{ scale: 0.97, transition: { duration: 0.12 } }}
+                      >
+                        {/* ghost number */}
+                        <span
+                          className="absolute top-3 right-4 font-bold leading-none pointer-events-none"
+                          style={{ fontSize: '3.8rem', lineHeight: 1, color: 'var(--color-accent-primary)', opacity: 0.1 }}
+                        >
+                          {String(idx + 1).padStart(2, '0')}
+                        </span>
+                        {/* label — slides up on hover */}
+                        <p
+                          className="text-[1.1rem] font-medium leading-snug relative z-10 pt-[3.2rem]"
+                          style={{ transition: 'transform 0.22s ease, opacity 0.22s ease' }}
+                        >
+                          {label}
+                        </p>
+                        {/* detail — reveals on hover via max-height */}
+                        <p
+                          className="text-[0.88rem] text-[var(--color-text-muted)] leading-snug relative z-10 overflow-hidden opacity-0 group-hover:opacity-100 max-h-0 group-hover:max-h-24 mt-0 group-hover:mt-[var(--space-xs)]"
+                          style={{ transition: 'max-height 0.35s ease, opacity 0.25s ease, margin 0.3s ease' }}
+                        >
+                          {detail}
+                        </p>
+                      </motion.div>
+                    ))}
+                  </div>
+
+                  {/* Persona subtitle + card */}
+                  <p className="type-caption text-[0.85rem] tracking-wider mt-[var(--space-xxl)] mb-[var(--space-sm)] text-[var(--color-text-muted)]">
+                    PERSONA
+                  </p>
+                  <div ref={personaCardRef} className="border border-black/10 rounded-2xl overflow-hidden mt-0 mb-[var(--space-xl)]">
+                    {/* header strip */}
+                    <div className="flex items-baseline justify-between px-[var(--space-lg)] py-[var(--space-md)] border-b border-black/10 bg-black/[0.03]">
+                      <p className="font-bold text-[1.4rem] leading-none">{String(t('housingPersonaName'))}</p>
+                      <p className="type-caption text-[var(--color-text-muted)] text-[0.85rem]">{String(t('housingPersonaRole'))}</p>
                     </div>
-                    <div className="flex-1">
-                      <h4 className="type-caption text-[1rem] mb-[var(--space-sm)]">Behaviors</h4>
-                      <ul className="space-y-[var(--space-sm)]">
-                        {(t('housingPersonaBehaviorItems') as readonly string[]).map((item, idx) => (
-                          <li key={idx} className="flex items-start gap-[var(--space-xs)] text-[1.05rem] text-[var(--color-text-muted)]">
-                            <span className="text-[var(--color-accent-primary)] mt-[2px]">→</span>
-                            <span>{item}</span>
-                          </li>
-                        ))}
-                      </ul>
+
+                    {/* quote */}
+                    <div className="px-[var(--space-lg)] py-[var(--space-lg)] border-b border-black/10">
+                      <p className="text-[1.25rem] italic leading-relaxed text-[var(--color-text)]">
+                        <span className="text-[var(--color-accent-primary)] not-italic font-bold mr-1">&ldquo;</span>
+                        {String(t('housingPersonaQuote'))}
+                        <span className="text-[var(--color-accent-primary)] not-italic font-bold ml-1">&rdquo;</span>
+                      </p>
+                    </div>
+
+                    {/* pain + behavior — draggable pills with scroll physics, restrained by card */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 divide-y sm:divide-y-0 sm:divide-x divide-black/10 overflow-hidden">
+                      <div className="px-[var(--space-lg)] py-[var(--space-md)]">
+                        <p className="type-caption text-[0.85rem] text-[var(--color-text-muted)] mb-[var(--space-sm)]">PAIN POINTS</p>
+                        <motion.div className="flex flex-wrap gap-[var(--space-xs)]" style={{ y: pillPhysicsY }}>
+                          {(t('housingPersonaPainItems') as readonly string[]).map((item, idx) => (
+                            <motion.span
+                              key={idx}
+                              drag
+                              dragConstraints={personaCardRef}
+                              dragElastic={0.08}
+                              dragMomentum={false}
+                              className="inline-flex items-center gap-[5px] border border-[var(--color-accent-primary)]/30 rounded-full px-[var(--space-sm)] py-[5px] text-[0.92rem] leading-snug cursor-grab select-none"
+                              style={{ touchAction: 'none' }}
+                              initial={{ scale: 0, opacity: 0 }}
+                              whileInView={{ scale: 1, opacity: 1 }}
+                              viewport={{ once: true, amount: 0.5 }}
+                              transition={{ type: 'spring', stiffness: 320, damping: 18, delay: idx * 0.1 }}
+                              whileDrag={{ scale: 1.08, zIndex: 20, cursor: 'grabbing', boxShadow: '0 4px 20px rgba(0,0,0,0.12)' }}
+                            >
+                              <span className="text-[var(--color-accent-primary)] text-[0.75rem] leading-none">✕</span>
+                              {item}
+                            </motion.span>
+                          ))}
+                        </motion.div>
+                      </div>
+                      <div className="px-[var(--space-lg)] py-[var(--space-md)]">
+                        <p className="type-caption text-[0.85rem] text-[var(--color-text-muted)] mb-[var(--space-sm)]">BEHAVIORS</p>
+                        <motion.div className="flex flex-wrap gap-[var(--space-xs)]" style={{ y: pillPhysicsY }}>
+                          {(t('housingPersonaBehaviorItems') as readonly string[]).map((item, idx) => (
+                            <motion.span
+                              key={idx}
+                              drag
+                              dragConstraints={personaCardRef}
+                              dragElastic={0.08}
+                              dragMomentum={false}
+                              className="inline-flex items-center gap-[5px] border border-black/20 rounded-full px-[var(--space-sm)] py-[5px] text-[0.92rem] leading-snug cursor-grab select-none"
+                              style={{ touchAction: 'none' }}
+                              initial={{ scale: 0, opacity: 0 }}
+                              whileInView={{ scale: 1, opacity: 1 }}
+                              viewport={{ once: true, amount: 0.5 }}
+                              transition={{ type: 'spring', stiffness: 320, damping: 18, delay: idx * 0.1 + 0.2 }}
+                              whileDrag={{ scale: 1.08, zIndex: 20, cursor: 'grabbing', boxShadow: '0 4px 20px rgba(0,0,0,0.12)' }}
+                            >
+                              <span className="text-[var(--color-accent-primary)] text-[0.75rem] leading-none">→</span>
+                              {item}
+                            </motion.span>
+                          ))}
+                        </motion.div>
+                      </div>
                     </div>
                   </div>
                 </motion.section>
 
-                {/* ── Typical Housing Journey (scroll-compressed) ── */}
-                <div ref={journeyChartRef} className="my-[var(--space-xxl)] pt-[var(--space-lg)]">
-                  <motion.div
-                    initial={{ opacity: 0, y: 30 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true, margin: '-10% 0px' }}
-                    transition={{ duration: 0.7, ease: [0.25, 0.1, 0.25, 1] }}
-                  >
-                    <h3 className="type-caption text-[1.1rem] tracking-wider mb-[var(--space-md)]">TYPICAL HOUSING JOURNEY</h3>
-                    <div className="overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
-                      {(() => {
-                        const weeks = ['8w', '7w', '6w', '5w', '4w', '3w', '2w', '1w', '0', '+1', '+2', '+3', '+4'];
-                        const phases: { label: string; active: number[] }[] = [
-                          { label: 'Prep',       active: [0, 1, 2] },
-                          { label: 'Search',     active: [2, 3, 4] },
-                          { label: 'Shortlist',  active: [4, 5] },
-                          { label: 'Tours',      active: [5, 6] },
-                          { label: 'Screening',  active: [5, 6, 7] },
-                          { label: 'Lease',      active: [6, 7] },
-                          { label: 'Move-in',    active: [7, 8] },
-                          { label: 'Setup',      active: [8, 9, 10, 11] },
-                          { label: 'Transition', active: [11, 12] },
-                        ];
-                        const colW = 28;
-                        const rowH = 24;
-                        const labelW = 80;
-                        const headerH = 20;
-                        const c = journeyCompress;
-                        const getX = (col: number) => {
-                          if (col <= 7) return labelW + col * colW * (1 - 0.625 * c) + colW / 2;
-                          return labelW + colW * (col - 5 * c) + colW / 2;
-                        };
-                        const w = labelW + weeks.length * colW + 10;
-                        const h = headerH + phases.length * rowH + 8;
-                        return (
-                          <svg viewBox={`0 0 ${w} ${h}`} fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full min-w-[480px]" aria-label="Typical Housing Journey — calendar view">
-                            {weeks.map((wk, i) => {
-                              const fade = i > 0 && i < 7 ? 1 - c : 1;
-                              return (
-                                <text key={wk} x={getX(i)} y={12} textAnchor="middle" fill="currentColor" fontSize="7" opacity={0.35 * fade} dominantBaseline="central">{wk}</text>
-                              );
-                            })}
-                            <line x1={getX(8)} y1={headerH - 2} x2={getX(8)} y2={h - 4} stroke="var(--color-accent-primary)" strokeWidth="1" opacity="0.25" strokeDasharray="3 3" />
-                            {phases.map((phase, row) => {
-                              const y = headerH + row * rowH + rowH / 2;
-                              return (
-                                <g key={phase.label}>
-                                  <text x={labelW - 6} y={y + 1} textAnchor="end" fill="currentColor" fontSize="9" fontWeight="500" dominantBaseline="central">{phase.label}</text>
-                                  {weeks.map((_, col) => {
-                                    const cx = getX(col);
-                                    const isActive = phase.active.includes(col);
-                                    return (
-                                      <circle key={col} cx={cx} cy={y} r={isActive ? 5 : 2.5} fill={isActive ? 'var(--color-accent-primary)' : 'currentColor'} opacity={isActive ? 1 : 0.1} />
-                                    );
-                                  })}
-                                </g>
-                              );
-                            })}
-                            {c > 0.2 && (
-                              <text x={(getX(0) + getX(7)) / 2} y={h + 2} textAnchor="middle" fill="var(--color-accent-primary)" fontSize="8" opacity={Math.min(1, (c - 0.2) * 1.5)} fontWeight="500">↑ compressed with app</text>
-                            )}
-                          </svg>
-                        );
-                      })()}
-                    </div>
-                  </motion.div>
-                </div>
-
                 {/* ── Competitive Analysis ── */}
                 <motion.section
-                  className="mb-[var(--space-xxl)]"
+                  className="mb-[var(--space-xxxl)]"
                   initial={{ opacity: 0, y: 40 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true, margin: '-10% 0px' }}
                   transition={{ duration: 0.6, ease: [0.25, 0.1, 0.25, 1] }}
                 >
-                  <h3 className="type-caption text-[1.1rem] tracking-wider mb-[var(--space-md)]">{String(t('housingCompetitiveLabel'))}</h3>
-                  <p className="text-[1.2rem] mb-[var(--space-lg)] max-w-4xl leading-relaxed">{String(t('housingCompetitiveDesc'))}</p>
-                  
-                  <div className="border border-black/10 rounded-xl overflow-hidden max-w-4xl">
-                    <div className="bg-black/5 px-[var(--space-md)] py-[var(--space-sm)] border-b border-black/10">
-                      <p className="type-caption text-[var(--color-text-muted)]">Industry Gaps</p>
-                    </div>
-                    <div className="divide-y divide-black/10">
-                      {(t('housingGapItems') as readonly string[]).map((item, idx) => (
-                        <div key={idx} className="px-[var(--space-md)] py-[var(--space-sm)] flex items-start gap-[var(--space-md)]">
-                          <span className="text-[var(--color-text-muted)] mt-[2px]">✕</span>
-                          <p className="text-[1.1rem] leading-snug">{item}</p>
+                  <h3 className="type-caption text-[1.1rem] tracking-wider mb-[var(--space-lg)]">{String(t('housingCompetitiveLabel'))}</h3>
+                  <p className="text-[1.2rem] mb-[var(--space-xl)] max-w-4xl leading-relaxed">{String(t('housingCompetitiveDesc'))}</p>
+
+                  {/* Unified competitive analysis panel */}
+                  {(() => {
+                    const W = 560; const H = 148;
+                    const axisY = 96; const axisX0 = 28; const axisX1 = W - 28;
+                    const features: { label: string; x: number; delay: number; accent?: boolean }[] = [
+                      { label: 'Map',                     x: 88,   delay: 0.55 },
+                      { label: 'Filter',                  x: 210,  delay: 0.72 },
+                      { label: 'Realtime\nUpdates',        x: 352,  delay: 0.89 },
+                      { label: 'Interior Image\n& Video',  x: 494,  delay: 1.06, accent: true },
+                    ];
+                    return (
+                      <div className="border border-black/10 rounded-2xl overflow-hidden max-w-4xl">
+
+                        {/* ── Top: feature importance axis ── */}
+                        <div className="px-[var(--space-lg)] pt-[var(--space-lg)] pb-[var(--space-md)] border-b border-black/10">
+                          <p className="type-caption text-[0.72rem] text-[var(--color-text-muted)] mb-[var(--space-md)] tracking-widest">HOW IMPORTANT IS THIS FEATURE TO USERS?</p>
+                          <svg
+                            viewBox={`0 0 ${W} ${H}`}
+                            fill="none"
+                            xmlns="http://www.w3.org/2000/svg"
+                            className="w-full pt-[13px] pb-[13px] overflow-visible"
+                            aria-label="Feature importance axis diagram"
+                            preserveAspectRatio="xMidYMid meet"
+                          >
+                            {/* gradient fill under axis: trivial→critical */}
+                            <defs>
+                              <linearGradient id="axis-grad" x1="0" y1="0" x2="1" y2="0">
+                                <stop offset="0%" stopColor="currentColor" stopOpacity="0.04" />
+                                <stop offset="100%" stopColor="var(--color-accent-primary)" stopOpacity="0.10" />
+                              </linearGradient>
+                            </defs>
+                            <rect x={axisX0} y={axisY} width={axisX1 - axisX0} height="1.5" fill="url(#axis-grad)" rx="1" />
+
+                            {/* Axis base line */}
+                            <motion.line
+                              x1={axisX0} y1={axisY} x2={axisX1} y2={axisY}
+                              stroke="currentColor" strokeWidth="1.5" strokeOpacity="0.28"
+                              initial={{ pathLength: 0, opacity: 0 }}
+                              whileInView={{ pathLength: 1, opacity: 1 }}
+                              viewport={{ once: true, amount: 0.5 }}
+                              transition={{ duration: 0.5, delay: 0.1, ease: [0.4, 0, 0.2, 1] }}
+                            />
+
+                            {/* End ticks */}
+                            {[axisX0, axisX1].map((tx) => (
+                              <motion.line key={tx} x1={tx} y1={axisY - 5} x2={tx} y2={axisY + 5}
+                                stroke="currentColor" strokeWidth="1.5" strokeOpacity="0.28"
+                                initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }}
+                                transition={{ duration: 0.18, delay: 0.35 }}
+                              />
+                            ))}
+
+                            {/* Axis labels */}
+                            <motion.text x={axisX0} y={axisY + 18} textAnchor="start"
+                              fill="currentColor" fontSize="9" fontWeight="500"
+                              initial={{ opacity: 0 }} whileInView={{ opacity: 0.38 }} viewport={{ once: true }}
+                              transition={{ duration: 0.22, delay: 0.4 }}
+                            >Trivial</motion.text>
+                            <motion.text x={axisX1} y={axisY + 18} textAnchor="end"
+                              fill="currentColor" fontSize="9" fontWeight="500"
+                              initial={{ opacity: 0 }} whileInView={{ opacity: 0.38 }} viewport={{ once: true }}
+                              transition={{ duration: 0.22, delay: 0.4 }}
+                            >Critical</motion.text>
+
+                            {/* Feature nodes */}
+                            {features.map(({ label, x, delay, accent }) => {
+                              const color = accent ? 'var(--color-accent-primary)' : 'currentColor';
+                              const strokeOp = accent ? 0.7 : 0.48;
+                              const fillOp   = accent ? 0.14 : 0.08;
+                              return (
+                                <motion.g
+                                  key={label}
+                                  initial={{ opacity: 0, y: 8 }}
+                                  whileInView={{ opacity: 1, y: 0 }}
+                                  viewport={{ once: true, amount: 0.4 }}
+                                  transition={{ duration: 0.38, delay, ease: [0.22, 1, 0.36, 1] }}
+                                >
+                                  {/* dashed vertical connector */}
+                                  <line x1={x} y1={axisY - 5} x2={x} y2={axisY - 32}
+                                    stroke={color} strokeWidth="1" strokeOpacity="0.22" strokeDasharray="2.5 2"
+                                  />
+                                  {/* dot */}
+                                  <circle cx={x} cy={axisY} r={accent ? 5 : 4}
+                                    fill={color} fillOpacity={fillOp}
+                                    stroke={color} strokeWidth="1.5" strokeOpacity={strokeOp}
+                                  />
+                                  {/* label lines above */}
+                                  {label.split('\n').map((ln, li, lns) => (
+                                    <text
+                                      key={li}
+                                      x={x}
+                                      y={axisY - 38 - (lns.length - 1 - li) * 13}
+                                      textAnchor="middle"
+                                      dominantBaseline="auto"
+                                      fill={color}
+                                      fontSize={accent ? 10 : 9.5}
+                                      fontWeight={accent ? '700' : '600'}
+                                      opacity={accent ? 0.9 : 0.75}
+                                    >{ln}</text>
+                                  ))}
+                                </motion.g>
+                              );
+                            })}
+                          </svg>
                         </div>
-                      ))}
-                    </div>
-                  </div>
+
+                        {/* ── Bottom: industry gaps ── */}
+                        <div className="px-[var(--space-lg)] py-[var(--space-lg)]">
+                          <p className="type-caption text-[0.72rem] text-[var(--color-text-muted)] mb-[var(--space-md)] tracking-widest">WHAT COMPETITORS MISS</p>
+                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-x-[var(--space-xl)] gap-y-[var(--space-md)]">
+                            {(t('housingGapItems') as readonly string[]).map((item, idx) => (
+                              <motion.div
+                                key={idx}
+                                className="flex items-start gap-[10px]"
+                                initial={{ opacity: 0, y: 8 }}
+                                whileInView={{ opacity: 1, y: 0 }}
+                                viewport={{ once: true, amount: 0.5 }}
+                                transition={{ duration: 0.32, delay: 0.15 + idx * 0.1, ease: [0.22, 1, 0.36, 1] }}
+                              >
+                                <span
+                                  className="shrink-0 mt-[3px] text-[0.65rem] font-bold leading-none border rounded-full flex items-center justify-center"
+                                  style={{
+                                    width: '16px', height: '16px',
+                                    color: 'var(--color-accent-primary)',
+                                    borderColor: 'var(--color-accent-primary)',
+                                    opacity: 0.7,
+                                  }}
+                                >✕</span>
+                                <p className="text-[1rem] leading-snug text-[var(--color-text)]">{item}</p>
+                              </motion.div>
+                            ))}
+                          </div>
+                        </div>
+
+                      </div>
+                    );
+                  })()}
                 </motion.section>
 
                 <div className="border-t border-black/8 my-[var(--space-xxl)]" />
 
+                {/* ── Housing Journey exchange animation (sticky-scroll) ── */}
+                <div ref={journeyStickyRef} className="relative h-[280vh] my-[var(--space-xxl)]">
+                  <div className="sticky top-0 h-screen flex flex-col justify-center z-10 bg-[var(--color-bg)]">
+                    <motion.div
+                      className="w-full"
+                      initial={{ opacity: 0, y: 30 }}
+                      whileInView={{ opacity: 1, y: 0 }}
+                      viewport={{ once: true, amount: 0.4 }}
+                      transition={{ duration: 0.7, ease: [0.25, 0.1, 0.25, 1] }}
+                    >
+                      {/* crossfade title */}
+                      <div className="relative mb-[var(--space-md)]" style={{ height: '1.4em' }}>
+                        <h3
+                          className="type-caption text-[1.1rem] tracking-wider absolute inset-0"
+                          style={{ opacity: Math.max(0, 1 - journeyCompress * 4) }}
+                        >
+                          TYPICAL HOUSING JOURNEY
+                        </h3>
+                        <h3
+                          className="type-caption text-[1.1rem] tracking-wider absolute inset-0"
+                          style={{ opacity: Math.min(1, Math.max(0, (journeyCompress - 0.55) * 4)) }}
+                        >
+                          NEW HOUSING JOURNEY
+                        </h3>
+                      </div>
+
+                      <div className="overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
+                        {(() => {
+                          const weeks = ['8w', '7w', '6w', '5w', '4w', '3w', '2w', '1w', '0', '+1', '+2', '+3', '+4'];
+                          const phases: { label: string; active: number[] }[] = [
+                            { label: 'Prep',       active: [0, 1, 2] },
+                            { label: 'Search',     active: [2, 3, 4] },
+                            { label: 'Shortlist',  active: [4, 5] },
+                            { label: 'Tours',      active: [5, 6] },
+                            { label: 'Screening',  active: [5, 6, 7] },
+                            { label: 'Lease',      active: [6, 7] },
+                            { label: 'Move-in',    active: [7, 8] },
+                            { label: 'Setup',      active: [8, 9, 10, 11] },
+                            { label: 'Transition', active: [11, 12] },
+                          ];
+                          const colW = 23;
+                          const rowH = 22;
+                          const labelW = 80;
+                          const headerH = 20;
+                          const c = journeyCompress;
+
+                          // phase 1: dots go orange → hollow (c 0→0.45)
+                          // phase 2: columns compress + hollow dots shrink (c 0.45→0.75)
+                          // phase 3: dark bar grows in (c 0.65→1)
+                          const hollowT = Math.min(1, c / 0.45);               // 0→1 in phase 1
+                          const shrinkT = Math.min(1, Math.max(0, (c - 0.45) / 0.3)); // 0→1 in phase 2
+                          const barT    = Math.min(1, Math.max(0, (c - 0.65) / 0.35)); // 0→1 in phase 3
+
+                          const getX = (col: number) => {
+                            if (col <= 7) return labelW + col * colW * (1 - 0.6 * shrinkT) + colW / 2;
+                            return labelW + colW * (col - 4.2 * shrinkT) + colW / 2;
+                          };
+
+                          const w = labelW + weeks.length * colW + 10;
+                          const h = headerH + phases.length * rowH + 8;
+                          const isPreCol   = (col: number)  => col <= 7;
+                          const isPrePhase = (row: number) => row <= 5;
+
+                          return (
+                            <svg viewBox={`0 0 ${w} ${h}`} fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full min-w-[360px]" aria-label="Housing Journey exchange — calendar view">
+
+                              {/* week labels — compress then fade, "~3w" appears */}
+                              {weeks.map((wk, i) => {
+                                const isZero = wk === '0';
+                                let op: number;
+                                if (isZero) {
+                                  op = 0.5; // move-in reference always visible
+                                } else if (isPreCol(i)) {
+                                  // stay at full 0.35 through hollowT (so labels visibly move together),
+                                  // then fade out in shrink phase
+                                  op = 0.35 * Math.max(0, 1 - shrinkT * 1.4);
+                                } else {
+                                  op = 0.35;
+                                }
+                                return (
+                                  <text
+                                    key={wk}
+                                    x={getX(i)}
+                                    y={12}
+                                    textAnchor="middle"
+                                    fill={isZero ? 'var(--color-accent-primary)' : 'currentColor'}
+                                    fontSize={isZero ? '8' : '7'}
+                                    fontWeight={isZero ? '600' : undefined}
+                                    opacity={op}
+                                    dominantBaseline="central"
+                                  >
+                                    {wk}
+                                  </text>
+                                );
+                              })}
+                              {/* "~3w" summary label fades in as bar grows */}
+                              {barT > 0 && (
+                                <text
+                                  x={(getX(0) + getX(7)) / 2}
+                                  y={12}
+                                  textAnchor="middle"
+                                  fill="currentColor"
+                                  fontSize="7"
+                                  fontWeight="500"
+                                  opacity={0.55 * barT}
+                                  dominantBaseline="central"
+                                >
+                                  ~3w
+                                </text>
+                              )}
+
+                              {/* move-in dashed line */}
+                              <line x1={getX(8)} y1={headerH - 2} x2={getX(8)} y2={h - 4} stroke="var(--color-accent-primary)" strokeWidth="1" opacity="0.25" strokeDasharray="3 3" />
+
+                              {phases.map((phase, row) => {
+                                const y = headerH + row * rowH + rowH / 2;
+                                const pre = isPrePhase(row);
+                                const labelFade = pre ? Math.max(0.15, 1 - hollowT * 0.6) : 1;
+                                const preActiveCols = phase.active.filter(isPreCol);
+
+                                return (
+                                  <g key={phase.label}>
+                                    <text x={labelW - 6} y={y + 1} textAnchor="end" fill="currentColor" fontSize="9" fontWeight="500" dominantBaseline="central" opacity={labelFade}>{phase.label}</text>
+
+                                    {weeks.map((_, col) => {
+                                      const cx = getX(col);
+                                      const isActive = phase.active.includes(col);
+                                      const preC = isPreCol(col);
+
+                                      if (!isActive) {
+                                        const op = preC ? 0.1 * Math.max(0, 1 - hollowT) : 0.1;
+                                        return <circle key={col} cx={cx} cy={y} r={2.5} fill="currentColor" opacity={op} />;
+                                      }
+
+                                      if (!preC) {
+                                        // post move-in: always orange
+                                        return <circle key={col} cx={cx} cy={y} r={5} fill="var(--color-accent-primary)" opacity={1} />;
+                                      }
+
+                                      // pre-move-in active dot: orange → hollow circle → shrink away
+                                      const orangeOp  = Math.max(0, 1 - hollowT);
+                                      const strokeOp  = hollowT * Math.max(0, 1 - shrinkT);
+                                      const r = 5 * Math.max(0, 1 - shrinkT * 0.9);
+
+                                      return (
+                                        <g key={col}>
+                                          {/* orange fill fading out */}
+                                          <circle cx={cx} cy={y} r={r} fill="var(--color-accent-primary)" opacity={orangeOp} />
+                                          {/* hollow ring fading in then out */}
+                                          <circle cx={cx} cy={y} r={r} fill="none" stroke="currentColor" strokeWidth="1.2" opacity={strokeOp * 0.55} />
+                                        </g>
+                                      );
+                                    })}
+
+                                    {/* dark bar growing in for pre-move-in phases */}
+                                    {pre && preActiveCols.length > 0 && barT > 0 && (() => {
+                                      const x1 = getX(preActiveCols[0]) - 5;
+                                      const x2 = getX(preActiveCols[preActiveCols.length - 1]) + 5;
+                                      const bh = 5;
+                                      const fullW = x2 - x1;
+                                      return (
+                                        <rect
+                                          x={x1}
+                                          y={y - bh / 2}
+                                          width={fullW * barT}
+                                          height={bh}
+                                          rx={bh / 2}
+                                          fill="currentColor"
+                                          opacity={0.7 * barT}
+                                        />
+                                      );
+                                    })()}
+                                  </g>
+                                );
+                              })}
+                            </svg>
+                          );
+                        })()}
+                      </div>
+                    </motion.div>
+                  </div>
+                </div>
+
                 {/* ── Iterative Prototyping ── */}
                 <motion.section
-                  className="mb-[var(--space-xxl)]"
+                  className="mb-[var(--space-xxxl)]"
                   initial={{ opacity: 0, y: 40 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true, margin: '-10% 0px' }}
                   transition={{ duration: 0.6, ease: [0.25, 0.1, 0.25, 1] }}
                 >
-                  <h3 className="type-caption text-[1.1rem] tracking-wider mb-[var(--space-md)]">{String(t('housingPrototypingLabel'))}</h3>
+                  <h3 className="type-caption text-[1.1rem] tracking-wider mb-[var(--space-lg)]">{String(t('housingPrototypingLabel'))}</h3>
 
                   <blockquote className="border-l-4 border-[var(--color-accent-primary)] pl-[var(--space-md)] mb-[var(--space-xl)] max-w-4xl">
                     <p className="text-[1.3rem] italic leading-relaxed">&ldquo;{String(t('housingPivotInsight'))}&rdquo;</p>

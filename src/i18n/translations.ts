@@ -146,10 +146,13 @@ const translations = {
 
     housingInterviewsLabel: 'User Interviews',
     housingInterviewsMethod: 'Surveyed 10+ NYC residents (18\u201325) and interviewed 4 college students in person.',
+    housingResearchGoalsLabel: 'Research Goals',
+    housingResearchGoalA: 'Research & identify issues that prevent college students from finding affordable housing outside of campus.',
+    housingResearchGoalB: 'Identify roadblocks international students tend to face when looking for affordable housing.',
     housingTakeawayItems: [
-      'Language and cultural barriers hinder the housing process for international students.',
-      'Students compromise on location & room size but not safety or commute.',
-      'The search process is stressful due to information and support gaps.',
+      'High rents & compromises',
+      'Complex applications',
+      'Information & support gaps',
     ],
     housingPersonaName: 'Li Wei',
     housingPersonaRole: '21 \u00b7 Full-Time Student \u00b7 International',
@@ -338,10 +341,13 @@ const translations = {
 
     housingInterviewsLabel: '用户访谈',
     housingInterviewsMethod: '调查了 10+ 名 18–25 岁的纽约居民，面对面访谈了 4 名大学生。',
+    housingResearchGoalsLabel: '研究目标',
+    housingResearchGoalA: '研究并识别：哪些障碍阻止大学生在校外找到负担得起的住房。',
+    housingResearchGoalB: '识别国际生在寻找校外可负担住房时常见的路障。',
     housingTakeawayItems: [
-      '语言和文化障碍阻碍了国际学生的找房过程。',
-      '学生在位置和房间大小上妥协，但不愿在安全和通勤上让步。',
-      '找房过程因信息和支持缺口而充满压力。',
+      '高租金与被迫妥协',
+      '申请流程复杂',
+      '信息与支持缺口',
     ],
     housingPersonaName: 'Li Wei',
     housingPersonaRole: '21 岁 · 全日制学生 · 国际生',
