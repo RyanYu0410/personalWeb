@@ -12,6 +12,8 @@ import {
   workIndex,
 } from './content/systematicContent';
 import InteractiveThreeSpine from './components/InteractiveThreeSpine';
+import ColorBends from './components/ColorBends';
+import BlurText from './components/BlurText';
 import { useT } from './i18n/useT';
 import { useLang } from './i18n/context';
 import type { TranslationKey } from './i18n/translations';
@@ -372,8 +374,26 @@ function App() {
     interactiveProjects.find((p) => p.id === interactiveOpen) ?? interactiveProjects[0];
   const currentLog = researchEntries.find((p) => p.id === logOpen) ?? researchEntries[0];
 
+  const showHomeColorBends = !isAboutView && !isResumeView && !workDetailId;
+
   return (
     <div className="min-h-screen selection:bg-black selection:text-white pb-16 md:pb-[var(--space-xxxl)]">
+      {showHomeColorBends && (
+        <ColorBends
+          colors={["#ff5c7a", "#8a5cff", "#00ffd1"]}
+          rotation={0}
+          speed={0.2}
+          scale={1}
+          frequency={1}
+          warpStrength={1}
+          mouseInfluence={1}
+          parallax={0.5}
+          noise={0.1}
+          transparent
+          autoRotate={0}
+          style={{ position: 'fixed', inset: 0, zIndex: 0, pointerEvents: 'none', opacity: 0.45 }}
+        />
+      )}
       <a href="#main-content" className="skip-link">
         {t('skipToMain')}
       </a>
@@ -1718,9 +1738,14 @@ function App() {
             <h2 className="text-[clamp(1rem,2.2vw,1.35rem)] font-medium text-[var(--color-text)] mb-[var(--space-xs)]">{String(t('homeTitle'))}</h2>
             <p className="type-caption text-[var(--color-text-muted)]">{String(t('homePurpose'))}</p>
           </div>
-          <p className="text-[clamp(2rem,5vw,3.5rem)] font-bold leading-tight mb-[var(--space-sm)] break-words">{home.name}</p>
+          <BlurText
+            text={home.name}
+            delay={500}
+            animateBy="words"
+            direction="top"
+            className="text-[clamp(2rem,5vw,3.5rem)] font-bold leading-tight mb-[var(--space-sm)] break-words"
+          />
           <InteractiveThreeSpine 
-            t={t}
             workIndex={workIndex}
           />
         </SectionShell>

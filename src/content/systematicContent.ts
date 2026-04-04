@@ -98,8 +98,6 @@ export const workIndex = {
     { title: 'AR Wayfinding Mock', outcome: 'Tested spatial cue readability in motion.', role: 'Unity/AR', href: '#page-04a' },
   ],
   research: [
-    { title: 'Fold Path Study', outcome: 'Defined spine-based navigation behavior.', role: 'Research', href: '#page-05' },
-    { title: 'Contrast Audit', outcome: 'Established AA-safe neutral palette rules.', role: 'Audit', href: '#page-05' },
   ],
 };
 

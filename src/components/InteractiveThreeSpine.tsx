@@ -171,10 +171,9 @@ interface InteractiveThreeSpineProps {
     interactive: SpineItem[];
     research: SpineItem[];
   };
-  t: (k: TranslationKey) => string | readonly string[];
 }
 
-export default function InteractiveThreeSpine({ workIndex, t }: InteractiveThreeSpineProps) {
+export default function InteractiveThreeSpine({ workIndex }: InteractiveThreeSpineProps) {
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const pointerPos = useRef({ x: -9999, y: -9999 });
@@ -200,7 +199,6 @@ export default function InteractiveThreeSpine({ workIndex, t }: InteractiveThree
   const allRows: { catIdx: number; item: SpineItem; globalIdx: number }[] = [];
   let gi = 0;
   categories.forEach((cat, catIdx) => {
-    allRows.push({ catIdx, item: { title: '', outcome: '', role: '', href: '' }, globalIdx: gi++ });
     cat.items.forEach((item) => {
       allRows.push({ catIdx, item, globalIdx: gi++ });
     });
@@ -233,19 +231,6 @@ export default function InteractiveThreeSpine({ workIndex, t }: InteractiveThree
             viewport={{ once: true, amount: 0.2 }}
             transition={{ duration: 0.45, delay: catIdx * 0.08, ease: enterEase }}
           >
-            <motion.div
-              className="spine-head"
-              onMouseEnter={() => {
-                const idx = allRows.findIndex((r) => r.catIdx === categories.indexOf(cat) && r.item.title === '');
-                setHoveredIndex(idx >= 0 ? idx : null);
-              }}
-              onMouseLeave={() => setHoveredIndex(null)}
-              whileHover={{ x: 2 }}
-              transition={{ duration: 0.22, ease: 'easeOut' }}
-            >
-              <span className="type-caption">#</span>
-              <span className="text-[1.05rem] font-semibold text-[var(--color-text)]">{String(t(cat.titleKey))}</span>
-            </motion.div>
             <div className="spine-body">
               <motion.ul
                 className="spine-list"

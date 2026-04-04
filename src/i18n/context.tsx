@@ -2,10 +2,6 @@ import { createContext, useContext, useState, useEffect, type ReactNode } from '
 
 export type Lang = 'en' | 'zh';
 
-function detectLang(): Lang {
-  const nav = navigator.language || (navigator as { userLanguage?: string }).userLanguage || 'en';
-  return nav.startsWith('zh') ? 'zh' : 'en';
-}
 
 const LangContext = createContext<{ lang: Lang; setLang: (l: Lang) => void }>({
   lang: 'en',
@@ -13,7 +9,7 @@ const LangContext = createContext<{ lang: Lang; setLang: (l: Lang) => void }>({
 });
 
 export function LangProvider({ children }: { children: ReactNode }) {
-  const [lang, setLang] = useState<Lang>(detectLang);
+  const [lang, setLang] = useState<Lang>('en');
 
   useEffect(() => {
     document.documentElement.lang = lang;
