@@ -63,8 +63,10 @@ svg {
   padding-bottom: 0;
 }
 
-/* Housing walkthrough: full-bleed frame; override global video sizing so <video> can fill absolute box */
-.housing-video-frame video {
+/* Project video/iframe frames: full-bleed override so media fills absolute box */
+.housing-video-frame video,
+.project-video-frame video,
+.project-video-frame iframe {
   max-width: none;
   max-height: none;
   width: 100%;
@@ -578,9 +580,6 @@ button:focus-visible {
 }
 
 .spine-block {
-  border: 1px solid rgb(0 0 0 / 0.1);
-  border-radius: 12px;
-  background: rgb(255 255 255 / 0.5);
   margin-bottom: var(--space-sm);
 }
 
@@ -615,65 +614,126 @@ button:focus-visible {
   border-bottom: 0;
 }
 
-/* Card wrapper: compact in resting state, expands to image height on hover */
+/* GSAP scroll entrance — initial hidden state */
+.spine-featured-gsap {
+  opacity: 0;
+}
+
+/* Card wrapper: image visible at rest, gentle expand on hover */
 .spine-row-link--featured {
   position: relative;
   display: block;
   overflow: hidden;
-  border-radius: 10px;
-  height: 108px;
+  border-radius: 14px;
+  height: 210px;
   text-decoration: none;
   color: var(--color-text);
   cursor: pointer;
-  background: rgb(0 0 0 / 0.04);
-  transition: height 0.52s cubic-bezier(0.4, 0, 0.2, 1),
-              border-radius 0.52s cubic-bezier(0.4, 0, 0.2, 1);
+  background: rgb(0 0 0 / 0.03);
+  box-shadow: 0 1px 4px rgb(0 0 0 / 0.05);
+  transition: height 0.6s cubic-bezier(0.33, 1, 0.68, 1),
+              border-radius 0.5s cubic-bezier(0.33, 1, 0.68, 1),
+              box-shadow 0.55s cubic-bezier(0.33, 1, 0.68, 1),
+              background 0.55s cubic-bezier(0.33, 1, 0.68, 1),
+              transform 0.5s cubic-bezier(0.33, 1, 0.68, 1);
 }
 
 .spine-row-link--featured:hover {
-  height: 224px;
-  border-radius: 14px;
+  height: 290px;
+  border-radius: 16px;
+  background: rgb(0 0 0 / 0.88);
+  transform: translateY(-2px);
+  box-shadow:
+    0 6px 24px rgb(0 0 0 / 0.14),
+    0 0 0 1px rgb(244 121 62 / 0.18),
+    0 0 40px -8px rgb(244 121 62 / 0.12);
 }
 
-/* Image absolutely fills the card; object-fit crops the portrait into the landscape frame */
+.spine-row-link--featured:active {
+  transform: translateY(-1px);
+}
+
+/* Orange accent glow on hover — matches non-featured row style */
+.spine-row-link--featured::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0;
+  box-shadow:
+    inset 0 -1px 0 0 rgb(244 121 62 / 0.3),
+    inset 0 0 20px -4px rgb(244 121 62 / 0.08);
+  transition: opacity 0.55s cubic-bezier(0.33, 1, 0.68, 1);
+}
+
+.spine-row-link--featured:hover::before {
+  opacity: 1;
+}
+
+/* Image: opacity from GSAP --scroll-opacity only; no hover change */
 .spine-featured-img {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
-  object-position: center 20%;
-  opacity: 0;
-  transform: scale(1.06);
-  transition: opacity 0.6s cubic-bezier(0.25, 0.1, 0.25, 1),
-              transform 0.75s cubic-bezier(0.25, 0.1, 0.25, 1);
+  object-position: center 25%;
+  opacity: var(--scroll-opacity, 0);
+  filter: brightness(0.95) saturate(1.05);
+  transition: opacity 0.55s cubic-bezier(0.33, 1, 0.68, 1),
+              filter 0.55s cubic-bezier(0.33, 1, 0.68, 1);
 }
 
-.spine-row-link--featured:hover .spine-featured-img {
-  opacity: 1;
-  transform: scale(1.0);
-}
-
-/* Overlay — covers the full card, sits above the image */
+/* Overlay: soft gradient at rest for text readability, dark on hover */
 .spine-featured-overlay {
   position: absolute;
   inset: 0;
-  background: transparent;
   pointer-events: none;
-  transition: background 0.5s cubic-bezier(0.25, 0.1, 0.25, 1);
+  opacity: 1;
+  background: linear-gradient(
+    to top,
+    var(--color-bg) 0%,
+    color-mix(in srgb, var(--color-bg) 88%, transparent) 30%,
+    color-mix(in srgb, var(--color-bg) 30%, transparent) 55%,
+    transparent 75%
+  );
+  transition: opacity 0.55s cubic-bezier(0.33, 1, 0.68, 1);
 }
 
 .spine-row-link--featured:hover .spine-featured-overlay {
-  background: linear-gradient(
-    to top,
-    rgba(0, 0, 0, 0.72) 0%,
-    rgba(0, 0, 0, 0.32) 45%,
-    rgba(0, 0, 0, 0.06) 75%,
-    transparent 100%
-  );
+  opacity: 0;
 }
 
-/* Content — always pinned to card bottom; shifts up gently as card expands */
+/* Dark overlay with warm orange accent that fades in on hover */
+.spine-featured-overlay::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  background:
+    linear-gradient(
+      to top,
+      rgba(244, 121, 62, 0.12) 0%,
+      rgba(244, 121, 62, 0.04) 15%,
+      transparent 30%
+    ),
+    linear-gradient(
+      to top,
+      rgba(0, 0, 0, 0.78) 0%,
+      rgba(0, 0, 0, 0.38) 40%,
+      rgba(0, 0, 0, 0.06) 70%,
+      transparent 100%
+    );
+  transition: opacity 0.55s cubic-bezier(0.33, 1, 0.68, 1);
+}
+
+.spine-row-link--featured:hover .spine-featured-overlay::after {
+  opacity: 1;
+}
+
+/* Content — pinned to bottom */
 .spine-featured-content {
   position: absolute;
   bottom: 0;
@@ -683,32 +743,35 @@ button:focus-visible {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  padding: var(--space-md);
-  gap: 3px;
+  padding: var(--space-md) var(--space-lg);
+  gap: 4px;
   transform: translateY(0);
-  transition: transform 0.52s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: transform 0.55s cubic-bezier(0.33, 1, 0.68, 1);
 }
 
 .spine-row-link--featured:hover .spine-featured-content {
   transform: translateY(-4px);
 }
 
-/* Role pill — hidden in resting state, slides up on hover */
+/* Role pill — hidden at rest, fades in on hover */
 .spine-featured-role {
   font-family: var(--font-mono);
   font-size: 0.65rem;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.7);
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.25);
   border-radius: 999px;
-  padding: 2px 8px;
+  padding: 3px 10px;
   display: inline-block;
   margin-bottom: 4px;
   opacity: 0;
-  transform: translateY(10px);
-  transition: opacity 0.32s ease 0.18s,
-              transform 0.4s cubic-bezier(0.22, 1, 0.36, 1) 0.14s;
+  transform: translateY(6px);
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  transition: opacity 0.45s cubic-bezier(0.33, 1, 0.68, 1) 0.08s,
+              transform 0.45s cubic-bezier(0.33, 1, 0.68, 1) 0.08s;
 }
 
 .spine-row-link--featured:hover .spine-featured-role {
@@ -716,31 +779,33 @@ button:focus-visible {
   transform: translateY(0);
 }
 
-/* Title — dark in resting, white on hover */
+/* Title */
 .spine-featured-title {
   font-size: 1.35rem;
   font-weight: 700;
   line-height: 1.2;
   color: var(--color-text);
   margin: 0;
-  transition: color 0.42s ease;
+  transition: color 0.5s cubic-bezier(0.33, 1, 0.68, 1),
+              text-shadow 0.5s cubic-bezier(0.33, 1, 0.68, 1);
 }
 
 .spine-row-link--featured:hover .spine-featured-title {
   color: #fff;
+  text-shadow: 0 1px 10px rgba(0, 0, 0, 0.25);
 }
 
-/* Outcome — muted in resting, light white on hover */
+/* Outcome */
 .spine-featured-outcome {
   font-size: 0.85rem;
   line-height: 1.4;
   color: var(--color-text-muted);
   margin: 0;
-  transition: color 0.42s ease;
+  transition: color 0.5s cubic-bezier(0.33, 1, 0.68, 1) 0.03s;
 }
 
 .spine-row-link--featured:hover .spine-featured-outcome {
-  color: rgba(255, 255, 255, 0.58);
+  color: rgba(255, 255, 255, 0.6);
 }
 
 .spine-row-link {

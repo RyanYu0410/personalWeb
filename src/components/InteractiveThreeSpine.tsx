@@ -1,8 +1,13 @@
-import { useRef, useState, useMemo } from 'react';
+import { useRef, useState, useMemo, useEffect, useCallback } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { motion } from 'framer-motion';
 import * as THREE from 'three';
+import { gsap } from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import type { TranslationKey } from '../i18n/translations';
+import BlurText from './BlurText';
+
+gsap.registerPlugin(ScrollTrigger);
 
 interface SpineItem {
   title: string;
@@ -177,6 +182,54 @@ export default function InteractiveThreeSpine({ workIndex }: InteractiveThreeSpi
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const pointerPos = useRef({ x: -9999, y: -9999 });
+  const gsapTriggersRef = useRef<ScrollTrigger[]>([]);
+
+  const featuredCardRef = useCallback((el: HTMLAnchorElement | null) => {
+    if (!el) return;
+
+    const cardTrigger = gsap.fromTo(
+      el,
+      { opacity: 0, y: 28 },
+      {
+        opacity: 1,
+        y: 0,
+        ease: 'none',
+        scrollTrigger: {
+          trigger: el,
+          start: 'top bottom-=5%',
+          end: 'top center+=15%',
+          scrub: 0.5,
+        },
+      },
+    );
+
+    const img = el.querySelector<HTMLElement>('.spine-featured-img');
+    if (img) {
+      gsap.fromTo(
+        img,
+        { '--scroll-opacity': 0 },
+        {
+          '--scroll-opacity': 0.55,
+          ease: 'power1.out',
+          scrollTrigger: {
+            trigger: el,
+            start: 'top bottom-=5%',
+            end: 'top center+=10%',
+            scrub: 0.8,
+          },
+        },
+      );
+    }
+
+    if (cardTrigger.scrollTrigger) gsapTriggersRef.current.push(cardTrigger.scrollTrigger);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      gsapTriggersRef.current.forEach((t) => t.kill());
+      gsapTriggersRef.current = [];
+    };
+  }, []);
 
   const handlePointerMove = (e: React.PointerEvent) => {
     if (!containerRef.current) return;
@@ -214,7 +267,7 @@ export default function InteractiveThreeSpine({ workIndex }: InteractiveThreeSpi
       onPointerMove={handlePointerMove}
       onPointerLeave={handlePointerLeave}
     >
-      <div className="absolute inset-0 z-0 pointer-events-none rounded-xl overflow-hidden" style={{ background: 'rgba(240, 239, 233, 0.12)' }}>
+      <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
         <Canvas camera={{ position: [0, 0, 5], fov: 50 }}>
           <ambientLight intensity={1} />
           <Particles hoveredIndex={hoveredIndex} rowCount={totalVisibleRows} pointerPos={pointerPos} />
@@ -222,125 +275,140 @@ export default function InteractiveThreeSpine({ workIndex }: InteractiveThreeSpi
       </div>
 
       <div className="relative z-10 py-[var(--space-sm)]">
-        {categories.map((cat, catIdx) => (
-          <motion.section
-            key={cat.key}
-            className="spine-block"
-            initial={{ opacity: 0, y: 16 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, amount: 0.2 }}
-            transition={{ duration: 0.45, delay: catIdx * 0.08, ease: enterEase }}
-          >
-            <div className="spine-body">
-              <motion.ul
-                className="spine-list"
-                initial="hidden"
-                whileInView="show"
-                viewport={{ once: true, amount: 0.2 }}
-                variants={{
-                  hidden: {},
-                  show: {
-                    transition: {
-                      staggerChildren: 0.08,
-                      delayChildren: 0.06 + catIdx * 0.04,
-                    },
+        <motion.section
+          className="spine-block"
+          initial={{ opacity: 0, y: 16 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.1 }}
+          transition={{ duration: 0.5, ease: enterEase }}
+        >
+          <div className="spine-body">
+            <motion.ul
+              className="spine-list"
+              initial="hidden"
+              whileInView="show"
+              viewport={{ once: true, amount: 0.1 }}
+              variants={{
+                hidden: {},
+                show: {
+                  transition: {
+                    staggerChildren: 0.06,
+                    delayChildren: 0.04,
                   },
-                }}
-              >
-                {cat.items.map((item, itemIdx) => {
-                  const gIdx = allRows.findIndex(
-                    (r) => r.catIdx === categories.indexOf(cat) && r.item.title === item.title
-                  );
-                  return (
-                    <motion.li
-                      key={item.title}
-                      className={item.featured ? 'spine-row spine-row--featured' : 'spine-row'}
-                      onMouseEnter={() => setHoveredIndex(gIdx >= 0 ? gIdx : null)}
-                      onMouseLeave={() => setHoveredIndex(null)}
-                      variants={{
-                        hidden: { opacity: 0, y: 10 },
-                        show: {
-                          opacity: 1,
-                          y: 0,
-                          transition: { duration: 0.38, ease: enterEase },
-                        },
-                      }}
-                      whileHover={{ y: -1 }}
+                },
+              }}
+            >
+              {allRows.map(({ item, globalIdx: gIdx }) => (
+                <motion.li
+                  key={item.title}
+                  className={item.featured ? 'spine-row spine-row--featured' : 'spine-row'}
+                  onMouseEnter={() => setHoveredIndex(gIdx)}
+                  onMouseLeave={() => setHoveredIndex(null)}
+                  variants={{
+                    hidden: { opacity: 0, y: 10 },
+                    show: {
+                      opacity: 1,
+                      y: 0,
+                      transition: { duration: 0.4, ease: enterEase },
+                    },
+                  }}
+                  whileHover={item.featured ? undefined : { y: -1 }}
+                >
+                  {item.featured && item.thumb ? (
+                    <a
+                      ref={featuredCardRef}
+                      href={item.href}
+                      className="spine-row-link--featured spine-featured-gsap"
                     >
-                      {item.featured && item.thumb ? (
-                        <motion.a
-                          href={item.href}
-                          className="spine-row-link--featured"
-                          whileHover={{ scale: 1.004 }}
-                          whileTap={{ scale: 0.996 }}
-                          transition={{ duration: 0.25, ease: 'easeOut' }}
-                        >
-                          <img
-                            src={item.thumb}
-                            alt={item.title}
-                            className="spine-featured-img"
-                          />
-                          <div className="spine-featured-overlay" />
-                          <div className="spine-featured-content">
-                            <motion.span
-                              className="spine-featured-role"
-                              initial={{ opacity: 0, y: 10 }}
-                              whileInView={{ opacity: 1, y: 0 }}
-                              viewport={{ once: true, amount: 0.4 }}
-                              transition={{ duration: 0.35, delay: 0.1 + itemIdx * 0.04, ease: enterEase }}
-                            >
-                              {item.role}
-                            </motion.span>
-                            <motion.p
-                              className="spine-featured-title"
-                              initial={{ opacity: 0, y: 10 }}
-                              whileInView={{ opacity: 1, y: 0 }}
-                              viewport={{ once: true, amount: 0.4 }}
-                              transition={{ duration: 0.4, delay: 0.14 + itemIdx * 0.04, ease: enterEase }}
-                            >
-                              {item.title}
-                            </motion.p>
-                            <motion.p
-                              className="spine-featured-outcome"
-                              initial={{ opacity: 0, y: 10 }}
-                              whileInView={{ opacity: 1, y: 0 }}
-                              viewport={{ once: true, amount: 0.4 }}
-                              transition={{ duration: 0.4, delay: 0.18 + itemIdx * 0.04, ease: enterEase }}
-                            >
-                              {item.outcome}
-                            </motion.p>
-                          </div>
-                        </motion.a>
-                      ) : (
-                        <motion.a
-                          href={item.href}
-                          className="spine-row-link"
-                          whileHover={{ x: 3 }}
-                          whileTap={{ scale: 0.995 }}
-                          transition={{ duration: 0.22, ease: 'easeOut' }}
-                        >
-                          {item.thumb && (
-                            <img
-                              src={item.thumb}
-                              alt=""
-                              className="shrink-0 rounded-md object-cover"
-                              style={{ width: '48px', height: '48px' }}
-                            />
-                          )}
-                          <div className="flex-1 min-w-0">
-                            <p className="font-medium text-[var(--color-text)]">{item.title}</p>
-                            <p className="type-body">{item.outcome}</p>
-                          </div>
-                          <span className="type-caption">{item.role}</span>
-                        </motion.a>
+                      <img
+                        src={item.thumb}
+                        alt={item.title}
+                        className="spine-featured-img"
+                      />
+                      <div className="spine-featured-overlay" />
+                      <div className="spine-featured-content">
+                        <span className="spine-featured-role">
+                          {item.role}
+                        </span>
+                        <BlurText
+                          text={item.title}
+                          className="spine-featured-title"
+                          delay={80}
+                          animateBy="words"
+                          direction="bottom"
+                          stepDuration={0.4}
+                          threshold={0.05}
+                          rootMargin="0px 0px -10% 0px"
+                        />
+                        <BlurText
+                          text={item.outcome}
+                          className="spine-featured-outcome"
+                          delay={60}
+                          animateBy="words"
+                          direction="bottom"
+                          stepDuration={0.35}
+                          threshold={0.05}
+                          rootMargin="0px 0px -10% 0px"
+                          animationFrom={{ filter: 'blur(8px)', opacity: 0, y: 20 }}
+                          animationTo={[
+                            { filter: 'blur(3px)', opacity: 0.5, y: 3 },
+                            { filter: 'blur(0px)', opacity: 1, y: 0 },
+                          ]}
+                        />
+                      </div>
+                    </a>
+                  ) : (
+                    <motion.a
+                      href={item.href}
+                      className="spine-row-link"
+                      whileHover={{ x: 2 }}
+                      whileTap={{ scale: 0.997 }}
+                      transition={{ duration: 0.3, ease: 'easeOut' }}
+                    >
+                      {item.thumb && (
+                        <img
+                          src={item.thumb}
+                          alt=""
+                          className="shrink-0 rounded-md object-cover"
+                          style={{ width: '48px', height: '48px' }}
+                        />
                       )}
-                    </motion.li>
-                  );
-                })}
-              </motion.ul>
-            </div>
-          </motion.section>
-        ))}
+                      <div className="flex-1 min-w-0">
+                        <BlurText
+                          text={item.title}
+                          className="font-medium text-[var(--color-text)]"
+                          delay={60}
+                          animateBy="words"
+                          direction="top"
+                          stepDuration={0.3}
+                          animationFrom={{ filter: 'blur(6px)', opacity: 0, y: -16 }}
+                          animationTo={[
+                            { filter: 'blur(2px)', opacity: 0.6, y: 2 },
+                            { filter: 'blur(0px)', opacity: 1, y: 0 },
+                          ]}
+                        />
+                        <BlurText
+                          text={item.outcome}
+                          className="type-body"
+                          delay={50}
+                          animateBy="words"
+                          direction="top"
+                          stepDuration={0.28}
+                          animationFrom={{ filter: 'blur(5px)', opacity: 0, y: -12 }}
+                          animationTo={[
+                            { filter: 'blur(2px)', opacity: 0.5, y: 2 },
+                            { filter: 'blur(0px)', opacity: 1, y: 0 },
+                          ]}
+                        />
+                      </div>
+                      <span className="type-caption">{item.role}</span>
+                    </motion.a>
+                  )}
+                </motion.li>
+              ))}
+            </motion.ul>
+          </div>
+        </motion.section>
       </div>
     </div>
   );

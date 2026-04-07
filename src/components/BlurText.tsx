@@ -3,20 +3,20 @@ import { useEffect, useRef, useState, useMemo } from 'react';
 
 type AnimationProps = Record<string, string | number>;
 
-function buildKeyframes(from: AnimationProps, steps: AnimationProps[]) {
+const buildKeyframes = (from: AnimationProps, steps: AnimationProps[]) => {
   const keys = new Set([...Object.keys(from), ...steps.flatMap((s) => Object.keys(s))]);
   const keyframes: Record<string, (string | number)[]> = {};
   keys.forEach((k) => {
-    keyframes[k] = [from[k] ?? 0, ...steps.map((s) => s[k] ?? 0)];
+    keyframes[k] = [from[k], ...steps.map((s) => s[k])];
   });
   return keyframes;
-}
+};
 
 interface BlurTextProps {
-  text?: string;
+  text: string;
   delay?: number;
   className?: string;
-  animateBy?: 'words' | 'letters';
+  animateBy?: 'words' | 'characters';
   direction?: 'top' | 'bottom';
   threshold?: number;
   rootMargin?: string;
@@ -25,6 +25,7 @@ interface BlurTextProps {
   easing?: (t: number) => number;
   onAnimationComplete?: () => void;
   stepDuration?: number;
+  as?: 'p' | 'span' | 'h1' | 'h2' | 'h3';
 }
 
 export default function BlurText({
@@ -40,14 +41,15 @@ export default function BlurText({
   easing = (t) => t,
   onAnimationComplete,
   stepDuration = 0.35,
+  as: Tag = 'p',
 }: BlurTextProps) {
   const elements = animateBy === 'words' ? text.split(' ') : text.split('');
   const [inView, setInView] = useState(false);
-  const ref = useRef<HTMLParagraphElement>(null);
+  const ref = useRef<HTMLElement>(null);
 
   useEffect(() => {
+    if (!ref.current) return;
     const el = ref.current;
-    if (!el) return;
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
@@ -61,17 +63,17 @@ export default function BlurText({
     return () => observer.disconnect();
   }, [threshold, rootMargin]);
 
-  const defaultFrom = useMemo<AnimationProps>(
+  const defaultFrom = useMemo(
     () =>
       direction === 'top'
-        ? { filter: 'blur(10px)', opacity: 0, y: -50 }
-        : { filter: 'blur(10px)', opacity: 0, y: 50 },
+        ? { filter: 'blur(10px)', opacity: 0, y: -30 }
+        : { filter: 'blur(10px)', opacity: 0, y: 30 },
     [direction],
   );
 
-  const defaultTo = useMemo<AnimationProps[]>(
+  const defaultTo = useMemo(
     () => [
-      { filter: 'blur(5px)', opacity: 0.5, y: direction === 'top' ? 5 : -5 },
+      { filter: 'blur(5px)', opacity: 0.5, y: direction === 'top' ? 4 : -4 },
       { filter: 'blur(0px)', opacity: 1, y: 0 },
     ],
     [direction],
@@ -82,10 +84,16 @@ export default function BlurText({
 
   const stepCount = toSnapshots.length + 1;
   const totalDuration = stepDuration * (stepCount - 1);
-  const times = Array.from({ length: stepCount }, (_, i) => (stepCount === 1 ? 0 : i / (stepCount - 1)));
+  const times = Array.from({ length: stepCount }, (_, i) =>
+    stepCount === 1 ? 0 : i / (stepCount - 1),
+  );
 
   return (
-    <p ref={ref} className={className} style={{ display: 'flex', flexWrap: 'wrap' }}>
+    <Tag
+      ref={ref as React.RefObject<HTMLParagraphElement>}
+      className={className}
+      style={{ display: 'flex', flexWrap: 'wrap' }}
+    >
       {elements.map((segment, index) => {
         const animateKeyframes = buildKeyframes(fromSnapshot, toSnapshots);
         const spanTransition = {
@@ -102,13 +110,15 @@ export default function BlurText({
             initial={fromSnapshot}
             animate={inView ? animateKeyframes : fromSnapshot}
             transition={spanTransition}
-            onAnimationComplete={index === elements.length - 1 ? onAnimationComplete : undefined}
+            onAnimationComplete={
+              index === elements.length - 1 ? onAnimationComplete : undefined
+            }
           >
             {segment === ' ' ? '\u00A0' : segment}
             {animateBy === 'words' && index < elements.length - 1 && '\u00A0'}
           </motion.span>
         );
       })}
-    </p>
+    </Tag>
   );
 }

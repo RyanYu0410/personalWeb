@@ -45,6 +45,8 @@ export const sectionMeta = [
   { id: 'page-03', label: 'UI Systems' },
   { id: 'page-03a', label: 'UI Case' },
   { id: 'page-housing', label: 'Housing' },
+  { id: 'page-train', label: 'Train UI' },
+  { id: 'page-poker', label: 'AR Poker' },
   { id: 'page-04', label: 'Interactive' },
   { id: 'page-04a', label: 'Int Project' },
   { id: 'page-05', label: 'Research' },
@@ -90,10 +92,11 @@ export const about = {
 
 export const workIndex = {
   ui: [
-    { title: 'Transit UI Refresh', outcome: 'Reduced interaction steps for trip planning.', role: 'UI System', href: '#page-03a' },
+    { title: 'MTA Live Arrivals', outcome: 'Real-time transit data visualization for NYC subway riders.', role: 'UI System + Data Viz', href: '#page-train', thumb: './train-hero.png', featured: true },
     { title: 'Housing Solutions', outcome: 'Tools and Insights for a Smoother Housing Searching Experiences', role: 'UI System + UX', href: '#page-housing', thumb: './housing-hero.png', featured: true },
   ],
   interactive: [
+    { title: 'Zero-kit AR Poker', outcome: 'Face-to-face multiplayer AR poker on shared table.', role: 'Unity/AR', href: '#page-poker', thumb: './poker-hero.png', featured: true },
     { title: 'Gesture Type Lab', outcome: 'Mapped body input to kinetic typography states.', role: 'Prototype', href: '#page-04a' },
     { title: 'AR Wayfinding Mock', outcome: 'Tested spatial cue readability in motion.', role: 'Unity/AR', href: '#page-04a' },
   ],
@@ -104,13 +107,13 @@ export const workIndex = {
 export const uiCaseStudies: CaseStudy[] = [
   {
     id: 'ui-a',
-    title: 'Transit UI Refresh',
-    role: 'Product Design + Frontend',
-    link: '#page-03a',
-    problem: 'Trip planning flows were verbose and visually inconsistent across surfaces.',
-    constraints: ['Legacy data schema', 'No backend changes', '2-week delivery'],
-    approach: ['Consolidated navigation states', 'Tokenized spacing and type', 'Built fold-out detail interactions'],
-    iterations: ['Prototype A removed redundant tabs', 'Prototype B improved card rhythm', 'Final reduced primary actions to 3'],
+    title: 'MTA Live Arrivals',
+    role: 'UI System + Data Visualization',
+    link: '#page-train',
+    problem: 'NYC subway riders lacked a unified, real-time view of arrivals, crowding, and service alerts across all lines.',
+    constraints: ['MTA GTFS-RT feed latency', 'Cross-line data normalization', '22 train lines with unique schedules'],
+    approach: ['Horizontal route map with live status', 'Station-level crowd prediction', 'Adaptive light/dark + color/B&W modes'],
+    iterations: ['v1 table-only arrivals', 'v2 added route map visualization', 'v3 integrated crowd & alert overlays'],
   },
   {
     id: 'ui-b',
@@ -268,6 +271,71 @@ export const housingProject = {
     tools: ['Figma', 'React', 'User Interviews', 'Usability Testing'],
   },
   galleryCount: 6,
+};
+
+export const trainProject = {
+  title: 'MTA Live Arrivals',
+  subtitle: 'Real-Time Transit Data Visualization for NYC Subway Riders',
+  year: '2025',
+  role: 'UI System + Data Visualization',
+  team: ['Ryan Yu'],
+  summary:
+    'A real-time transit information system that aggregates MTA GTFS-RT feeds across all 22 NYC subway lines into a unified interface. The project delivers live arrival boards, a horizontal route map with crowd and alert overlays, an interactive station finder, and adaptive theming — designed for riders who need fast, trustworthy information at a glance.',
+  features: [
+    {
+      label: 'Live Arrivals',
+      desc: 'Real-time arrival and departure data for every station, refreshed from the MTA GTFS-RT feed with predicted hourly ridership.',
+    },
+    {
+      label: 'Route Map',
+      desc: 'Horizontal visual spec of the G line (Church Av to Court Sq) with station nodes, crowd density, service alerts, and light/dark + color/B&W toggles.',
+    },
+    {
+      label: 'Station Finder',
+      desc: 'Map-based station search with route planning, nearby station discovery, and quick-access train detail links.',
+    },
+    {
+      label: 'Service Status',
+      desc: 'Live service alerts with severity tiers (Good Service / Delays / Major Issues) and crowd thresholds per station.',
+    },
+  ],
+  credits: {
+    team: ['Ryan Yu'],
+    role: 'UI System + Data Visualization',
+    year: '2025',
+    tools: ['React', 'MTA GTFS-RT API', 'Mapbox', 'Node.js'],
+  },
+  liveUrl: 'https://trainui.onrender.com/Gtrain-roadmap.html',
+  youtubeUrl: 'https://youtu.be/oKeX4DFnOfk',
+};
+
+export const pokerProject = {
+  title: 'Zero-kit AR Poker',
+  subtitle: 'Face-to-Face Multiplayer AR Texas Hold\u2019em',
+  year: '2025',
+  role: 'Interaction Design + Unity/AR Development',
+  team: ['Ryan Yu'],
+  summary:
+    'A local multiplayer AR poker game where 2\u20136 friends gather, scan a surface, and share a virtual felt table rendered in augmented reality. Each player sees private hands on their own device while the shared table \u2014 community cards, chips, and pot \u2014 appears anchored in the room. Built with ARKit, RealityKit, and MultipeerConnectivity for under-30-second setup and zero infrastructure.',
+  features: [
+    { label: 'AR Table Placement', desc: 'Scan a flat surface to anchor a shared felt table in the room. All players see the same table from their own vantage point via relocalized AR anchors.' },
+    { label: 'Private Hands', desc: 'Each device receives encrypted private cards \u2014 only you see your hole cards. Community cards, pot, and chip stacks render on the shared AR table.' },
+    { label: 'Auto Judge', desc: 'A built-in rules engine validates every bet, call, and fold in real-time. Hand ranking and winner determination happen automatically at showdown.' },
+    { label: 'QR / Nearby Join', desc: 'Players join via QR code scan or iOS Nearby Interaction. No server, no account \u2014 peer-to-peer connectivity gets everyone in under 30 seconds.' },
+  ],
+  gameplay: {
+    actions: 'Bet \u00b7 Check \u00b7 Call \u00b7 Fold',
+    flow: 'Texas Hold\u2019em (no cash) \u2014 validate rules \u2192 update table state \u2192 score + share at round end.',
+    players: '2\u20136 players, local only',
+  },
+  techStack: ['Unity', 'ARKit + RealityKit', 'MultipeerConnectivity', 'C#', 'iOS'],
+  credits: {
+    team: ['Ryan Yu'],
+    role: 'Interaction Design + Unity/AR Development',
+    year: '2025',
+    tools: ['Unity', 'ARKit', 'RealityKit', 'MultipeerConnectivity', 'C#'],
+  },
+  youtubeUrl: 'https://youtu.be/dX3YE3JLDgw',
 };
 
 export const spatialStudies = {

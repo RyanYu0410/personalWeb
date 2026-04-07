@@ -5,9 +5,11 @@ import {
   home,
   housingProject,
   interactiveProjects,
+  pokerProject,
   researchEntries,
   sectionMeta,
   spatialStudies,
+  trainProject,
   uiCaseStudies,
   workIndex,
 } from './content/systematicContent';
@@ -176,6 +178,8 @@ const navLabelKeys: Record<string, TranslationKey> = {
   'page-03': 'navUISystems',
   'page-03a': 'navUICase',
   'page-housing': 'navHousing',
+  'page-train': 'navTrain',
+  'page-poker': 'navPoker',
   'page-04': 'navInteractive',
   'page-04a': 'navIntProject',
   'page-05': 'navResearch',
@@ -193,11 +197,10 @@ function App() {
   const [uiDeepOpen, setUiDeepOpen] = useState<string | null>(null);
   const [interactiveOpen, setInteractiveOpen] = useState(interactiveProjects[0].id);
   const [logOpen, setLogOpen] = useState(researchEntries[0].id);
-  const [aboutFoldOpen, setAboutFoldOpen] = useState<'education' | 'paper' | 'other' | null>(null);
   const [focusOpen, setFocusOpen] = useState(false);
   const [toolsOpen, setToolsOpen] = useState(false);
   const [spatialOpen, setSpatialOpen] = useState<'installation' | 'coding'>('installation');
-  const WORK_DETAIL_IDS = ['page-03', 'page-03a', 'page-housing', 'page-04', 'page-04a', 'page-05', 'page-06', 'page-06a'] as const;
+  const WORK_DETAIL_IDS = ['page-03', 'page-03a', 'page-housing', 'page-train', 'page-poker', 'page-04', 'page-04a', 'page-05', 'page-06', 'page-06a'] as const;
   const [workDetailId, setWorkDetailId] = useState<string | null>(() => {
     const id = window.location.hash.slice(1);
     return WORK_DETAIL_IDS.includes(id as (typeof WORK_DETAIL_IDS)[number]) ? id : null;
@@ -407,7 +410,7 @@ function App() {
       <nav aria-label="Section navigation" className="section-nav surface-glass">
         <div className="section-nav-links">
           {sectionMeta.map((item) => {
-            const isNested = ['page-03', 'page-03a', 'page-housing', 'page-04', 'page-04a', 'page-05', 'page-06', 'page-06a'].includes(item.id);
+            const isNested = ['page-03', 'page-03a', 'page-housing', 'page-train', 'page-poker', 'page-04', 'page-04a', 'page-05', 'page-06', 'page-06a'].includes(item.id);
             if (isNested) return null;
             return (
               <a
@@ -471,7 +474,7 @@ function App() {
                 {(() => {
                   let idx = 0;
                   return sectionMeta.map((item) => {
-                    const isNested = ['page-03', 'page-03a', 'page-housing', 'page-04', 'page-04a', 'page-05', 'page-06', 'page-06a'].includes(item.id);
+                    const isNested = ['page-03', 'page-03a', 'page-housing', 'page-train', 'page-poker', 'page-04', 'page-04a', 'page-05', 'page-06', 'page-06a'].includes(item.id);
                     if (!isNested) return null;
                     const i = idx++;
                     return (
@@ -611,38 +614,35 @@ function App() {
                 <button type="submit" className="spine-open" style={{ justifySelf: 'start' }}>SEND</button>
               </form>
             </div>
-            <div className="space-y-[var(--space-sm)]">
-              <button type="button" className="spine-head home-spine-link" onClick={() => setAboutFoldOpen((v) => (v === 'education' ? null : 'education'))} aria-expanded={aboutFoldOpen === 'education'}>
-                <span className="type-caption">{t('optionalFold')}</span>
-                <span className="text-[1rem] font-medium text-[var(--color-text)]">{t('educationFold')}</span>
-                <span className="type-caption">{aboutFoldOpen === 'education' ? t('fold') : t('unfold')}</span>
-              </button>
-              {aboutFoldOpen === 'education' && (
+            <div className="space-y-[var(--space-md)]">
+              <div className="spine-block">
+                <div className="spine-head">
+                  <span className="type-caption">#</span>
+                  <span className="text-[1rem] font-medium text-[var(--color-text)]">{t('educationFold')}</span>
+                </div>
                 <div className="spine-body">
                   <p className="type-body">{about.fold.education}</p>
                   {about.fold.exhibitions && <p className="type-body mt-[var(--space-sm)]">{about.fold.exhibitions}</p>}
                 </div>
-              )}
-              <button type="button" className="spine-head home-spine-link" onClick={() => setAboutFoldOpen((v) => (v === 'paper' ? null : 'paper'))} aria-expanded={aboutFoldOpen === 'paper'}>
-                <span className="type-caption">{t('optionalFold')}</span>
-                <span className="text-[1rem] font-medium text-[var(--color-text)]">{t('paperFold')}</span>
-                <span className="type-caption">{aboutFoldOpen === 'paper' ? t('fold') : t('unfold')}</span>
-              </button>
-              {aboutFoldOpen === 'paper' && (
+              </div>
+              <div className="spine-block">
+                <div className="spine-head">
+                  <span className="type-caption">#</span>
+                  <span className="text-[1rem] font-medium text-[var(--color-text)]">{t('paperFold')}</span>
+                </div>
                 <div className="spine-body">
                   <p className="type-body">{about.fold.paperReport}</p>
                 </div>
-              )}
-              <button type="button" className="spine-head home-spine-link" onClick={() => setAboutFoldOpen((v) => (v === 'other' ? null : 'other'))} aria-expanded={aboutFoldOpen === 'other'}>
-                <span className="type-caption">{t('optionalFold')}</span>
-                <span className="text-[1rem] font-medium text-[var(--color-text)]">{t('otherFold')}</span>
-                <span className="type-caption">{aboutFoldOpen === 'other' ? t('fold') : t('unfold')}</span>
-              </button>
-              {aboutFoldOpen === 'other' && (
+              </div>
+              <div className="spine-block">
+                <div className="spine-head">
+                  <span className="type-caption">#</span>
+                  <span className="text-[1rem] font-medium text-[var(--color-text)]">{t('otherFold')}</span>
+                </div>
                 <div className="spine-body">
                   <p className="type-body">{about.fold.otherWorks}</p>
                 </div>
-              )}
+              </div>
             </div>
           </section>
         ) : isResumeView ? (
@@ -1580,6 +1580,512 @@ function App() {
                     <div>
                       <p className="type-caption mb-[var(--space-xs)]">{String(t('housingCreditsTools'))}</p>
                       <p className="type-body">{housingProject.credits.tools.join(', ')}</p>
+                    </div>
+                  </div>
+                </section>
+              </>
+            )}
+            {workDetailId === 'page-train' && (
+              <>
+                {/* Hero */}
+                <div className="flex flex-col md:flex-row gap-[var(--space-lg)] mb-[var(--space-xxxl)] items-start">
+                  <div className="flex-1 min-w-0 pt-[var(--space-md)]">
+                    <h1 className="type-h1">{String(t('trainHeroName'))}</h1>
+                    <div className="flex gap-[var(--space-md)] mt-[var(--space-lg)]">
+                      <span className="type-caption">{String(t('trainYear'))}</span>
+                      <span className="type-caption">{String(t('trainRole'))}</span>
+                    </div>
+                  </div>
+                  <div className="w-full md:w-[55%] shrink-0">
+                    <img
+                      src="./train-hero.png"
+                      alt="MTA Live Arrivals hero — G train route map"
+                      className="w-full rounded-xl object-cover"
+                      style={{ aspectRatio: '4 / 3' }}
+                    />
+                  </div>
+                </div>
+
+                {/* Overview */}
+                <div className="flex flex-col md:flex-row gap-[var(--space-lg)] mt-[var(--space-xxxl)] mb-[var(--space-xxxl)] items-start py-[var(--space-xxl)] px-[var(--space-md)] border-t border-b border-black/8">
+                  <h3 className="shrink-0 pt-[3px] text-[var(--color-text-muted)]" style={{ fontSize: 'clamp(1.05rem, 1.5vw, 1.25rem)', letterSpacing: '0.04em' }}>{String(t('trainOverviewLabel'))}</h3>
+                  <p className="leading-relaxed max-w-2xl ml-auto" style={{ fontSize: 'clamp(1rem, 1.3vw, 1.15rem)' }}>{String(t('trainOverview'))}</p>
+                </div>
+
+                {/* Scroll-reveal typographic statement */}
+                <motion.div
+                  className="mb-[var(--space-xxxl)]"
+                  initial={{ opacity: 0, y: 60 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, margin: '-15% 0px' }}
+                  transition={{ duration: 0.8, ease: [0.25, 0.1, 0.25, 1] }}
+                >
+                  <p className="font-bold leading-[1.1] tracking-tight text-[var(--color-text)]" style={{ fontSize: 'clamp(2.5rem, 8vw, 6rem)' }}>
+                    Real-Time
+                  </p>
+                  <p className="font-bold leading-[1.1] tracking-tight text-[var(--color-accent-primary)]" style={{ fontSize: 'clamp(2.5rem, 8vw, 6rem)', marginTop: '-13px', marginBottom: '-13px' }}>
+                    MTA Live
+                  </p>
+                  <p className="text-right mt-[var(--space-xs)]" style={{ marginTop: '-11px', marginBottom: '-18px' }}>
+                    <span className="text-[var(--color-accent-secondary)] font-semibold tracking-wide" style={{ fontSize: 'clamp(1.2rem, 2.5vw, 1.8rem)' }}>22 lines &middot; 472 stations</span>
+                  </p>
+                  <p className="font-bold leading-[1.1] tracking-tight text-[var(--color-text)] text-right mt-[var(--space-xs)]" style={{ fontSize: 'clamp(2.5rem, 8vw, 6rem)' }}>
+                    Arrivals
+                  </p>
+                </motion.div>
+
+                {/* Video embed */}
+                <motion.div
+                  className="mb-[var(--space-xxxl)]"
+                  initial={{ opacity: 0, y: 40 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, margin: '-10% 0px' }}
+                  transition={{ duration: 0.6, ease: [0.25, 0.1, 0.25, 1] }}
+                >
+                  <div className="flex flex-col items-center gap-[var(--space-sm)]">
+                    <h3 className="type-caption m-0 w-full text-left" style={{ maxWidth: 'min(100%, 40rem)' }}>{String(t('trainVideoLabel'))}</h3>
+                    <div
+                      className="relative overflow-hidden bg-black rounded-xl"
+                      style={{ width: 'min(100%, 40rem)', aspectRatio: '16 / 9' }}
+                    >
+                      <iframe
+                        className="absolute inset-0 w-full h-full"
+                        src="https://www.youtube.com/embed/oKeX4DFnOfk"
+                        title="MTA Live Arrivals — project walkthrough"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowFullScreen
+                        style={{ border: 0 }}
+                      />
+                    </div>
+                    <div className="flex items-center justify-between w-full" style={{ maxWidth: 'min(100%, 40rem)' }}>
+                      <a
+                        className="spine-open"
+                        href={trainProject.youtubeUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        {String(t('trainVideoOpenYouTube'))}
+                      </a>
+                    </div>
+                  </div>
+                </motion.div>
+
+                {/* Key Features */}
+                <motion.section
+                  className="mb-[var(--space-xxxl)]"
+                  initial={{ opacity: 0, y: 40 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, margin: '-10% 0px' }}
+                  transition={{ duration: 0.6, ease: [0.25, 0.1, 0.25, 1] }}
+                >
+                  <h3 className="type-caption text-[1.1rem] tracking-wider mb-[var(--space-lg)]">{String(t('trainFeaturesLabel'))}</h3>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-[var(--space-md)]">
+                    {([
+                      { label: String(t('trainFeatureLiveArrivals')), detail: String(t('trainFeatureLiveArrivalsDesc')), accent: 'var(--color-accent-primary)' },
+                      { label: String(t('trainFeatureRouteMap')), detail: String(t('trainFeatureRouteMapDesc')), accent: 'var(--color-accent-secondary)' },
+                      { label: String(t('trainFeatureStationFinder')), detail: String(t('trainFeatureStationFinderDesc')), accent: 'var(--color-accent-tertiary)' },
+                      { label: String(t('trainFeatureServiceStatus')), detail: String(t('trainFeatureServiceStatusDesc')), accent: 'var(--color-accent-primary)' },
+                    ]).map(({ label, detail, accent }, idx) => (
+                      <motion.div
+                        key={idx}
+                        className="group relative rounded-2xl p-[var(--space-md)] overflow-hidden cursor-default select-none border border-black/12 hover:border-[var(--color-accent-primary)]/40 hover:bg-[var(--color-accent-primary)]/5"
+                        style={{ minHeight: '10rem', transition: 'border-color 0.25s, background 0.25s' }}
+                        initial={{ opacity: 0, y: 16 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true, amount: 0.4 }}
+                        transition={{ duration: 0.5, delay: idx * 0.08, ease: [0.22, 1, 0.36, 1] }}
+                        whileHover={{ y: -4, transition: { duration: 0.22, ease: 'easeOut' } }}
+                      >
+                        <span
+                          className="absolute top-3 right-4 font-bold leading-none pointer-events-none"
+                          style={{ fontSize: '3.8rem', lineHeight: 1, color: accent, opacity: 0.1 }}
+                        >
+                          {String(idx + 1).padStart(2, '0')}
+                        </span>
+                        <p
+                          className="text-[1.1rem] font-medium leading-snug relative z-10 pt-[3.2rem]"
+                          style={{ transition: 'transform 0.22s ease, opacity 0.22s ease' }}
+                        >
+                          {label}
+                        </p>
+                        <p
+                          className="text-[0.88rem] text-[var(--color-text-muted)] leading-snug relative z-10 overflow-hidden opacity-0 group-hover:opacity-100 max-h-0 group-hover:max-h-28 mt-0 group-hover:mt-[var(--space-xs)]"
+                          style={{ transition: 'max-height 0.35s ease, opacity 0.25s ease, margin 0.3s ease' }}
+                        >
+                          {detail}
+                        </p>
+                      </motion.div>
+                    ))}
+                  </div>
+                </motion.section>
+
+                {/* G-Line Route Map SVG */}
+                <motion.section
+                  className="mb-[var(--space-xxxl)]"
+                  initial={{ opacity: 0, y: 40 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, margin: '-10% 0px' }}
+                  transition={{ duration: 0.6, ease: [0.25, 0.1, 0.25, 1] }}
+                >
+                  <h3 className="type-caption text-[1.1rem] tracking-wider mb-[var(--space-lg)]">G LINE ROUTE MAP</h3>
+                  <div className="border border-black/10 rounded-2xl overflow-hidden p-[var(--space-lg)]">
+                    <svg viewBox="0 0 720 120" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full" aria-label="G line route map: Church Av to Court Sq" preserveAspectRatio="xMidYMid meet">
+                      {/* Main line */}
+                      <motion.line
+                        x1="40" y1="60" x2="680" y2="60"
+                        stroke="#6CBE45" strokeWidth="4" strokeLinecap="round"
+                        initial={{ pathLength: 0, opacity: 0 }}
+                        whileInView={{ pathLength: 1, opacity: 1 }}
+                        viewport={{ once: true }}
+                        transition={{ duration: 0.8, delay: 0.2, ease: [0.4, 0, 0.2, 1] }}
+                      />
+                      {/* Station nodes */}
+                      {[
+                        { name: 'Church Av', x: 40 },
+                        { name: 'Beverly Rd', x: 120 },
+                        { name: 'Ft Hamilton', x: 200 },
+                        { name: '15th St', x: 280 },
+                        { name: '4th Av–9th St', x: 360 },
+                        { name: 'Smith–9th St', x: 440 },
+                        { name: 'Bergen St', x: 520 },
+                        { name: 'Hoyt–Sch', x: 600 },
+                        { name: 'Court Sq', x: 680 },
+                      ].map((station, i) => (
+                        <motion.g
+                          key={station.name}
+                          initial={{ opacity: 0, scale: 0 }}
+                          whileInView={{ opacity: 1, scale: 1 }}
+                          viewport={{ once: true }}
+                          transition={{ duration: 0.35, delay: 0.3 + i * 0.07, ease: [0.22, 1, 0.36, 1] }}
+                          style={{ transformOrigin: `${station.x}px 60px` }}
+                        >
+                          <circle cx={station.x} cy={60} r={8} fill="#6CBE45" fillOpacity={i === 0 || i === 8 ? 1 : 0.2} stroke="#6CBE45" strokeWidth={2} />
+                          <circle cx={station.x} cy={60} r={4} fill="white" />
+                          <text
+                            x={station.x}
+                            y={i % 2 === 0 ? 38 : 90}
+                            textAnchor="middle"
+                            dominantBaseline="central"
+                            fill="currentColor"
+                            fontSize="8"
+                            fontWeight={i === 0 || i === 8 ? '700' : '500'}
+                            opacity={i === 0 || i === 8 ? 0.9 : 0.55}
+                          >
+                            {station.name}
+                          </text>
+                        </motion.g>
+                      ))}
+                      {/* Direction indicators */}
+                      <text x="40" y="108" textAnchor="middle" fill="#6CBE45" fontSize="7" fontWeight="600" opacity="0.7">SOUTH</text>
+                      <text x="680" y="108" textAnchor="middle" fill="#6CBE45" fontSize="7" fontWeight="600" opacity="0.7">NORTH</text>
+                    </svg>
+                  </div>
+                </motion.section>
+
+                {/* Live Demo */}
+                <motion.div
+                  className="mb-[var(--space-xxxl)] flex flex-col items-center gap-[var(--space-md)] py-[var(--space-xxl)] border-t border-b border-black/8"
+                  initial={{ opacity: 0, y: 30 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, margin: '-10% 0px' }}
+                  transition={{ duration: 0.5, ease: [0.25, 0.1, 0.25, 1] }}
+                >
+                  <p className="type-caption text-[1.1rem] tracking-wider">{String(t('trainDemoLabel'))}</p>
+                  <a
+                    href={trainProject.liveUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="spine-open"
+                    style={{ fontSize: '0.82rem', padding: '10px 22px' }}
+                  >
+                    {String(t('trainDemoOpen'))}
+                  </a>
+                </motion.div>
+
+                {/* Reflection */}
+                <motion.section
+                  className="mb-[var(--space-xxl)]"
+                  initial={{ opacity: 0, y: 40 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, margin: '-10% 0px' }}
+                  transition={{ duration: 0.6, ease: [0.25, 0.1, 0.25, 1] }}
+                >
+                  <h3 className="type-caption text-[1.1rem] tracking-wider mb-[var(--space-sm)]">{String(t('trainReflectionLabel'))}</h3>
+                  <p className="text-[1.2rem] max-w-4xl leading-relaxed">{String(t('trainReflectionDesc'))}</p>
+                </motion.section>
+
+                <div className="border-t border-black/8 my-[var(--space-xxl)]" />
+
+                {/* Credits */}
+                <section className="mb-[var(--space-xxl)]">
+                  <h3 className="type-caption mb-[var(--space-sm)]">{String(t('trainCreditsLabel'))}</h3>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-[var(--space-md)]">
+                    <div>
+                      <p className="type-caption mb-[var(--space-xs)]">{String(t('trainCreditsTeam'))}</p>
+                      <p className="type-body">{trainProject.credits.team.join(', ')}</p>
+                    </div>
+                    <div>
+                      <p className="type-caption mb-[var(--space-xs)]">{String(t('trainCreditsRole'))}</p>
+                      <p className="type-body">{trainProject.credits.role}</p>
+                    </div>
+                    <div>
+                      <p className="type-caption mb-[var(--space-xs)]">{String(t('trainCreditsYear'))}</p>
+                      <p className="type-body">{trainProject.credits.year}</p>
+                    </div>
+                    <div>
+                      <p className="type-caption mb-[var(--space-xs)]">{String(t('trainCreditsTools'))}</p>
+                      <p className="type-body">{trainProject.credits.tools.join(', ')}</p>
+                    </div>
+                  </div>
+                </section>
+              </>
+            )}
+            {workDetailId === 'page-poker' && (
+              <>
+                {/* Hero */}
+                <div className="flex flex-col md:flex-row gap-[var(--space-lg)] mb-[var(--space-xxxl)] items-start">
+                  <div className="flex-1 min-w-0 pt-[var(--space-md)]">
+                    <h1 className="type-h1">{String(t('pokerHeroName'))}</h1>
+                    <div className="flex gap-[var(--space-md)] mt-[var(--space-lg)]">
+                      <span className="type-caption">{String(t('pokerYear'))}</span>
+                      <span className="type-caption">{String(t('pokerRole'))}</span>
+                    </div>
+                  </div>
+                  <div className="w-full md:w-[55%] shrink-0">
+                    <img
+                      src="./poker-hero.png"
+                      alt="Zero-kit AR Poker — multiplayer AR table"
+                      className="w-full rounded-xl object-cover"
+                      style={{ aspectRatio: '16 / 9' }}
+                    />
+                  </div>
+                </div>
+
+                {/* Overview */}
+                <div className="flex flex-col md:flex-row gap-[var(--space-lg)] mt-[var(--space-xxxl)] mb-[var(--space-xxxl)] items-start py-[var(--space-xxl)] px-[var(--space-md)] border-t border-b border-black/8">
+                  <h3 className="shrink-0 pt-[3px] text-[var(--color-text-muted)]" style={{ fontSize: 'clamp(1.05rem, 1.5vw, 1.25rem)', letterSpacing: '0.04em' }}>{String(t('pokerOverviewLabel'))}</h3>
+                  <p className="leading-relaxed max-w-2xl ml-auto" style={{ fontSize: 'clamp(1rem, 1.3vw, 1.15rem)' }}>{String(t('pokerOverview'))}</p>
+                </div>
+
+                {/* Scroll-reveal typographic statement */}
+                <motion.div
+                  className="mb-[var(--space-xxxl)]"
+                  initial={{ opacity: 0, y: 60 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, margin: '-15% 0px' }}
+                  transition={{ duration: 0.8, ease: [0.25, 0.1, 0.25, 1] }}
+                >
+                  <p className="font-bold leading-[1.1] tracking-tight text-[var(--color-text)]" style={{ fontSize: 'clamp(2.5rem, 8vw, 6rem)' }}>
+                    Shared AR
+                  </p>
+                  <p className="font-bold leading-[1.1] tracking-tight text-[var(--color-accent-primary)]" style={{ fontSize: 'clamp(2.5rem, 8vw, 6rem)', marginTop: '-13px', marginBottom: '-13px' }}>
+                    Poker Table
+                  </p>
+                  <p className="text-right mt-[var(--space-xs)]" style={{ marginTop: '-11px', marginBottom: '-18px' }}>
+                    <span className="text-[var(--color-accent-secondary)] font-semibold tracking-wide" style={{ fontSize: 'clamp(1.2rem, 2.5vw, 1.8rem)' }}>2–6 players &middot; 30s setup &middot; zero servers</span>
+                  </p>
+                  <p className="font-bold leading-[1.1] tracking-tight text-[var(--color-text)] text-right mt-[var(--space-xs)]" style={{ fontSize: 'clamp(2.5rem, 8vw, 6rem)' }}>
+                    Face to Face
+                  </p>
+                </motion.div>
+
+                {/* Video embed */}
+                <motion.div
+                  className="mb-[var(--space-xxxl)]"
+                  initial={{ opacity: 0, y: 40 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, margin: '-10% 0px' }}
+                  transition={{ duration: 0.6, ease: [0.25, 0.1, 0.25, 1] }}
+                >
+                  <div className="flex flex-col items-center gap-[var(--space-sm)]">
+                    <h3 className="type-caption m-0 w-full text-left" style={{ maxWidth: 'min(100%, 40rem)' }}>{String(t('pokerVideoLabel'))}</h3>
+                    <div
+                      className="relative overflow-hidden bg-black rounded-xl"
+                      style={{ width: 'min(100%, 40rem)', aspectRatio: '16 / 9' }}
+                    >
+                      <iframe
+                        className="absolute inset-0 w-full h-full"
+                        src="https://www.youtube.com/embed/dX3YE3JLDgw"
+                        title="Zero-kit AR Poker — game demo"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowFullScreen
+                        style={{ border: 0 }}
+                      />
+                    </div>
+                    <div className="flex items-center justify-between w-full" style={{ maxWidth: 'min(100%, 40rem)' }}>
+                      <a
+                        className="spine-open"
+                        href={pokerProject.youtubeUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        {String(t('pokerVideoOpenYouTube'))}
+                      </a>
+                    </div>
+                  </div>
+                </motion.div>
+
+                {/* Key Features */}
+                <motion.section
+                  className="mb-[var(--space-xxxl)]"
+                  initial={{ opacity: 0, y: 40 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, margin: '-10% 0px' }}
+                  transition={{ duration: 0.6, ease: [0.25, 0.1, 0.25, 1] }}
+                >
+                  <h3 className="type-caption text-[1.1rem] tracking-wider mb-[var(--space-lg)]">{String(t('pokerFeaturesLabel'))}</h3>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-[var(--space-md)]">
+                    {([
+                      { label: String(t('pokerFeatureARTable')), detail: String(t('pokerFeatureARTableDesc')), accent: 'var(--color-accent-primary)' },
+                      { label: String(t('pokerFeaturePrivateHands')), detail: String(t('pokerFeaturePrivateHandsDesc')), accent: 'var(--color-accent-secondary)' },
+                      { label: String(t('pokerFeatureAutoJudge')), detail: String(t('pokerFeatureAutoJudgeDesc')), accent: 'var(--color-accent-tertiary)' },
+                      { label: String(t('pokerFeatureJoin')), detail: String(t('pokerFeatureJoinDesc')), accent: 'var(--color-accent-primary)' },
+                    ]).map(({ label, detail, accent }, idx) => (
+                      <motion.div
+                        key={idx}
+                        className="group relative rounded-2xl p-[var(--space-md)] overflow-hidden cursor-default select-none border border-black/12 hover:border-[var(--color-accent-primary)]/40 hover:bg-[var(--color-accent-primary)]/5"
+                        style={{ minHeight: '10rem', transition: 'border-color 0.25s, background 0.25s' }}
+                        initial={{ opacity: 0, y: 16 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true, amount: 0.4 }}
+                        transition={{ duration: 0.5, delay: idx * 0.08, ease: [0.22, 1, 0.36, 1] }}
+                        whileHover={{ y: -4, transition: { duration: 0.22, ease: 'easeOut' } }}
+                      >
+                        <span
+                          className="absolute top-3 right-4 font-bold leading-none pointer-events-none"
+                          style={{ fontSize: '3.8rem', lineHeight: 1, color: accent, opacity: 0.1 }}
+                        >
+                          {String(idx + 1).padStart(2, '0')}
+                        </span>
+                        <p
+                          className="text-[1.1rem] font-medium leading-snug relative z-10 pt-[3.2rem]"
+                          style={{ transition: 'transform 0.22s ease, opacity 0.22s ease' }}
+                        >
+                          {label}
+                        </p>
+                        <p
+                          className="text-[0.88rem] text-[var(--color-text-muted)] leading-snug relative z-10 overflow-hidden opacity-0 group-hover:opacity-100 max-h-0 group-hover:max-h-28 mt-0 group-hover:mt-[var(--space-xs)]"
+                          style={{ transition: 'max-height 0.35s ease, opacity 0.25s ease, margin 0.3s ease' }}
+                        >
+                          {detail}
+                        </p>
+                      </motion.div>
+                    ))}
+                  </div>
+                </motion.section>
+
+                {/* Gameplay flow */}
+                <motion.section
+                  className="mb-[var(--space-xxxl)]"
+                  initial={{ opacity: 0, y: 40 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, margin: '-10% 0px' }}
+                  transition={{ duration: 0.6, ease: [0.25, 0.1, 0.25, 1] }}
+                >
+                  <h3 className="type-caption text-[1.1rem] tracking-wider mb-[var(--space-lg)]">{String(t('pokerGameplayLabel'))}</h3>
+                  <div className="border border-black/10 rounded-2xl overflow-hidden p-[var(--space-lg)]">
+                    <div className="flex flex-col gap-[var(--space-md)]">
+                      <div className="flex items-center gap-[var(--space-sm)]">
+                        <span className="font-mono text-xs tracking-widest text-[var(--color-accent-primary)] uppercase">Actions</span>
+                        <span className="text-[1.05rem]">{String(t('pokerGameplayActions'))}</span>
+                      </div>
+                      <div className="flex items-start gap-[var(--space-sm)]">
+                        <span className="font-mono text-xs tracking-widest text-[var(--color-accent-secondary)] uppercase shrink-0 pt-[3px]">Flow</span>
+                        <span className="text-[1.05rem]">{String(t('pokerGameplayFlow'))}</span>
+                      </div>
+                      <div className="flex items-center gap-[var(--space-sm)]">
+                        <span className="font-mono text-xs tracking-widest text-[var(--color-accent-tertiary)] uppercase">Players</span>
+                        <span className="text-[1.05rem]">{String(t('pokerGameplayPlayers'))}</span>
+                      </div>
+                    </div>
+                  </div>
+                </motion.section>
+
+                {/* The Experience — from the PDF */}
+                <motion.section
+                  className="mb-[var(--space-xxxl)]"
+                  initial={{ opacity: 0, y: 40 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, margin: '-10% 0px' }}
+                  transition={{ duration: 0.6, ease: [0.25, 0.1, 0.25, 1] }}
+                >
+                  <h3 className="type-caption text-[1.1rem] tracking-wider mb-[var(--space-lg)]">{String(t('pokerExperienceLabel'))}</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-[var(--space-lg)]">
+                    {([
+                      { emoji: '🎯', text: String(t('pokerExperienceSetup')) },
+                      { emoji: '🃏', text: String(t('pokerExperienceFlow')) },
+                      { emoji: '🎨', text: String(t('pokerExperienceLook')) },
+                      { emoji: '✨', text: String(t('pokerExperienceMoments')) },
+                    ]).map(({ emoji, text }, idx) => (
+                      <motion.div
+                        key={idx}
+                        className="flex gap-[var(--space-sm)] items-start"
+                        initial={{ opacity: 0, y: 12 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true, amount: 0.5 }}
+                        transition={{ duration: 0.45, delay: idx * 0.06, ease: [0.22, 1, 0.36, 1] }}
+                      >
+                        <span className="text-2xl shrink-0 mt-[2px]">{emoji}</span>
+                        <p className="text-[0.95rem] leading-relaxed text-[var(--color-text-muted)]">{text}</p>
+                      </motion.div>
+                    ))}
+                  </div>
+                </motion.section>
+
+                {/* Tech Stack */}
+                <motion.div
+                  className="mb-[var(--space-xxxl)] flex flex-wrap gap-[var(--space-sm)] py-[var(--space-lg)] border-t border-b border-black/8"
+                  initial={{ opacity: 0, y: 30 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, margin: '-10% 0px' }}
+                  transition={{ duration: 0.5, ease: [0.25, 0.1, 0.25, 1] }}
+                >
+                  <h3 className="type-caption text-[1.1rem] tracking-wider w-full mb-[var(--space-xs)]">{String(t('pokerTechLabel'))}</h3>
+                  {pokerProject.techStack.map((tech) => (
+                    <span
+                      key={tech}
+                      className="font-mono text-xs tracking-wider border border-black/15 rounded-full px-3 py-1"
+                    >
+                      {tech}
+                    </span>
+                  ))}
+                </motion.div>
+
+                {/* Reflection */}
+                <motion.section
+                  className="mb-[var(--space-xxl)]"
+                  initial={{ opacity: 0, y: 40 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, margin: '-10% 0px' }}
+                  transition={{ duration: 0.6, ease: [0.25, 0.1, 0.25, 1] }}
+                >
+                  <h3 className="type-caption text-[1.1rem] tracking-wider mb-[var(--space-sm)]">{String(t('pokerReflectionLabel'))}</h3>
+                  <p className="text-[1.2rem] max-w-4xl leading-relaxed">{String(t('pokerReflectionDesc'))}</p>
+                </motion.section>
+
+                <div className="border-t border-black/8 my-[var(--space-xxl)]" />
+
+                {/* Credits */}
+                <section className="mb-[var(--space-xxl)]">
+                  <h3 className="type-caption mb-[var(--space-sm)]">{String(t('pokerCreditsLabel'))}</h3>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-[var(--space-md)]">
+                    <div>
+                      <p className="type-caption mb-[var(--space-xs)]">{String(t('pokerCreditsTeam'))}</p>
+                      <p className="type-body">{pokerProject.credits.team.join(', ')}</p>
+                    </div>
+                    <div>
+                      <p className="type-caption mb-[var(--space-xs)]">{String(t('pokerCreditsRole'))}</p>
+                      <p className="type-body">{pokerProject.credits.role}</p>
+                    </div>
+                    <div>
+                      <p className="type-caption mb-[var(--space-xs)]">{String(t('pokerCreditsYear'))}</p>
+                      <p className="type-body">{pokerProject.credits.year}</p>
+                    </div>
+                    <div>
+                      <p className="type-caption mb-[var(--space-xs)]">{String(t('pokerCreditsTools'))}</p>
+                      <p className="type-body">{pokerProject.credits.tools.join(', ')}</p>
                     </div>
                   </div>
                 </section>
