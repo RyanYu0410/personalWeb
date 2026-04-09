@@ -189,7 +189,7 @@ const translations = {
     housingMoveinDesc: 'Filters for type, price, duration; deposit checklist.',
 
     housingReflectionLabel: 'Reflection',
-    housingReflectionDesc: 'A timeline view may reduce stress, but needs full-semester validation. Peer-to-peer sublets also need more trust testing.',
+    housingReflectionDesc: 'A timeline-based interface may reduce perceived stress; its efficacy nevertheless requires validation across a full academic term. Peer-to-peer subletting flows demand further trust and safety verification.',
 
     housingCreditsLabel: 'Credits',
     housingCreditsTeam: 'Team',
@@ -448,7 +448,7 @@ const translations = {
     housingMoveinDesc: '按类型、价格、时长筛选；押金清单。',
 
     housingReflectionLabel: '反思',
-    housingReflectionDesc: '时间线视图可能减轻压力，但需要全学期验证。点对点转租也需要更多信任测试。',
+    housingReflectionDesc: '以时间线呈现信息或有助于降低用户压力，但其有效性须在完整学期内加以验证。点对点转租路径亦需在信任机制与安全审核上持续投入。',
 
     housingCreditsLabel: '项目信息',
     housingCreditsTeam: '团队',

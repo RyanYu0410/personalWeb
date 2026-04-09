@@ -1,5 +1,14 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { motion, AnimatePresence, useReducedMotion, useScroll, useSpring, useTransform, useMotionValueEvent } from 'framer-motion';
+import {
+  motion,
+  AnimatePresence,
+  useReducedMotion,
+  useScroll,
+  useSpring,
+  useTransform,
+  useMotionValueEvent,
+} from 'framer-motion';
+import type { MotionValue } from 'framer-motion';
 import {
   about,
   home,
@@ -25,6 +34,67 @@ function publicUrl(file: string) {
   const base = import.meta.env.BASE_URL;
   const path = file.startsWith('/') ? file.slice(1) : file;
   return `${base}${path}`;
+}
+
+/** PDF slides in the housing sticky timeline: enter from below, exit upward (scroll-linked). */
+function HousingTimelinePdfSlide({
+  progress,
+  totalSlides,
+  slideIndex,
+  img,
+  alt,
+  pageLine,
+}: {
+  progress: MotionValue<number>;
+  totalSlides: number;
+  slideIndex: number;
+  img: string;
+  alt: string;
+  pageLine: string;
+}) {
+  const reduceMotion = useReducedMotion();
+  const N = totalSlides;
+  const i = slideIndex;
+
+  const y = useTransform(
+    progress,
+    [
+      Math.max(0, (i - 0.22) / N),
+      i / N,
+      (i + 0.12) / N,
+      (i + 1 - 0.12) / N,
+      (i + 1) / N,
+      Math.min(1, (i + 1 + 0.22) / N),
+    ],
+    reduceMotion
+      ? ['0vh', '0vh', '0vh', '0vh', '0vh', '0vh']
+      : ['26vh', '9vh', '0vh', '0vh', '-9vh', '-26vh']
+  );
+
+  const opacity = useTransform(
+    progress,
+    [
+      Math.max(0, (i - 0.18) / N),
+      (i + 0.06) / N,
+      (i + 1 - 0.06) / N,
+      Math.min(1, (i + 1 + 0.18) / N),
+    ],
+    [0, 1, 1, 0]
+  );
+
+  return (
+    <div className="w-screen h-full flex flex-col justify-center items-center px-[var(--space-xl)] py-[var(--space-xxxl)] overflow-hidden">
+      <motion.div className="max-w-5xl w-full will-change-transform" style={{ y, opacity }}>
+        <img
+          src={publicUrl(img)}
+          alt={alt}
+          className="w-full rounded-2xl shadow-2xl object-contain"
+          style={{ maxHeight: '76vh' }}
+        />
+        <p className="type-caption mt-[var(--space-sm)] text-[var(--color-text-muted)]">{pageLine}</p>
+      </motion.div>
+    </div>
+  );
 }
 
 type SectionId = (typeof sectionMeta)[number]['id'];
@@ -262,7 +332,7 @@ function App() {
     ([actual, smooth]: number[]) => (actual - smooth) * 0.25
   );
 
-  // Housing Timeline Horizontal Scroll
+  // Housing Timeline Vertical Strip
   const housingTimelineRef = useRef<HTMLDivElement>(null);
   const housingTimelineSlides = [
     'housing-pdf-page-1.jpg',
@@ -274,24 +344,26 @@ function App() {
   ];
   // +1 for the hero slide prepended before the PDF pages
   const housingTimelineCount = housingTimelineSlides.length + 1;
+  /** Extra scroll distance per slide so each step feels like its own action (longer page). */
+  const housingTimelineVhPerSlide = 165;
   const { scrollYProgress: housingTimelineScrollY } = useScroll({
     target: housingTimelineRef,
     offset: ["start start", "end end"]
   });
-  // Snap horizontal movement so each stop is a full page.
-  const housingTimelineStep = useTransform(housingTimelineScrollY, (v) => {
-    const maxStep = housingTimelineCount - 1;
-    return Math.max(0, Math.min(maxStep, Math.round(v * maxStep)));
+  // One equal segment per slide: [0,1) → step 0, [1/7,2/7) → step 1, … (not round(v*6), which skews early).
+  const [housingTimelineStepInt, setHousingTimelineStepInt] = useState(0);
+  const [housingTimelineLocalProgress, setHousingTimelineLocalProgress] = useState(0);
+  useMotionValueEvent(housingTimelineScrollY, 'change', (v) => {
+    const idx = Math.min(housingTimelineCount - 1, Math.floor(v * housingTimelineCount));
+    setHousingTimelineStepInt(idx);
+    setHousingTimelineLocalProgress(v * housingTimelineCount - idx);
   });
-  const housingTimelineStepSmooth = useSpring(housingTimelineStep, {
-    stiffness: 130,
-    damping: 24,
-    mass: 0.9,
-  });
-  const housingTimelineX = useTransform(
-    housingTimelineStepSmooth,
-    (step) => `-${(step / housingTimelineCount) * 100}%`
-  );
+  useEffect(() => {
+    const v = housingTimelineScrollY.get();
+    const idx = Math.min(housingTimelineCount - 1, Math.floor(v * housingTimelineCount));
+    setHousingTimelineStepInt(idx);
+    setHousingTimelineLocalProgress(v * housingTimelineCount - idx);
+  }, [housingTimelineScrollY, housingTimelineCount]);
 
   // Hero slide (slide 0) parallax / fade-out driven by timeline scroll
   const _heroStep0 = 1 / housingTimelineCount;
@@ -328,11 +400,10 @@ function App() {
     target: journeyStickyRef,
     offset: ['start start', 'end end'],
   });
-  // Narrow active range (0.3→0.58) = fast snap in. Long hold after (0.58→1) = slow out feel.
-  const journeyCompressMV = useTransform(journeyScrollY, [0, 0.3, 0.58, 1], [0, 0, 1, 1], { clamp: true });
-  const journeyCompressSmooth = useSpring(journeyCompressMV, { stiffness: 260, damping: 38 });
+  // Map most of the sticky scroll (≈5%–88%) to full 0→1 so the sequence completes while scrolling down.
+  const journeyCompressMV = useTransform(journeyScrollY, [0, 0.05, 0.88, 1], [0, 0, 1, 1], { clamp: true });
   const [journeyCompress, setJourneyCompress] = useState(0);
-  useMotionValueEvent(journeyCompressSmooth, 'change', (v) => setJourneyCompress(v));
+  useMotionValueEvent(journeyCompressMV, 'change', (v) => setJourneyCompress(v));
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -383,17 +454,17 @@ function App() {
     <div className="min-h-screen selection:bg-black selection:text-white pb-16 md:pb-[var(--space-xxxl)]">
       {showHomeColorBends && (
         <ColorBends
-          colors={["#ff5c7a", "#8a5cff", "#00ffd1"]}
-          rotation={0}
-          speed={0.2}
+          rotation={45}
+          speed={1}
+          colors={["#5227FF", "#FF9FFC", "#7cff67"]}
           scale={1}
-          frequency={1}
+          frequency={1.3}
           warpStrength={1}
-          mouseInfluence={1}
-          parallax={0.5}
-          noise={0.1}
+          mouseInfluence={3}
+          parallax={1.4}
+          noise={0.5}
           transparent
-          autoRotate={0}
+          autoRotate={1}
           style={{ position: 'fixed', inset: 0, zIndex: 0, pointerEvents: 'none', opacity: 0.45 }}
         />
       )}
@@ -1263,7 +1334,7 @@ function App() {
                 <div className="border-t border-black/8 my-[var(--space-xxl)]" />
 
                 {/* ── Housing Journey exchange animation (sticky-scroll) ── */}
-                <div ref={journeyStickyRef} className="relative h-[280vh] my-[var(--space-xxl)]">
+                <div ref={journeyStickyRef} className="relative h-[320vh] my-[var(--space-xxl)]">
                   <div className="sticky top-0 h-screen flex flex-col justify-center z-10 bg-[var(--color-bg)]">
                     <motion.div
                       className="w-full"
@@ -1465,85 +1536,135 @@ function App() {
                   className="relative my-[var(--space-xxxl)] w-screen"
                   style={{
                     marginLeft: 'calc(50% - 50vw)',
-                    height: `${housingTimelineCount * 100}vh`,
+                    height: `${housingTimelineCount * housingTimelineVhPerSlide}vh`,
                   }}
                 >
-                  <div className="sticky top-0 h-screen flex items-center overflow-hidden bg-[var(--color-bg)] z-10">
-                    <motion.div style={{ x: housingTimelineX, width: `${housingTimelineCount * 100}vw` }} className="flex h-full">
-
-                      {/* ── Slide 0: project hero ── */}
-                      <div className="w-screen h-full flex items-center justify-center px-[var(--space-xl)]">
-                        <div
-                          className="w-full max-w-6xl grid gap-[var(--space-xxl)]"
-                          style={{ gridTemplateColumns: '1fr 1fr', alignItems: 'center' }}
+                  <div className="sticky top-0 h-screen overflow-hidden bg-[var(--color-bg)] z-10">
+                    <div className="relative h-screen w-full">
+                      <AnimatePresence mode="wait">
+                        <motion.div
+                          key={housingTimelineStepInt}
+                          className="absolute inset-0"
+                          initial={{ y: '14vh', opacity: 0 }}
+                          animate={{ y: '0vh', opacity: 1 }}
+                          exit={{ y: '-14vh', opacity: 0 }}
+                          transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
                         >
-                          {/* Phone mockup — parallax out as user scrolls right */}
-                          <motion.div
-                            style={{ y: heroImgY, x: heroImgX, opacity: heroImgOp }}
-                            className="flex justify-center"
+                          {housingTimelineStepInt === 0 ? (
+                            <div className="h-screen w-full flex items-center justify-center px-[var(--space-xl)]">
+                              <div
+                                className="w-full max-w-6xl grid gap-[var(--space-xxl)]"
+                                style={{ gridTemplateColumns: '1fr 1fr', alignItems: 'center' }}
+                              >
+                                <motion.div
+                                  style={{ y: heroImgY, x: heroImgX, opacity: heroImgOp }}
+                                  className="flex justify-center"
+                                >
+                                  <img
+                                    src={publicUrl('housing-hero-mockup.png')}
+                                    alt="Housing app — Week 1 screen"
+                                    style={{ maxHeight: '72vh', width: 'auto', filter: 'drop-shadow(0 32px 64px rgba(0,0,0,0.18))' }}
+                                  />
+                                </motion.div>
+
+                                <div className="flex flex-col gap-[var(--space-lg)]">
+                                  <motion.div style={{ y: heroTagY, opacity: heroTagOp }} className="flex gap-[var(--space-sm)] flex-wrap">
+                                    {['UI System', 'UX Research', 'Prototyping'].map((tag) => (
+                                      <span
+                                        key={tag}
+                                        className="font-mono text-[0.65rem] tracking-widest uppercase px-3 py-1 rounded-full border"
+                                        style={{ borderColor: 'rgba(0,0,0,0.18)', color: 'var(--color-text-muted)' }}
+                                      >{tag}</span>
+                                    ))}
+                                  </motion.div>
+
+                                  <motion.h2
+                                    style={{ y: heroTxtY, opacity: heroTxtOp, fontSize: 'clamp(2.2rem, 4.5vw, 3.8rem)', color: 'var(--color-text)' }}
+                                    className="font-bold leading-[1.05] tracking-tight m-0"
+                                  >
+                                    Housing Solutions
+                                    <br />
+                                    <span style={{ color: 'var(--color-accent-primary)' }}>for International Students</span>
+                                  </motion.h2>
+
+                                  <motion.p
+                                    style={{ y: heroTxtY, opacity: heroTxtOp, color: 'var(--color-text-muted)' }}
+                                    className="text-[1.1rem] leading-relaxed max-w-md m-0"
+                                  >
+                                    A timeline-based tool designed to guide international college students through NYC's off-campus housing process — from landing to lease.
+                                  </motion.p>
+
+                                  <motion.p
+                                    style={{ color: 'var(--color-text-muted)', y: heroTxtY, opacity: heroTxtOp }}
+                                    className="type-caption m-0"
+                                  >
+                                    Scroll to view process ↓
+                                  </motion.p>
+                                </div>
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="h-screen w-full flex flex-col justify-center items-center px-[var(--space-xl)] py-[var(--space-xxxl)] overflow-hidden">
+                              <div className="max-w-5xl w-full">
+                                <img
+                                  src={publicUrl(housingTimelineSlides[housingTimelineStepInt - 1])}
+                                  alt={`Housing slide ${housingTimelineStepInt}`}
+                                  className="w-full rounded-2xl shadow-2xl object-contain"
+                                  style={{ maxHeight: '76vh' }}
+                                />
+                              </div>
+                            </div>
+                          )}
+                        </motion.div>
+                      </AnimatePresence>
+                      <div
+                        className="pointer-events-none absolute left-0 right-0 z-20 px-[var(--space-lg)] pb-[max(1.25rem,env(safe-area-inset-bottom))]"
+                        style={{ bottom: '5px' }}
+                        aria-hidden
+                      >
+                        <div className="mx-auto max-w-5xl flex flex-col gap-3">
+                          <div className="flex items-baseline justify-between gap-4">
+                            <span className="type-caption tracking-[0.12em] text-[var(--color-text-muted)]">
+                              ACTION {housingTimelineStepInt + 1} / {housingTimelineCount}
+                            </span>
+                            <span className="type-caption text-[var(--color-text-muted)] tabular-nums">
+                              {Math.round(
+                                ((housingTimelineStepInt + housingTimelineLocalProgress) / housingTimelineCount) * 100,
+                              )}
+                              %
+                            </span>
+                          </div>
+                          <div
+                            className="h-[3px] w-full rounded-full overflow-hidden"
+                            style={{ background: 'rgba(0,0,0,0.08)' }}
                           >
-                            <img
-                              src={publicUrl('housing-hero-mockup.png')}
-                              alt="Housing app — Week 1 screen"
-                              style={{ maxHeight: '72vh', width: 'auto', filter: 'drop-shadow(0 32px 64px rgba(0,0,0,0.18))' }}
+                            <div
+                              className="h-full rounded-full transition-[width] duration-75 ease-out"
+                              style={{
+                                width: `${((housingTimelineStepInt + housingTimelineLocalProgress) / housingTimelineCount) * 100}%`,
+                                background: 'var(--color-accent-primary)',
+                              }}
                             />
-                          </motion.div>
-
-                          {/* Text: tags → title → description → scroll hint */}
-                          <div className="flex flex-col gap-[var(--space-lg)]">
-                            <motion.div style={{ y: heroTagY, opacity: heroTagOp }} className="flex gap-[var(--space-sm)] flex-wrap">
-                              {['UI System', 'UX Research', 'Prototyping'].map((tag) => (
-                                <span
-                                  key={tag}
-                                  className="font-mono text-[0.65rem] tracking-widest uppercase px-3 py-1 rounded-full border"
-                                  style={{ borderColor: 'rgba(0,0,0,0.18)', color: 'var(--color-text-muted)' }}
-                                >{tag}</span>
-                              ))}
-                            </motion.div>
-
-                            <motion.h2
-                              style={{ y: heroTxtY, opacity: heroTxtOp, fontSize: 'clamp(2.2rem, 4.5vw, 3.8rem)', color: 'var(--color-text)' }}
-                              className="font-bold leading-[1.05] tracking-tight m-0"
-                            >
-                              Housing Solutions
-                              <br />
-                              <span style={{ color: 'var(--color-accent-primary)' }}>for International Students</span>
-                            </motion.h2>
-
-                            <motion.p
-                              style={{ y: heroTxtY, opacity: heroTxtOp, color: 'var(--color-text-muted)' }}
-                              className="text-[1.1rem] leading-relaxed max-w-md m-0"
-                            >
-                              A timeline-based tool designed to guide international college students through NYC's off-campus housing process — from landing to lease.
-                            </motion.p>
-
-                            <motion.p
-                              style={{ color: 'var(--color-text-muted)', y: heroTxtY, opacity: heroTxtOp }}
-                              className="type-caption m-0"
-                            >
-                              Scroll to view process →
-                            </motion.p>
+                          </div>
+                          <div className="flex justify-center gap-2 flex-wrap">
+                            {Array.from({ length: housingTimelineCount }, (_, i) => (
+                              <span
+                                key={i}
+                                className="h-1.5 rounded-full transition-[width,opacity] duration-200"
+                                style={{
+                                  width: i === housingTimelineStepInt ? '1.5rem' : '0.375rem',
+                                  opacity: i <= housingTimelineStepInt ? 1 : 0.35,
+                                  background:
+                                    i === housingTimelineStepInt
+                                      ? 'var(--color-accent-primary)'
+                                      : 'currentColor',
+                                }}
+                              />
+                            ))}
                           </div>
                         </div>
                       </div>
-
-                      {/* ── Slides 1–5: PDF pages ── */}
-                      {housingTimelineSlides.map((img, idx) => (
-                        <div key={img} className="w-screen h-full flex flex-col justify-center items-center px-[var(--space-xl)] py-[var(--space-xxxl)]">
-                          <div className="max-w-5xl w-full">
-                            <img
-                              src={publicUrl(img)}
-                              alt={`Housing slide ${idx + 1}`}
-                              className="w-full rounded-2xl shadow-2xl object-contain"
-                              style={{ maxHeight: '76vh' }}
-                            />
-                            <p className="type-caption mt-[var(--space-sm)] text-[var(--color-text-muted)]">
-                              {`PAGE ${idx + 1} / ${housingTimelineSlides.length}`}
-                            </p>
-                          </div>
-                        </div>
-                      ))}
-                    </motion.div>
+                    </div>
                   </div>
                 </div>
 
@@ -1986,19 +2107,19 @@ function App() {
                 >
                   <h3 className="type-caption text-[1.1rem] tracking-wider mb-[var(--space-lg)]">{String(t('pokerGameplayLabel'))}</h3>
                   <div className="border border-black/10 rounded-2xl overflow-hidden p-[var(--space-lg)]">
-                    <div className="flex flex-col gap-[var(--space-md)]">
-                      <div className="flex items-center gap-[var(--space-sm)]">
-                        <span className="font-mono text-xs tracking-widest text-[var(--color-accent-primary)] uppercase">Actions</span>
-                        <span className="text-[1.05rem]">{String(t('pokerGameplayActions'))}</span>
-                      </div>
-                      <div className="flex items-start gap-[var(--space-sm)]">
-                        <span className="font-mono text-xs tracking-widest text-[var(--color-accent-secondary)] uppercase shrink-0 pt-[3px]">Flow</span>
-                        <span className="text-[1.05rem]">{String(t('pokerGameplayFlow'))}</span>
-                      </div>
-                      <div className="flex items-center gap-[var(--space-sm)]">
-                        <span className="font-mono text-xs tracking-widest text-[var(--color-accent-tertiary)] uppercase">Players</span>
-                        <span className="text-[1.05rem]">{String(t('pokerGameplayPlayers'))}</span>
-                      </div>
+                    <div className="grid grid-cols-[auto_1fr] gap-x-[var(--space-md)] gap-y-[var(--space-md)] items-start">
+                      <span className="font-mono text-xs tracking-widest text-[var(--color-accent-primary)] uppercase shrink-0 justify-self-end text-right pr-[var(--space-sm)]">
+                        Actions
+                      </span>
+                      <span className="text-[1.05rem] min-w-0">{String(t('pokerGameplayActions'))}</span>
+                      <span className="font-mono text-xs tracking-widest text-[var(--color-accent-secondary)] uppercase shrink-0 justify-self-end text-right pr-[var(--space-sm)] pt-[3px]">
+                        Flow
+                      </span>
+                      <span className="text-[1.05rem] min-w-0">{String(t('pokerGameplayFlow'))}</span>
+                      <span className="font-mono text-xs tracking-widest text-[var(--color-accent-tertiary)] uppercase shrink-0 justify-self-end text-right pr-[var(--space-sm)]">
+                        Players
+                      </span>
+                      <span className="text-[1.05rem] min-w-0">{String(t('pokerGameplayPlayers'))}</span>
                     </div>
                   </div>
                 </motion.section>
@@ -2249,7 +2370,7 @@ function App() {
             delay={500}
             animateBy="words"
             direction="top"
-            className="text-[clamp(2rem,5vw,3.5rem)] font-bold leading-tight mb-[var(--space-sm)] break-words"
+            className="text-[clamp(2rem,5vw,3.5rem)] font-bold leading-tight mb-[var(--space-lg)] break-words"
           />
           <InteractiveThreeSpine 
             workIndex={workIndex}

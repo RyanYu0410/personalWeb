@@ -487,11 +487,9 @@ button:focus-visible {
     padding: var(--space-sm);
   }
 
-  .spine-row-link {
-    flex-direction: column;
-    gap: var(--space-xs);
-    padding: var(--space-sm);
-    min-height: 44px;
+  .spine-grid {
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: var(--space-sm);
   }
 
   .spine-open {
@@ -595,274 +593,151 @@ button:focus-visible {
   padding: var(--space-md);
 }
 
-.spine-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
+/* ── Spine grid: auto-layout cards ──────────── */
+.spine-grid-wrapper {
+  width: 100%;
+  margin-top: var(--space-xxl);
 }
 
-.spine-row {
-  border-bottom: 1px solid rgb(0 0 0 / 0.08);
+.spine-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: var(--space-md);
 }
 
-.spine-row:last-child {
-  border-bottom: 0;
-}
-
-/* Featured spine row — large image card with white text overlay */
-.spine-row--featured {
-  border-bottom: 0;
-}
-
-/* GSAP scroll entrance — initial hidden state */
-.spine-featured-gsap {
+.spine-card {
   opacity: 0;
 }
 
-/* Card wrapper: image visible at rest, gentle expand on hover */
-.spine-row-link--featured {
+.spine-card-link {
   position: relative;
-  display: block;
-  overflow: hidden;
-  border-radius: 14px;
-  height: 210px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  text-align: center;
   text-decoration: none;
-  color: var(--color-text);
+  color: inherit;
+  overflow: hidden;
+  border-radius: 4px;
+  aspect-ratio: 3 / 4;
   cursor: pointer;
   background: rgb(0 0 0 / 0.03);
   box-shadow: 0 1px 4px rgb(0 0 0 / 0.05);
-  transition: height 0.6s cubic-bezier(0.33, 1, 0.68, 1),
-              border-radius 0.5s cubic-bezier(0.33, 1, 0.68, 1),
-              box-shadow 0.55s cubic-bezier(0.33, 1, 0.68, 1),
-              background 0.55s cubic-bezier(0.33, 1, 0.68, 1),
-              transform 0.5s cubic-bezier(0.33, 1, 0.68, 1);
+  transition: transform 0.5s cubic-bezier(0.33, 1, 0.68, 1),
+              box-shadow 0.5s cubic-bezier(0.33, 1, 0.68, 1);
 }
 
-.spine-row-link--featured:hover {
-  height: 290px;
-  border-radius: 16px;
-  background: rgb(0 0 0 / 0.88);
-  transform: translateY(-2px);
-  box-shadow:
-    0 6px 24px rgb(0 0 0 / 0.14),
-    0 0 0 1px rgb(244 121 62 / 0.18),
-    0 0 40px -8px rgb(244 121 62 / 0.12);
-}
-
-.spine-row-link--featured:active {
-  transform: translateY(-1px);
-}
-
-/* Orange accent glow on hover — matches non-featured row style */
-.spine-row-link--featured::before {
-  content: '';
+/* Orange wash from top, fading down — visible on hover/focus */
+.spine-card-link::before {
+  content: "";
   position: absolute;
   inset: 0;
-  z-index: 2;
-  border-radius: inherit;
+  z-index: 1;
   pointer-events: none;
+  border-radius: inherit;
   opacity: 0;
-  box-shadow:
-    inset 0 -1px 0 0 rgb(244 121 62 / 0.3),
-    inset 0 0 20px -4px rgb(244 121 62 / 0.08);
-  transition: opacity 0.55s cubic-bezier(0.33, 1, 0.68, 1);
+  background: linear-gradient(
+    to bottom,
+    rgb(244 121 62 / 0.42) 0%,
+    rgb(244 121 62 / 0.14) 38%,
+    rgb(244 121 62 / 0.03) 62%,
+    transparent 82%
+  );
+  transition: opacity 0.65s cubic-bezier(0.45, 0, 0.55, 1);
 }
 
-.spine-row-link--featured:hover::before {
+.spine-card-link:hover::before,
+.spine-card-link:focus-visible::before {
   opacity: 1;
 }
 
-/* Image: opacity from GSAP --scroll-opacity only; no hover change */
-.spine-featured-img {
+.spine-card-link:hover {
+  transform: translateY(-3px);
+  box-shadow:
+    0 8px 28px rgb(0 0 0 / 0.12),
+    0 0 0 1px rgb(0 0 0 / 0.06);
+}
+
+.spine-card-link:focus-visible {
+  outline: 2px solid var(--color-accent-primary);
+  outline-offset: 3px;
+}
+
+.spine-card-img {
   position: absolute;
   inset: 0;
+  z-index: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
-  object-position: center 25%;
-  opacity: var(--scroll-opacity, 0);
-  filter: brightness(0.95) saturate(1.05);
-  transition: opacity 0.55s cubic-bezier(0.33, 1, 0.68, 1),
-              filter 0.55s cubic-bezier(0.33, 1, 0.68, 1);
+  object-position: center;
+  filter: grayscale(1) brightness(0.92);
+  opacity: 0.55;
+  /* Opacity eases slowly in/out; color filter follows slightly after for a layered feel */
+  transition: opacity 1s cubic-bezier(0.45, 0, 0.55, 1),
+              filter 0.85s cubic-bezier(0.33, 1, 0.68, 1) 0.08s;
 }
 
-/* Overlay: soft gradient at rest for text readability, dark on hover */
-.spine-featured-overlay {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  opacity: 1;
-  background: linear-gradient(
-    to top,
-    var(--color-bg) 0%,
-    color-mix(in srgb, var(--color-bg) 88%, transparent) 30%,
-    color-mix(in srgb, var(--color-bg) 30%, transparent) 55%,
-    transparent 75%
-  );
-  transition: opacity 0.55s cubic-bezier(0.33, 1, 0.68, 1);
-}
-
-.spine-row-link--featured:hover .spine-featured-overlay {
-  opacity: 0;
-}
-
-/* Dark overlay with warm orange accent that fades in on hover */
-.spine-featured-overlay::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  opacity: 0;
-  background:
-    linear-gradient(
-      to top,
-      rgba(244, 121, 62, 0.12) 0%,
-      rgba(244, 121, 62, 0.04) 15%,
-      transparent 30%
-    ),
-    linear-gradient(
-      to top,
-      rgba(0, 0, 0, 0.78) 0%,
-      rgba(0, 0, 0, 0.38) 40%,
-      rgba(0, 0, 0, 0.06) 70%,
-      transparent 100%
-    );
-  transition: opacity 0.55s cubic-bezier(0.33, 1, 0.68, 1);
-}
-
-.spine-row-link--featured:hover .spine-featured-overlay::after {
+.spine-card-link:hover .spine-card-img,
+.spine-card-link:focus-visible .spine-card-img {
+  filter: grayscale(0) brightness(1);
   opacity: 1;
 }
 
-/* Content — pinned to bottom */
-.spine-featured-content {
+.spine-card-placeholder {
   position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  z-index: 1;
+  inset: 0;
+  z-index: 0;
+  background: linear-gradient(135deg, rgb(0 0 0 / 0.04) 0%, rgb(0 0 0 / 0.08) 100%);
+}
+
+.spine-card-content {
+  position: relative;
+  z-index: 2;
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
-  padding: var(--space-md) var(--space-lg);
+  align-items: center;
   gap: 4px;
-  transform: translateY(0);
-  transition: transform 0.55s cubic-bezier(0.33, 1, 0.68, 1);
+  width: 100%;
+  padding: var(--space-md) var(--space-sm);
+  background: linear-gradient(
+    to top,
+    rgba(0, 0, 0, 0.72) 0%,
+    rgba(0, 0, 0, 0.40) 50%,
+    transparent 100%
+  );
+  transition: background 0.5s cubic-bezier(0.33, 1, 0.68, 1);
 }
 
-.spine-row-link--featured:hover .spine-featured-content {
-  transform: translateY(-4px);
-}
-
-/* Role pill — hidden at rest, fades in on hover */
-.spine-featured-role {
+.spine-card-role {
   font-family: var(--font-mono);
-  font-size: 0.65rem;
+  font-size: 0.6rem;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.8);
-  border: 1px solid rgba(255, 255, 255, 0.25);
+  color: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 999px;
-  padding: 3px 10px;
-  display: inline-block;
-  margin-bottom: 4px;
-  opacity: 0;
-  transform: translateY(6px);
-  background: rgba(255, 255, 255, 0.08);
+  padding: 2px 10px;
+  background: rgba(255, 255, 255, 0.06);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
-  transition: opacity 0.45s cubic-bezier(0.33, 1, 0.68, 1) 0.08s,
-              transform 0.45s cubic-bezier(0.33, 1, 0.68, 1) 0.08s;
 }
 
-.spine-row-link--featured:hover .spine-featured-role {
-  opacity: 1;
-  transform: translateY(0);
-}
-
-/* Title */
-.spine-featured-title {
-  font-size: 1.35rem;
+.spine-card-title {
+  font-size: 1.15rem;
   font-weight: 700;
-  line-height: 1.2;
-  color: var(--color-text);
-  margin: 0;
-  transition: color 0.5s cubic-bezier(0.33, 1, 0.68, 1),
-              text-shadow 0.5s cubic-bezier(0.33, 1, 0.68, 1);
-}
-
-.spine-row-link--featured:hover .spine-featured-title {
+  line-height: 1.25;
   color: #fff;
-  text-shadow: 0 1px 10px rgba(0, 0, 0, 0.25);
-}
-
-/* Outcome */
-.spine-featured-outcome {
-  font-size: 0.85rem;
-  line-height: 1.4;
-  color: var(--color-text-muted);
   margin: 0;
-  transition: color 0.5s cubic-bezier(0.33, 1, 0.68, 1) 0.03s;
 }
 
-.spine-row-link--featured:hover .spine-featured-outcome {
+.spine-card-outcome {
+  font-size: 0.78rem;
+  line-height: 1.4;
   color: rgba(255, 255, 255, 0.6);
-}
-
-.spine-row-link {
-  position: relative;
-  isolation: isolate;
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: var(--space-sm);
-  padding: var(--space-sm) var(--space-md);
-  width: 100%;
-  text-decoration: none;
-  color: inherit;
-  cursor: pointer;
-  border-radius: 10px;
-  transition: transform 0.25s ease;
-}
-
-.spine-row-link::before {
-  content: "";
-  position: absolute;
-  inset: -2px;
-  z-index: -1;
-  border-radius: 16px;
-  background: linear-gradient(
-    to left,
-    rgb(255 255 255 / 0.32) 0%,
-    rgb(255 255 255 / 0.18) 20%,
-    rgb(255 255 255 / 0.08) 45%,
-    rgb(255 255 255 / 0.02) 65%,
-    transparent 100%
-  );
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  mask-image: radial-gradient(ellipse 180% 200% at 100% 50%, black 10%, rgba(0,0,0,0.5) 30%, rgba(0,0,0,0.15) 50%, transparent 65%);
-  -webkit-mask-image: radial-gradient(ellipse 180% 200% at 100% 50%, black 10%, rgba(0,0,0,0.5) 30%, rgba(0,0,0,0.15) 50%, transparent 65%);
-  opacity: 0.75;
-  transition: opacity 0.3s ease, backdrop-filter 0.3s ease;
-  pointer-events: none;
-}
-
-.spine-row-link:hover {
-  transform: translateX(4px);
-}
-
-.spine-row-link:hover::before {
-  opacity: 0.95;
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  background: linear-gradient(
-    to left,
-    rgb(244 121 62 / 0.1) 0%,
-    rgb(244 121 62 / 0.05) 18%,
-    rgb(255 255 255 / 0.03) 40%,
-    rgb(255 255 255 / 0.01) 60%,
-    transparent 100%
-  );
+  margin: 0;
+  max-width: 90%;
 }
 
 .spine-open {
@@ -981,9 +856,8 @@ button:focus-visible {
 }
 
 @media (max-width: 768px) {
-  .spine-row {
-    flex-direction: column;
-    align-items: flex-start;
+  .spine-grid {
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
   }
 
   .tape-receipt {
