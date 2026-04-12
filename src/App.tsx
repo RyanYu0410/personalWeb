@@ -8,7 +8,6 @@ import {
   useTransform,
   useMotionValueEvent,
 } from 'framer-motion';
-import type { MotionValue } from 'framer-motion';
 import {
   about,
   home,
@@ -34,67 +33,6 @@ function publicUrl(file: string) {
   const base = import.meta.env.BASE_URL;
   const path = file.startsWith('/') ? file.slice(1) : file;
   return `${base}${path}`;
-}
-
-/** PDF slides in the housing sticky timeline: enter from below, exit upward (scroll-linked). */
-function HousingTimelinePdfSlide({
-  progress,
-  totalSlides,
-  slideIndex,
-  img,
-  alt,
-  pageLine,
-}: {
-  progress: MotionValue<number>;
-  totalSlides: number;
-  slideIndex: number;
-  img: string;
-  alt: string;
-  pageLine: string;
-}) {
-  const reduceMotion = useReducedMotion();
-  const N = totalSlides;
-  const i = slideIndex;
-
-  const y = useTransform(
-    progress,
-    [
-      Math.max(0, (i - 0.22) / N),
-      i / N,
-      (i + 0.12) / N,
-      (i + 1 - 0.12) / N,
-      (i + 1) / N,
-      Math.min(1, (i + 1 + 0.22) / N),
-    ],
-    reduceMotion
-      ? ['0vh', '0vh', '0vh', '0vh', '0vh', '0vh']
-      : ['26vh', '9vh', '0vh', '0vh', '-9vh', '-26vh']
-  );
-
-  const opacity = useTransform(
-    progress,
-    [
-      Math.max(0, (i - 0.18) / N),
-      (i + 0.06) / N,
-      (i + 1 - 0.06) / N,
-      Math.min(1, (i + 1 + 0.18) / N),
-    ],
-    [0, 1, 1, 0]
-  );
-
-  return (
-    <div className="w-screen h-full flex flex-col justify-center items-center px-[var(--space-xl)] py-[var(--space-xxxl)] overflow-hidden">
-      <motion.div className="max-w-5xl w-full will-change-transform" style={{ y, opacity }}>
-        <img
-          src={publicUrl(img)}
-          alt={alt}
-          className="w-full rounded-2xl shadow-2xl object-contain"
-          style={{ maxHeight: '76vh' }}
-        />
-        <p className="type-caption mt-[var(--space-sm)] text-[var(--color-text-muted)]">{pageLine}</p>
-      </motion.div>
-    </div>
-  );
 }
 
 type SectionId = (typeof sectionMeta)[number]['id'];
