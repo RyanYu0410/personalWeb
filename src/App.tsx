@@ -512,7 +512,7 @@ function App() {
                 {(() => {
                   let idx = 0;
                   return sectionMeta.map((item) => {
-                    const isNested = ['page-03', 'page-03a', 'page-housing', 'page-train', 'page-poker', 'page-mirror', 'page-noteblock', 'page-04', 'page-04a', 'page-05', 'page-06', 'page-06a'].includes(item.id);
+                    const isNested = ['page-03', 'page-03a', 'page-housing', 'page-train', 'page-poker', 'page-mirror', 'page-noteblock'].includes(item.id);
                     if (!isNested) return null;
                     const i = idx++;
                     return (
@@ -637,6 +637,71 @@ function App() {
               </motion.div>
             </div>
             <motion.div
+              className="space-y-[var(--space-xl)] mt-[var(--space-xxxl)]"
+              initial="hidden"
+              animate="show"
+              variants={{
+                hidden: {},
+                show: { transition: { staggerChildren: 0.08, delayChildren: 0.2 } },
+              }}
+            >
+              <motion.section
+                className="border-t border-black/10 pt-[var(--space-lg)]"
+                variants={{
+                  hidden: { opacity: 0, y: 16 },
+                  show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] } },
+                }}
+              >
+                <h3 className="text-[1.35rem] font-medium text-[var(--color-text)] mb-[var(--space-sm)]">{t('educationFold')}</h3>
+                <p className="type-body max-w-3xl">{about.fold.education}</p>
+                {about.fold.exhibitions && <p className="type-body mt-[var(--space-sm)]">{about.fold.exhibitions}</p>}
+              </motion.section>
+              <motion.section
+                className="border-t border-black/10 pt-[var(--space-lg)]"
+                variants={{
+                  hidden: { opacity: 0, y: 16 },
+                  show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] } },
+                }}
+              >
+                <h3 className="text-[1.35rem] font-medium text-[var(--color-text)] mb-[var(--space-sm)]">{t('paperFold')}</h3>
+                <p className="type-body max-w-3xl">{about.fold.paperReport}</p>
+              </motion.section>
+              <motion.section
+                className="border-t border-black/10 pt-[var(--space-lg)]"
+                variants={{
+                  hidden: { opacity: 0, y: 16 },
+                  show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] } },
+                }}
+              >
+                <h3 className="text-[1.35rem] font-medium text-[var(--color-text)] mb-[var(--space-md)]">{t('otherFold')}</h3>
+                <div className="other-works">
+                  {about.fold.otherWorks.map((work) => (
+                    <article key={work.title} className="other-work">
+                      <a
+                        className="other-work-still"
+                        href={work.watch}
+                        target="_blank"
+                        rel="noreferrer"
+                        aria-label={`Watch ${work.title}`}
+                      >
+                        <img src={work.still} alt="" />
+                      </a>
+                      <h3 className="other-work-title">{work.title}</h3>
+                      <p className="type-body other-work-summary">{work.summary}</p>
+                      <div className="other-work-links">
+                        <a className="spine-open" href={work.watch} target="_blank" rel="noreferrer">
+                          Watch
+                        </a>
+                        <a className="spine-open" href={work.repo} target="_blank" rel="noreferrer">
+                          GitHub
+                        </a>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              </motion.section>
+            </motion.div>
+            <motion.div
               className="flex flex-col md:flex-row gap-[var(--space-xxl)] items-start my-[var(--space-xxxl)] py-[var(--space-xxl)] border-t border-b border-black/8"
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
@@ -678,86 +743,6 @@ function App() {
                 <input name="contact-message" className="field" placeholder={String(t('placeholderMessage'))} aria-label={String(t('placeholderMessage'))} required />
                 <button type="submit" className="spine-open" style={{ justifySelf: 'start' }}>SEND</button>
               </form>
-            </motion.div>
-            <motion.div
-              className="space-y-[var(--space-md)]"
-              initial="hidden"
-              animate="show"
-              variants={{
-                hidden: {},
-                show: { transition: { staggerChildren: 0.08, delayChildren: 0.36 } },
-              }}
-            >
-              <motion.div
-                className="spine-block"
-                variants={{
-                  hidden: { opacity: 0, y: 16 },
-                  show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] } },
-                }}
-              >
-                <div className="spine-head">
-                  <span className="type-caption">#</span>
-                  <span className="text-[1rem] font-medium text-[var(--color-text)]">{t('educationFold')}</span>
-                </div>
-                <div className="spine-body">
-                  <p className="type-body">{about.fold.education}</p>
-                  {about.fold.exhibitions && <p className="type-body mt-[var(--space-sm)]">{about.fold.exhibitions}</p>}
-                </div>
-              </motion.div>
-              <motion.div
-                className="spine-block"
-                variants={{
-                  hidden: { opacity: 0, y: 16 },
-                  show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] } },
-                }}
-              >
-                <div className="spine-head">
-                  <span className="type-caption">#</span>
-                  <span className="text-[1rem] font-medium text-[var(--color-text)]">{t('paperFold')}</span>
-                </div>
-                <div className="spine-body">
-                  <p className="type-body">{about.fold.paperReport}</p>
-                </div>
-              </motion.div>
-              <motion.div
-                className="spine-block"
-                variants={{
-                  hidden: { opacity: 0, y: 16 },
-                  show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] } },
-                }}
-              >
-                <div className="spine-head">
-                  <span className="type-caption">#</span>
-                  <span className="text-[1rem] font-medium text-[var(--color-text)]">{t('otherFold')}</span>
-                </div>
-                <div className="spine-body">
-                  <div className="other-works">
-                    {about.fold.otherWorks.map((work) => (
-                      <article key={work.title} className="other-work">
-                        <a
-                          className="other-work-still"
-                          href={work.watch}
-                          target="_blank"
-                          rel="noreferrer"
-                          aria-label={`Watch ${work.title}`}
-                        >
-                          <img src={work.still} alt="" />
-                        </a>
-                        <h3 className="other-work-title">{work.title}</h3>
-                        <p className="type-body other-work-summary">{work.summary}</p>
-                        <div className="other-work-links">
-                          <a className="spine-open" href={work.watch} target="_blank" rel="noreferrer">
-                            Watch
-                          </a>
-                          <a className="spine-open" href={work.repo} target="_blank" rel="noreferrer">
-                            GitHub
-                          </a>
-                        </div>
-                      </article>
-                    ))}
-                  </div>
-                </div>
-              </motion.div>
             </motion.div>
           </PageAppear>
         ) : isResumeView ? (
