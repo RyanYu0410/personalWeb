@@ -22,6 +22,8 @@ import {
   workIndex,
 } from './content/systematicContent';
 import InteractiveThreeSpine from './components/InteractiveThreeSpine';
+import ProjectStudy from './components/ProjectStudy';
+import { mirrorStudy, noteBlockStudy } from './content/projectStudies';
 import ColorBends from './components/ColorBends';
 import BlurText from './components/BlurText';
 import { useT } from './i18n/useT';
@@ -58,6 +60,31 @@ function SectionShell({
       viewport={{ once: true, margin: '-10% 0px' }}
       transition={{ duration: 0.5, ease: [0.4, 0, 0.2, 1] }}
       className={className ?? 'system-shell section-shell py-[var(--space-xxxl)]'}
+    >
+      {children}
+    </motion.section>
+  );
+}
+
+/** Same rise-in as Home, played whenever About or Resume mounts. */
+function PageAppear({
+  children,
+  id,
+  label,
+}: {
+  children: React.ReactNode;
+  id: string;
+  label: string;
+}) {
+  const prefersReducedMotion = useReducedMotion();
+  return (
+    <motion.section
+      id={id}
+      aria-label={label}
+      className="system-shell section-shell py-[var(--space-xxxl)]"
+      initial={prefersReducedMotion ? false : { opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5, ease: [0.4, 0, 0.2, 1] }}
     >
       {children}
     </motion.section>
@@ -188,6 +215,8 @@ const navLabelKeys: Record<string, TranslationKey> = {
   'page-housing': 'navHousing',
   'page-train': 'navTrain',
   'page-poker': 'navPoker',
+  'page-mirror': 'navMirror',
+  'page-noteblock': 'navNoteBlock',
   'page-04': 'navInteractive',
   'page-04a': 'navIntProject',
   'page-05': 'navResearch',
@@ -208,7 +237,7 @@ function App() {
   const [focusOpen, setFocusOpen] = useState(false);
   const [toolsOpen, setToolsOpen] = useState(false);
   const [spatialOpen, setSpatialOpen] = useState<'installation' | 'coding'>('installation');
-  const WORK_DETAIL_IDS = ['page-03', 'page-03a', 'page-housing', 'page-train', 'page-poker', 'page-04', 'page-04a', 'page-05', 'page-06', 'page-06a'] as const;
+  const WORK_DETAIL_IDS = ['page-03', 'page-03a', 'page-housing', 'page-train', 'page-poker', 'page-mirror', 'page-noteblock', 'page-04', 'page-04a', 'page-05', 'page-06', 'page-06a'] as const;
   const [workDetailId, setWorkDetailId] = useState<string | null>(() => {
     const id = window.location.hash.slice(1);
     return WORK_DETAIL_IDS.includes(id as (typeof WORK_DETAIL_IDS)[number]) ? id : null;
@@ -419,7 +448,7 @@ function App() {
       <nav aria-label="Section navigation" className="section-nav surface-glass">
         <div className="section-nav-links">
           {sectionMeta.map((item) => {
-            const isNested = ['page-03', 'page-03a', 'page-housing', 'page-train', 'page-poker', 'page-04', 'page-04a', 'page-05', 'page-06', 'page-06a'].includes(item.id);
+            const isNested = ['page-03', 'page-03a', 'page-housing', 'page-train', 'page-poker', 'page-mirror', 'page-noteblock', 'page-04', 'page-04a', 'page-05', 'page-06', 'page-06a'].includes(item.id);
             if (isNested) return null;
             return (
               <a
@@ -483,7 +512,7 @@ function App() {
                 {(() => {
                   let idx = 0;
                   return sectionMeta.map((item) => {
-                    const isNested = ['page-03', 'page-03a', 'page-housing', 'page-train', 'page-poker', 'page-04', 'page-04a', 'page-05', 'page-06', 'page-06a'].includes(item.id);
+                    const isNested = ['page-03', 'page-03a', 'page-housing', 'page-train', 'page-poker', 'page-mirror', 'page-noteblock', 'page-04', 'page-04a', 'page-05', 'page-06', 'page-06a'].includes(item.id);
                     if (!isNested) return null;
                     const i = idx++;
                     return (
@@ -517,10 +546,17 @@ function App() {
 
       <main id="main-content">
         {isAboutView ? (
-          <section id="page-01" aria-label="About Node" className="system-shell section-shell py-[var(--space-xxxl)]">
+          <PageAppear id="page-01" label="About Node">
             <div className="flex flex-col md:flex-row gap-[var(--space-lg)] items-start">
               <div className="flex-1 min-w-0">
-                <h2 className="type-h1 mb-[var(--space-sm)]">{t('aboutTitle')}</h2>
+                <BlurText
+                  as="h2"
+                  text={String(t('aboutTitle'))}
+                  delay={500}
+                  animateBy="words"
+                  direction="top"
+                  className="type-h1 mb-[var(--space-sm)]"
+                />
                 <motion.p
                   className="max-w-xl"
                   style={{
@@ -530,8 +566,11 @@ function App() {
                     letterSpacing: '0.01em',
                     color: 'var(--color-text)',
                   }}
-                  initial={false}
+                  initial={{ opacity: 0, y: 16, filter: 'blur(8px)' }}
                   animate={{
+                    opacity: 1,
+                    y: 0,
+                    filter: 'blur(0px)',
                     fontSize: (focusOpen || toolsOpen) ? 'clamp(1rem, 1.4vw, 1.15rem)' : 'clamp(1.3rem, 2.2vw, 1.7rem)',
                     lineHeight: (focusOpen || toolsOpen) ? '1.6' : '1.8',
                     marginTop: (focusOpen || toolsOpen) ? '16px' : '48px',
@@ -583,22 +622,39 @@ function App() {
                   ))}
                 </motion.div>
               </div>
-              <div className="w-4/5 mx-auto md:mx-0 md:w-80 lg:w-88 shrink-0">
+              <motion.div
+                className="w-4/5 mx-auto md:mx-0 md:w-80 lg:w-88 shrink-0"
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.18, ease: [0.22, 1, 0.36, 1] }}
+              >
                 <img
                   src="./about-photo.jpg"
                   alt="Portrait of Ryan Yu"
                   className="w-full rounded-xl object-cover"
                   style={{ aspectRatio: '3 / 4' }}
                 />
-              </div>
+              </motion.div>
             </div>
-            <div className="flex flex-col md:flex-row gap-[var(--space-xxl)] items-start my-[var(--space-xxxl)] py-[var(--space-xxl)] border-t border-b border-black/8">
+            <motion.div
+              className="flex flex-col md:flex-row gap-[var(--space-xxl)] items-start my-[var(--space-xxxl)] py-[var(--space-xxl)] border-t border-b border-black/8"
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.28, ease: [0.22, 1, 0.36, 1] }}
+            >
               <div className="flex-1 min-w-0">
                 <p className="type-body mb-[var(--space-xs)]">{t('email')}</p>
                 <p className="type-body text-[var(--color-text-muted)] mb-[var(--space-lg)]">{t('availability')}</p>
                 <div className="flex flex-wrap gap-[var(--space-sm)]">
                   {about.links.map((link) => (
-                    <a key={link.label} href={link.href} className="spine-open">
+                    <a
+                      key={link.label}
+                      href={link.href}
+                      className="spine-open"
+                      {...(link.href.startsWith('http')
+                        ? { target: '_blank', rel: 'noreferrer' }
+                        : {})}
+                    >
                       {link.label}
                     </a>
                   ))}
@@ -622,9 +678,23 @@ function App() {
                 <input name="contact-message" className="field" placeholder={String(t('placeholderMessage'))} aria-label={String(t('placeholderMessage'))} required />
                 <button type="submit" className="spine-open" style={{ justifySelf: 'start' }}>SEND</button>
               </form>
-            </div>
-            <div className="space-y-[var(--space-md)]">
-              <div className="spine-block">
+            </motion.div>
+            <motion.div
+              className="space-y-[var(--space-md)]"
+              initial="hidden"
+              animate="show"
+              variants={{
+                hidden: {},
+                show: { transition: { staggerChildren: 0.08, delayChildren: 0.36 } },
+              }}
+            >
+              <motion.div
+                className="spine-block"
+                variants={{
+                  hidden: { opacity: 0, y: 16 },
+                  show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] } },
+                }}
+              >
                 <div className="spine-head">
                   <span className="type-caption">#</span>
                   <span className="text-[1rem] font-medium text-[var(--color-text)]">{t('educationFold')}</span>
@@ -633,8 +703,14 @@ function App() {
                   <p className="type-body">{about.fold.education}</p>
                   {about.fold.exhibitions && <p className="type-body mt-[var(--space-sm)]">{about.fold.exhibitions}</p>}
                 </div>
-              </div>
-              <div className="spine-block">
+              </motion.div>
+              <motion.div
+                className="spine-block"
+                variants={{
+                  hidden: { opacity: 0, y: 16 },
+                  show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] } },
+                }}
+              >
                 <div className="spine-head">
                   <span className="type-caption">#</span>
                   <span className="text-[1rem] font-medium text-[var(--color-text)]">{t('paperFold')}</span>
@@ -642,26 +718,80 @@ function App() {
                 <div className="spine-body">
                   <p className="type-body">{about.fold.paperReport}</p>
                 </div>
-              </div>
-              <div className="spine-block">
+              </motion.div>
+              <motion.div
+                className="spine-block"
+                variants={{
+                  hidden: { opacity: 0, y: 16 },
+                  show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] } },
+                }}
+              >
                 <div className="spine-head">
                   <span className="type-caption">#</span>
                   <span className="text-[1rem] font-medium text-[var(--color-text)]">{t('otherFold')}</span>
                 </div>
                 <div className="spine-body">
-                  <p className="type-body">{about.fold.otherWorks}</p>
+                  <div className="other-works">
+                    {about.fold.otherWorks.map((work) => (
+                      <article key={work.title} className="other-work">
+                        <a
+                          className="other-work-still"
+                          href={work.watch}
+                          target="_blank"
+                          rel="noreferrer"
+                          aria-label={`Watch ${work.title}`}
+                        >
+                          <img src={work.still} alt="" />
+                        </a>
+                        <h3 className="other-work-title">{work.title}</h3>
+                        <p className="type-body other-work-summary">{work.summary}</p>
+                        <div className="other-work-links">
+                          <a className="spine-open" href={work.watch} target="_blank" rel="noreferrer">
+                            Watch
+                          </a>
+                          <a className="spine-open" href={work.repo} target="_blank" rel="noreferrer">
+                            GitHub
+                          </a>
+                        </div>
+                      </article>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            </div>
-          </section>
+              </motion.div>
+            </motion.div>
+          </PageAppear>
         ) : isResumeView ? (
-          <section id="page-08" aria-label="Resume Page" className="system-shell section-shell py-[var(--space-xxxl)]">
+          <PageAppear id="page-08" label="Resume Page">
             <a href="#page-00" className="type-caption mb-[var(--space-md)] inline-block">{t('back')}</a>
-            <SectionIntro
-              title={String(t('resumeTitle'))}
-              purpose={String(t('resumePurpose'))}
-            />
-            <div className="spine-body">
+            <header className="mb-[var(--space-xl)]">
+              <BlurText
+                as="h2"
+                text={String(t('resumeTitle'))}
+                delay={500}
+                animateBy="words"
+                direction="top"
+                className="type-h1 mb-[var(--space-sm)]"
+              />
+              <BlurText
+                text={String(t('resumePurpose'))}
+                delay={60}
+                animateBy="words"
+                direction="bottom"
+                stepDuration={0.35}
+                className="type-body max-w-3xl"
+                animationFrom={{ filter: 'blur(8px)', opacity: 0, y: 20 }}
+                animationTo={[
+                  { filter: 'blur(3px)', opacity: 0.5, y: 3 },
+                  { filter: 'blur(0px)', opacity: 1, y: 0 },
+                ]}
+              />
+            </header>
+            <motion.div
+              className="spine-body"
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
+            >
               <div className="image-block h-72 mb-[var(--space-sm)]" />
               <div className="flex gap-[var(--space-sm)] mb-[var(--space-sm)]">
                 <a href="#" className="spine-open">
@@ -672,8 +802,8 @@ function App() {
                 </a>
               </div>
               <div className="pt-[var(--space-md)] pb-[var(--space-md)]" aria-hidden="true" />
-            </div>
-          </section>
+            </motion.div>
+          </PageAppear>
         ) : workDetailId ? (
           <section id={workDetailId} aria-label="Work detail" className="system-shell section-shell py-[var(--space-xxxl)]">
             <a href="#page-00" className="type-caption mb-[var(--space-md)] inline-block">{t('back')}</a>
@@ -1644,6 +1774,8 @@ function App() {
                 </section>
               </>
             )}
+            {workDetailId === 'page-mirror' && <ProjectStudy project={mirrorStudy} />}
+            {workDetailId === 'page-noteblock' && <ProjectStudy project={noteBlockStudy} />}
             {workDetailId === 'page-train' && (
               <>
                 {/* Hero */}

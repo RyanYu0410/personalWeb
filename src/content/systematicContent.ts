@@ -47,6 +47,8 @@ export const sectionMeta = [
   { id: 'page-housing', label: 'Housing' },
   { id: 'page-train', label: 'Train UI' },
   { id: 'page-poker', label: 'AR Poker' },
+  { id: 'page-mirror', label: 'Mirror' },
+  { id: 'page-noteblock', label: 'NoteBlock' },
   { id: 'page-04', label: 'Interactive' },
   { id: 'page-04a', label: 'Int Project' },
   { id: 'page-05', label: 'Research' },
@@ -79,6 +81,7 @@ export const about = {
   links: [
     { label: 'Resume', href: '#page-08' },
     { label: 'Email', href: 'mailto:hryanyu@gmail.com' },
+    { label: 'YouTube', href: 'https://www.youtube.com/@hryanyu' },
     { label: 'GitHub', href: 'https://github.com/' },
     { label: 'LinkedIn', href: 'https://www.linkedin.com/' },
   ],
@@ -86,7 +89,22 @@ export const about = {
     education: 'PRATT BFA Digital Arts Art & Technology focused on creative technology and interaction systems.',
     exhibitions: '',
     paperReport: 'Published and in-progress papers, reports, and written documentation.',
-    otherWorks: 'Additional projects, collaborations, and side work outside main tracks.',
+    otherWorks: [
+      {
+        title: 'Speed of Time',
+        summary: 'A low-poly 3D garden you paint by clicking, then walk through as one full day.',
+        repo: 'https://github.com/RyanYu0410/Speed-of-time',
+        watch: 'https://www.youtube.com/watch?v=aWeUETX6g7M',
+        still: 'https://i.ytimg.com/vi/aWeUETX6g7M/maxresdefault.jpg',
+      },
+      {
+        title: 'Pocket Memory',
+        summary: 'A performance where a black puffer coat becomes a portable archive of everyday objects.',
+        repo: 'https://github.com/RyanYu0410/Pocket-Memory',
+        watch: 'https://www.youtube.com/watch?v=6iLmZUhB4qQ',
+        still: 'https://i.ytimg.com/vi/6iLmZUhB4qQ/maxresdefault.jpg',
+      },
+    ],
   },
 };
 
@@ -96,9 +114,9 @@ export const workIndex = {
     { title: 'Housing Solutions', outcome: 'Tools and Insights for a Smoother Housing Searching Experiences', role: 'UI System + UX', href: '#page-housing', thumb: './housing-hero.png', featured: true },
   ],
   interactive: [
+    { title: 'Unstable Mirror', outcome: 'A browser mirror that turns a live portrait into a botanical AI reflection.', role: 'Interactive / AI', href: '#page-mirror', thumb: 'https://raw.githubusercontent.com/RyanYu0410/unstableMirror/main/docs/images/frontend-desktop.png', featured: true },
+    { title: 'NoteBlock', outcome: 'A clock-table instrument where colored fruits play Euclidean rhythms.', role: 'p5.js + Tone.js', href: '#page-noteblock', thumb: 'https://raw.githubusercontent.com/RyanYu0410/NoteBlock/main/docs/screenshots/00-empty-table.png', featured: true },
     { title: 'Zero-kit AR Poker', outcome: 'Face-to-face multiplayer AR poker on shared table.', role: 'Unity/AR', href: '#page-poker', thumb: './poker-hero.png', featured: true },
-    { title: 'Gesture Type Lab', outcome: 'Mapped body input to kinetic typography states.', role: 'Prototype', href: '#page-04a' },
-    { title: 'AR Wayfinding Mock', outcome: 'Tested spatial cue readability in motion.', role: 'Unity/AR', href: '#page-04a' },
   ],
   research: [
   ],

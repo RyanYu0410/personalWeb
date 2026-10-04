@@ -563,7 +563,6 @@ button:focus-visible {
   *::after {
     animation-duration: 0.001ms !important;
     animation-iteration-count: 1 !important;
-    transition-duration: 0.001ms !important;
     scroll-behavior: auto !important;
   }
 }
@@ -591,6 +590,77 @@ button:focus-visible {
 
 .spine-body {
   padding: var(--space-md);
+}
+
+.other-works {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-xl);
+}
+
+.other-work {
+  display: flex;
+  flex-direction: column;
+}
+
+.other-work-still {
+  display: block;
+  overflow: hidden;
+  border-radius: 12px;
+  aspect-ratio: 16 / 10;
+  background: rgb(0 0 0 / 0.04);
+  margin-bottom: var(--space-sm);
+}
+
+.other-work-still img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 10px;
+  filter: grayscale(1) brightness(0.94);
+  transform: scale(0.94);
+  will-change: transform;
+  transition: filter 0.75s cubic-bezier(0.4, 0, 0.2, 1),
+    transform 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.other-work-still:hover img,
+.other-work-still:focus-visible img {
+  filter: none;
+  transform: scale(1);
+}
+
+.other-work-still:focus-visible {
+  outline: 2px solid var(--color-accent-primary);
+  outline-offset: 3px;
+}
+
+.other-work-title {
+  margin: 0 0 var(--space-xs);
+  font-size: 1.05rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--color-text);
+}
+
+.other-work-summary {
+  margin: 0 0 var(--space-sm);
+  max-width: 36rem;
+  line-height: 1.75;
+}
+
+.other-work-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+  margin-top: auto;
+}
+
+@media (min-width: 768px) {
+  .other-works {
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-lg);
+  }
 }
 
 /* ── Spine grid: auto-layout cards ──────────── */
@@ -624,8 +694,8 @@ button:focus-visible {
   cursor: pointer;
   background: rgb(0 0 0 / 0.03);
   box-shadow: 0 1px 4px rgb(0 0 0 / 0.05);
-  transition: transform 0.5s cubic-bezier(0.33, 1, 0.68, 1),
-              box-shadow 0.5s cubic-bezier(0.33, 1, 0.68, 1);
+  transition: transform 0.65s cubic-bezier(0.4, 0, 0.2, 1),
+              box-shadow 0.65s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* Orange wash from top, fading down — visible on hover/focus */
@@ -674,15 +744,18 @@ button:focus-visible {
   object-position: center;
   filter: grayscale(1) brightness(0.92);
   opacity: 0.55;
-  /* Opacity eases slowly in/out; color filter follows slightly after for a layered feel */
-  transition: opacity 1s cubic-bezier(0.45, 0, 0.55, 1),
-              filter 0.85s cubic-bezier(0.33, 1, 0.68, 1) 0.08s;
+  transform: scale(0.94);
+  will-change: transform;
+  transition: opacity 0.75s cubic-bezier(0.4, 0, 0.2, 1),
+              filter 0.75s cubic-bezier(0.4, 0, 0.2, 1),
+              transform 1.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .spine-card-link:hover .spine-card-img,
 .spine-card-link:focus-visible .spine-card-img {
   filter: grayscale(0) brightness(1);
   opacity: 1;
+  transform: scale(1);
 }
 
 .spine-card-placeholder {
@@ -698,7 +771,7 @@ button:focus-visible {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
+  gap: 7px;
   width: 100%;
   padding: var(--space-md) var(--space-sm);
   background: linear-gradient(
@@ -727,14 +800,14 @@ button:focus-visible {
 .spine-card-title {
   font-size: 1.15rem;
   font-weight: 700;
-  line-height: 1.25;
+  line-height: 1.35;
   color: #fff;
   margin: 0;
 }
 
 .spine-card-outcome {
   font-size: 0.78rem;
-  line-height: 1.4;
+  line-height: 1.7;
   color: rgba(255, 255, 255, 0.6);
   margin: 0;
   max-width: 90%;

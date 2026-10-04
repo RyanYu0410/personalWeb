@@ -227,6 +227,8 @@ const translations = {
 
     // Zero-kit AR Poker
     navPoker: 'AR Poker',
+    navMirror: 'Mirror',
+    navNoteBlock: 'NoteBlock',
     pokerHeroName: 'Zero-kit AR Poker',
     pokerYear: '2025',
     pokerRole: 'Interaction Design + Unity/AR Development',
@@ -486,6 +488,8 @@ const translations = {
 
     // Zero-kit AR Poker
     navPoker: 'AR 扑克',
+    navMirror: '镜像',
+    navNoteBlock: '音符',
     pokerHeroName: 'Zero-kit AR 扑克',
     pokerYear: '2025',
     pokerRole: '交互设计 + Unity/AR 开发',

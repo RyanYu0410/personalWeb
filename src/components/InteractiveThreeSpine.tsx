@@ -88,7 +88,14 @@ export default function InteractiveThreeSpine({ workIndex }: InteractiveThreeSpi
               },
             }}
           >
-            <a ref={cardRef} href={item.href} className="spine-card-link">
+            <a
+              ref={cardRef}
+              href={item.href}
+              className="spine-card-link"
+              {...(item.href.startsWith('http')
+                ? { target: '_blank', rel: 'noreferrer' }
+                : {})}
+            >
               {item.thumb ? (
                 <img
                   src={item.thumb}
