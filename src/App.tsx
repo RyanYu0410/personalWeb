@@ -24,6 +24,7 @@ import {
 import InteractiveThreeSpine from './components/InteractiveThreeSpine';
 import ProjectStudy from './components/ProjectStudy';
 import { mirrorStudy, noteBlockStudy } from './content/projectStudies';
+import PullBackStudy from './components/PullBackStudy';
 import ColorBends from './components/ColorBends';
 import BlurText from './components/BlurText';
 import { useT } from './i18n/useT';
@@ -217,6 +218,7 @@ const navLabelKeys: Record<string, TranslationKey> = {
   'page-poker': 'navPoker',
   'page-mirror': 'navMirror',
   'page-noteblock': 'navNoteBlock',
+  'page-pullback': 'navPullBack',
   'page-04': 'navInteractive',
   'page-04a': 'navIntProject',
   'page-05': 'navResearch',
@@ -237,7 +239,7 @@ function App() {
   const [focusOpen, setFocusOpen] = useState(false);
   const [toolsOpen, setToolsOpen] = useState(false);
   const [spatialOpen, setSpatialOpen] = useState<'installation' | 'coding'>('installation');
-  const WORK_DETAIL_IDS = ['page-03', 'page-03a', 'page-housing', 'page-train', 'page-poker', 'page-mirror', 'page-noteblock', 'page-04', 'page-04a', 'page-05', 'page-06', 'page-06a'] as const;
+  const WORK_DETAIL_IDS = ['page-03', 'page-03a', 'page-housing', 'page-train', 'page-poker', 'page-mirror', 'page-noteblock', 'page-pullback', 'page-04', 'page-04a', 'page-05', 'page-06', 'page-06a'] as const;
   const [workDetailId, setWorkDetailId] = useState<string | null>(() => {
     const id = window.location.hash.slice(1);
     return WORK_DETAIL_IDS.includes(id as (typeof WORK_DETAIL_IDS)[number]) ? id : null;
@@ -448,7 +450,7 @@ function App() {
       <nav aria-label="Section navigation" className="section-nav surface-glass">
         <div className="section-nav-links">
           {sectionMeta.map((item) => {
-            const isNested = ['page-03', 'page-03a', 'page-housing', 'page-train', 'page-poker', 'page-mirror', 'page-noteblock', 'page-04', 'page-04a', 'page-05', 'page-06', 'page-06a'].includes(item.id);
+            const isNested = ['page-03', 'page-03a', 'page-housing', 'page-train', 'page-poker', 'page-mirror', 'page-noteblock', 'page-pullback', 'page-04', 'page-04a', 'page-05', 'page-06', 'page-06a'].includes(item.id);
             if (isNested) return null;
             return (
               <a
@@ -512,7 +514,7 @@ function App() {
                 {(() => {
                   let idx = 0;
                   return sectionMeta.map((item) => {
-                    const isNested = ['page-03', 'page-03a', 'page-housing', 'page-train', 'page-poker', 'page-mirror', 'page-noteblock'].includes(item.id);
+                    const isNested = ['page-housing', 'page-train', 'page-poker', 'page-mirror', 'page-noteblock', 'page-pullback'].includes(item.id);
                     if (!isNested) return null;
                     const i = idx++;
                     return (
@@ -1761,6 +1763,7 @@ function App() {
             )}
             {workDetailId === 'page-mirror' && <ProjectStudy project={mirrorStudy} />}
             {workDetailId === 'page-noteblock' && <ProjectStudy project={noteBlockStudy} />}
+            {workDetailId === 'page-pullback' && <PullBackStudy />}
             {workDetailId === 'page-train' && (
               <>
                 {/* Hero */}

@@ -15,6 +15,8 @@ export type ProjectStudyData = {
   closingLine: string;
   wideImage: string;
   wideAlt: string;
+  wideFit?: 'cover' | 'board';
+  slideFit?: 'frame' | 'board';
   goals: [string, string];
   nodes: { title: string; lines: string[]; accent?: boolean }[];
   edges: [string, string];
@@ -164,5 +166,76 @@ export const noteBlockStudy: ProjectStudyData = {
   links: [
     { label: 'Play', href: 'https://ryanyu0410.github.io/NoteBlock/' },
     { label: 'GitHub', href: 'https://github.com/RyanYu0410/NoteBlock' },
+  ],
+};
+
+export const pullbackStudy: ProjectStudyData = {
+  heroName: 'PullBack',
+  year: '2026',
+  role: 'UI/UX design · Vibe coding',
+  heroImage: './pullback/hero.jpg',
+  heroAlt: 'A student at a desk, phone open to PullBack, notebook and lamp nearby',
+  overview:
+    'Middle school students often open their phones with a homework-related intention, but the environment quickly pulls them into messages, notifications, social feedback, and endless content. Pull It is a small ritual that helps them come back to that intention before drifting too far.',
+  statement: 'A simple pull.',
+  accentLine: 'A powerful reset.',
+  closingLine: 'Small wins grow into a garden.',
+  wideImage: './pullback/01-cover.jpg',
+  wideAlt: 'Pull It project cover: phone mock and a student studying at home',
+  wideFit: 'board',
+  slideFit: 'board',
+  goals: [
+    'Help children start homework without a teacher nearby, using gentle reminders instead of locks and punishment.',
+    'Make studying feel social and rewarding: presence, instant feedback, and a garden that records the streak.',
+  ],
+  nodes: [
+    { title: 'Start', lines: ['Smart reminder', 'Tonight’s plan'] },
+    { title: 'Room', lines: ['Avatars nearby', 'Focus timer'], accent: true },
+    { title: 'Garden', lines: ['Micro-rewards', 'Visible growth'] },
+  ],
+  edges: ['Sit', 'Grow'],
+  steps: [
+    { head: 'Research the drift', sub: 'Home has no classroom.\nPhones fill the gap with mini-rewards.' },
+    { head: 'Talk to families', sub: 'Two parents and one student.\nControl creates conflict. Peers help.' },
+    { head: 'Design the room', sub: 'Wireframes, a design guide,\nthen prototypes with Codex.' },
+  ],
+  takeaways: [
+    { label: 'Control is not desire', detail: 'Timers, lockers, and rewards manage behavior. They do not change why a child opens the phone.' },
+    { label: 'Replace the reward', detail: 'Learning needs its own instant feedback loop, not a punishment when the phone comes out.' },
+    { label: 'Not alone', detail: 'A light social presence — friends also studying — lowers isolation without adding pressure.' },
+  ],
+  quote: 'I know I should study, but it is really hard to get started at home.',
+  features: [
+    { label: 'Smart reminder', desc: 'A nudge to put the phone away and name tonight’s subjects before the session starts.' },
+    { label: 'Personalized plan', desc: 'Goals, time, and today’s tasks, so there is a clear place to begin.' },
+    { label: 'Virtual study room', desc: 'An immersive seat with fewer distractions, built to feel quiet rather than locked.' },
+    { label: 'Study group', desc: 'See that others are studying. Companionship without a teacher watching.' },
+    { label: 'Focus timer', desc: 'Pomodoro sessions, elapsed time, and a structured break — “take it easy,” then pull back.' },
+    { label: 'Garden', desc: 'Streaks and blooms make progress visible. Small wins accumulate into a study garden.' },
+  ],
+  intro: {
+    title: 'Pull It',
+    text: 'A homework companion for coming back in time. Instead of removing the phone, a small ritual brings students back to the work they meant to do.',
+    tags: ['UI/UX', 'Vibe coding', 'Study'],
+  },
+  slides: [
+    { src: './pullback/01-cover.jpg', alt: 'Project cover, Pull It' },
+    { src: './pullback/02-research.jpg', alt: 'Social context and secondary research' },
+    { src: './pullback/03-interviews.jpg', alt: 'Depth interviews, competitor analysis, and ideation' },
+    { src: './pullback/04-journey.jpg', alt: 'Persona and user journey map' },
+    { src: './pullback/05-wireframe.jpg', alt: 'Wireframes, design guide, and vibe coding process' },
+    { src: './pullback/06-app.jpg', alt: 'App interface screens' },
+  ],
+  reflection:
+    'Children at home lose the structure of school: no classroom, no teacher, no classmates. Current tools restrict, remove, or punish. PullBack tries the other path — autonomy, immediate feedback, and a shared room — so starting feels lighter than opening the phone.',
+  credits: {
+    team: 'Ryan Yu',
+    role: 'UI/UX design and vibe coding',
+    year: '2026',
+    tools: 'Figma, Inter, Quicksand, Codex',
+  },
+  links: [
+    { label: 'Live', href: 'https://ryanyu0410.github.io/pullback/welcome' },
+    { label: 'GitHub', href: 'https://github.com/RyanYu0410/pullback' },
   ],
 };

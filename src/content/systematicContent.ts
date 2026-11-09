@@ -49,6 +49,7 @@ export const sectionMeta = [
   { id: 'page-poker', label: 'AR Poker' },
   { id: 'page-mirror', label: 'Mirror' },
   { id: 'page-noteblock', label: 'NoteBlock' },
+  { id: 'page-pullback', label: 'PullBack' },
   { id: 'page-04', label: 'Interactive' },
   { id: 'page-04a', label: 'Int Project' },
   { id: 'page-05', label: 'Research' },
@@ -110,6 +111,7 @@ export const about = {
 
 export const workIndex = {
   ui: [
+    { title: 'PullBack', outcome: 'A virtual study room where a simple pull resets focus and small wins grow a garden.', role: 'UI/UX · Vibe Coding', href: '#page-pullback', thumb: './pullback/card.jpg', featured: true },
     { title: 'MTA Live Arrivals', outcome: 'Real-time transit data visualization for NYC subway riders.', role: 'UI System + Data Viz', href: '#page-train', thumb: './train-hero.png', featured: true },
     { title: 'Housing Solutions', outcome: 'Tools and Insights for a Smoother Housing Searching Experiences', role: 'UI System + UX', href: '#page-housing', thumb: './housing-hero.png', featured: true },
   ],

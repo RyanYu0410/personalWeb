@@ -1,13 +1,13 @@
 import { useEffect, useRef, useState } from 'react';
-import { motion, useMotionValueEvent, useScroll } from 'framer-motion';
+import { AnimatePresence, motion, useMotionValueEvent, useScroll, useTransform } from 'framer-motion';
 import type { ProjectStudyData } from '../content/projectStudies';
 
 const ease = [0.25, 0.1, 0.25, 1] as const;
 
 export default function ProjectStudy({ project }: { project: ProjectStudyData }) {
   const timelineRef = useRef<HTMLDivElement>(null);
-  const slideCount = project.slides.length + 1;
-  const vhPerSlide = 120;
+  const slideCount = Math.max(project.slides.length + 1, 1);
+  const vhPerSlide = 165;
   const { scrollYProgress } = useScroll({
     target: timelineRef,
     offset: ['start start', 'end end'],
@@ -29,6 +29,15 @@ export default function ProjectStudy({ project }: { project: ProjectStudyData })
   }, [scrollYProgress, slideCount]);
 
   const progress = ((step + local) / slideCount) * 100;
+  const heroStep = 1 / slideCount;
+  const heroImgY = useTransform(scrollYProgress, [0, heroStep], ['0%', '-6%']);
+  const heroImgX = useTransform(scrollYProgress, [0, heroStep], ['0%', '-4%']);
+  const heroImgOp = useTransform(scrollYProgress, [0, heroStep * 0.6], [1, 0]);
+  const heroTxtY = useTransform(scrollYProgress, [0, heroStep * 0.5], ['0%', '-12%']);
+  const heroTxtOp = useTransform(scrollYProgress, [0, heroStep * 0.45], [1, 0]);
+  const heroTagY = useTransform(scrollYProgress, [0, heroStep * 0.35], ['0%', '-8%']);
+  const heroTagOp = useTransform(scrollYProgress, [0, heroStep * 0.3], [1, 0]);
+  const boardSlides = project.slideFit === 'board';
 
   return (
     <>
@@ -84,8 +93,16 @@ export default function ProjectStudy({ project }: { project: ProjectStudyData })
         <img
           src={project.wideImage}
           alt={project.wideAlt}
-          className="w-full rounded-xl object-cover mt-[var(--space-lg)]"
-          style={{ maxHeight: 'clamp(200px, 35vw, 420px)' }}
+          className={
+            project.wideFit === 'board'
+              ? 'w-full rounded-2xl shadow-2xl object-contain mt-[var(--space-lg)]'
+              : 'w-full rounded-xl object-cover mt-[var(--space-lg)]'
+          }
+          style={
+            project.wideFit === 'board'
+              ? { maxHeight: '70vh' }
+              : { maxHeight: 'clamp(200px, 35vw, 420px)' }
+          }
         />
       </motion.div>
 
@@ -184,70 +201,142 @@ export default function ProjectStudy({ project }: { project: ProjectStudyData })
         </blockquote>
       </motion.section>
 
-      <div
+      {project.slides.length > 0 && <div
         ref={timelineRef}
         className="relative my-[var(--space-xxxl)] w-screen"
         style={{ marginLeft: 'calc(50% - 50vw)', height: `${slideCount * vhPerSlide}vh` }}
       >
         <div className="sticky top-0 h-screen overflow-hidden bg-[var(--color-bg)] z-10">
           <div className="relative h-screen w-full">
-            <motion.div
-              key={step}
-              className="absolute inset-0"
-              initial={{ y: '8vh', opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
-            >
-              {step === 0 ? (
-                <div className="h-screen w-full flex items-center justify-center px-[var(--space-xl)]">
-                  <div className="max-w-3xl">
-                    <div className="flex gap-[var(--space-sm)] flex-wrap mb-[var(--space-lg)]">
-                      {project.intro.tags.map((tag) => (
-                        <span
-                          key={tag}
-                          className="font-mono text-[0.65rem] tracking-widest uppercase px-3 py-1 rounded-full border"
-                          style={{ borderColor: 'rgba(0,0,0,0.18)', color: 'var(--color-text-muted)' }}
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={step}
+                className="absolute inset-0"
+                initial={{ y: '14vh', opacity: 0 }}
+                animate={{ y: '0vh', opacity: 1 }}
+                exit={{ y: '-14vh', opacity: 0 }}
+                transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+              >
+                {step === 0 ? (
+                  <div className="h-screen w-full flex items-center justify-center px-[var(--space-xl)]">
+                    <div className="w-full max-w-6xl grid grid-cols-1 md:grid-cols-2 gap-[var(--space-xxl)] items-center">
+                      <motion.div style={{ y: heroImgY, x: heroImgX, opacity: heroImgOp }} className="flex justify-center">
+                        <img
+                          src={project.heroImage}
+                          alt={project.heroAlt}
+                          style={{ maxHeight: '72vh', width: 'auto', maxWidth: '100%', filter: 'drop-shadow(0 32px 64px rgba(0,0,0,0.18))' }}
+                        />
+                      </motion.div>
+                      <div className="flex flex-col gap-[var(--space-lg)]">
+                        <motion.div style={{ y: heroTagY, opacity: heroTagOp }} className="flex gap-[var(--space-sm)] flex-wrap">
+                          {project.intro.tags.map((tag) => (
+                            <span
+                              key={tag}
+                              className="font-mono text-[0.65rem] tracking-widest uppercase px-3 py-1 rounded-full border"
+                              style={{ borderColor: 'rgba(0,0,0,0.18)', color: 'var(--color-text-muted)' }}
+                            >
+                              {tag}
+                            </span>
+                          ))}
+                        </motion.div>
+                        <motion.h2
+                          style={{ y: heroTxtY, opacity: heroTxtOp, fontSize: 'clamp(2.2rem, 4.5vw, 3.8rem)' }}
+                          className="font-bold leading-[1.05] tracking-tight m-0"
                         >
-                          {tag}
-                        </span>
-                      ))}
+                          {project.intro.title}
+                          <br />
+                          <span style={{ color: 'var(--color-accent-primary)' }}>{project.accentLine}</span>
+                        </motion.h2>
+                        <motion.p
+                          style={{ y: heroTxtY, opacity: heroTxtOp }}
+                          className="text-[1.1rem] leading-relaxed max-w-md m-0 text-[var(--color-text-muted)]"
+                        >
+                          {project.intro.text}
+                        </motion.p>
+                        <motion.p style={{ y: heroTxtY, opacity: heroTxtOp }} className="type-caption m-0 text-[var(--color-text-muted)]">
+                          Scroll to view the work ↓
+                        </motion.p>
+                      </div>
                     </div>
-                    <h2 className="font-bold leading-[1.05] tracking-tight m-0" style={{ fontSize: 'clamp(2.2rem, 4.5vw, 3.8rem)' }}>
-                      {project.intro.title}
-                    </h2>
-                    <p className="text-[1.1rem] leading-relaxed max-w-xl mt-[var(--space-md)] text-[var(--color-text-muted)]">
-                      {project.intro.text}
-                    </p>
-                    <p className="type-caption mt-[var(--space-lg)] text-[var(--color-text-muted)]">Scroll to view the work ↓</p>
                   </div>
-                </div>
-              ) : (
-                <div className="h-screen w-full flex items-center justify-center px-[var(--space-xl)]">
-                  <img
-                    src={project.slides[step - 1].src}
-                    alt={project.slides[step - 1].alt}
-                    className="w-full max-w-5xl rounded-2xl shadow-2xl object-contain"
-                    style={{ maxHeight: '76vh' }}
-                  />
-                </div>
-              )}
-            </motion.div>
-            <div className="pointer-events-none absolute left-0 right-0 z-20 px-[var(--space-lg)]" style={{ bottom: '1.25rem' }}>
-              <div className="mx-auto max-w-5xl flex flex-col gap-3">
-                <div className="flex items-baseline justify-between">
+                ) : (
+                  <div className="h-screen w-full flex flex-col justify-center items-center px-[var(--space-xl)] py-[var(--space-xxxl)] overflow-hidden">
+                    <div className="w-full" style={{ maxWidth: boardSlides ? 'min(94vw, 1680px)' : '64rem' }}>
+                      <img
+                        src={project.slides[step - 1].src}
+                        alt={project.slides[step - 1].alt}
+                        className="w-full rounded-2xl shadow-2xl object-contain"
+                        style={{ maxHeight: '76vh' }}
+                      />
+                    </div>
+                  </div>
+                )}
+              </motion.div>
+            </AnimatePresence>
+            <div
+              className="pointer-events-none absolute left-0 right-0 z-20 px-[var(--space-lg)] pb-[max(1.25rem,env(safe-area-inset-bottom))]"
+              style={{ bottom: '5px' }}
+              aria-hidden
+            >
+              <div className="mx-auto flex flex-col gap-3" style={{ maxWidth: boardSlides ? 'min(94vw, 1680px)' : '64rem' }}>
+                <div className="flex items-baseline justify-between gap-4">
                   <span className="type-caption tracking-[0.12em] text-[var(--color-text-muted)]">
-                    {step + 1} / {slideCount}
+                    ACTION {step + 1} / {slideCount}
                   </span>
                   <span className="type-caption text-[var(--color-text-muted)] tabular-nums">{Math.round(progress)}%</span>
                 </div>
                 <div className="h-[3px] w-full rounded-full overflow-hidden" style={{ background: 'rgba(0,0,0,0.08)' }}>
-                  <div className="h-full rounded-full" style={{ width: `${progress}%`, background: 'var(--color-accent-primary)' }} />
+                  <div
+                    className="h-full rounded-full transition-[width] duration-75 ease-out"
+                    style={{ width: `${progress}%`, background: 'var(--color-accent-primary)' }}
+                  />
+                </div>
+                <div className="flex justify-center gap-2 flex-wrap">
+                  {Array.from({ length: slideCount }, (_, i) => (
+                    <span
+                      key={i}
+                      className="h-1.5 rounded-full transition-[width,opacity] duration-200"
+                      style={{
+                        width: i === step ? '1.5rem' : '0.375rem',
+                        opacity: i <= step ? 1 : 0.35,
+                        background: i === step ? 'var(--color-accent-primary)' : 'currentColor',
+                      }}
+                    />
+                  ))}
                 </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
+      </div>}
+
+      {project.slides.length === 0 && (
+        <motion.section
+          className="mb-[var(--space-xxxl)]"
+          initial={{ opacity: 0, y: 40 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: '-10% 0px' }}
+          transition={{ duration: 0.6, ease }}
+        >
+          <div className="flex gap-[var(--space-sm)] flex-wrap mb-[var(--space-lg)]">
+            {project.intro.tags.map((tag) => (
+              <span
+                key={tag}
+                className="font-mono text-[0.65rem] tracking-widest uppercase px-3 py-1 rounded-full border"
+                style={{ borderColor: 'rgba(0,0,0,0.18)', color: 'var(--color-text-muted)' }}
+              >
+                {tag}
+              </span>
+            ))}
+          </div>
+          <h2 className="font-bold leading-[1.05] tracking-tight m-0" style={{ fontSize: 'clamp(2.2rem, 4.5vw, 3.8rem)' }}>
+            {project.intro.title}
+          </h2>
+          <p className="text-[1.1rem] leading-relaxed max-w-xl mt-[var(--space-md)] text-[var(--color-text-muted)]">
+            {project.intro.text}
+          </p>
+        </motion.section>
+      )}
 
       <motion.section
         className="mb-[var(--space-xxxl)]"
