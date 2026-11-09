@@ -235,7 +235,7 @@ export const pullbackStudy: ProjectStudyData = {
     tools: 'Figma, Inter, Quicksand, Codex',
   },
   links: [
-    { label: 'Live', href: 'https://ryanyu0410.github.io/pullback/welcome' },
+    { label: 'Live', href: 'https://ryanyu0410.github.io/pullback/safety' },
     { label: 'GitHub', href: 'https://github.com/RyanYu0410/pullback' },
   ],
 };

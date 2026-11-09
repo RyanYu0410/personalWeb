@@ -1590,7 +1590,7 @@ export default function PullBackStudy() {
           ))}
         </div>
         <div className="flex flex-wrap gap-[var(--space-sm)]">
-          <a className="spine-open" href="https://ryanyu0410.github.io/pullback/welcome" target="_blank" rel="noreferrer">Live</a>
+          <a className="spine-open" href="https://ryanyu0410.github.io/pullback/safety" target="_blank" rel="noreferrer">Live</a>
           <a className="spine-open" href="https://github.com/RyanYu0410/pullback" target="_blank" rel="noreferrer">GitHub</a>
         </div>
       </section>
