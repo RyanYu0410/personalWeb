@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import { useId, type ReactNode } from 'react';
 import { motion } from 'framer-motion';
 
 const ease = [0.25, 0.1, 0.25, 1] as const;
@@ -21,6 +21,27 @@ function Block({
       <h3 className="type-caption text-[1.1rem] tracking-wider mb-[var(--space-lg)]">{title}</h3>
       {children}
     </motion.section>
+  );
+}
+
+function Frame({
+  ratio = 'video',
+  tone = '#FFF8F1',
+  className = '',
+  children,
+}: {
+  ratio?: 'video' | 'wide';
+  tone?: string;
+  className?: string;
+  children: ReactNode;
+}) {
+  return (
+    <div
+      className={`w-full overflow-hidden rounded-3xl ${ratio === 'video' ? 'aspect-video' : 'aspect-[32/9]'} p-[2.5%] flex flex-col items-center justify-center gap-[3%] [&>svg]:max-h-full [&>svg]:min-h-0 ${className}`}
+      style={{ background: tone }}
+    >
+      {children}
+    </div>
   );
 }
 
@@ -370,84 +391,208 @@ function Badge({
   );
 }
 
-const sketch = {
+const face = 'Inter, system-ui, sans-serif';
+
+const art = {
+  line: '#3D3A2E',
+  skin: '#F2C9A5',
+  blush: '#F4A38A',
+  hair: '#3A2A22',
+  hoodie: '#4E8A5B',
+  hoodieShade: '#3F7A4C',
+  wood: '#D8B48A',
+  woodShade: '#B98D60',
+  paper: '#FFF8EE',
+};
+
+const outline = {
   fill: 'none',
-  stroke: '#5E6B2C',
-  strokeWidth: 1.6,
+  stroke: art.line,
+  strokeWidth: 1.1,
   strokeLinecap: 'round' as const,
   strokeLinejoin: 'round' as const,
 };
 
+function Grain({ id, opacity = 0.18 }: { id: string; opacity?: number }) {
+  return (
+    <filter id={id} x="0" y="0" width="100%" height="100%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" seed="7" result="noise" />
+      <feColorMatrix in="noise" type="saturate" values="0" result="mono" />
+      <feComponentTransfer in="mono" result="soft">
+        <feFuncA type="linear" slope={opacity} />
+      </feComponentTransfer>
+      <feComposite in="soft" in2="SourceGraphic" operator="in" result="grain" />
+      <feMerge>
+        <feMergeNode in="SourceGraphic" />
+        <feMergeNode in="grain" />
+      </feMerge>
+    </filter>
+  );
+}
+
+function Desk({ y = 60 }: { y?: number }) {
+  return (
+    <>
+      <ellipse cx="60" cy={y + 15} rx="50" ry="3" fill="#3D3A2E" opacity="0.08" />
+      <rect x="8" y={y} width="104" height="5" rx="2" fill={art.wood} />
+      <rect x="8" y={y + 4} width="104" height="2" rx="1" fill={art.woodShade} />
+      <path d={`M16 ${y + 6}v9M104 ${y + 6}v9`} stroke={art.woodShade} strokeWidth="2.4" strokeLinecap="round" />
+    </>
+  );
+}
+
 function ImpactArt({ kind }: { kind: 'start' | 'drift' | 'momentum' | 'doubt' }) {
+  const id = useId().replace(/:/g, '');
+  const wash = `${id}w`;
+  const glow = `${id}g`;
+  const beam = `${id}b`;
+  const cloud = `${id}c`;
+  const hill = `${id}h`;
+  const grain = `${id}n`;
   return (
     <svg viewBox="0 0 120 80" className="w-full h-auto" aria-hidden>
-      {kind === 'start' && (
-        <>
-          <path d="M8 66h104" {...sketch} />
-          <circle cx="52" cy="30" r="13" {...sketch} />
-          <path d="M39 27c3-9 21-12 26-1M45 22c4 2 11 2 16-2" {...sketch} />
-          <circle cx="47.5" cy="31" r="1.3" fill="#5E6B2C" />
-          <circle cx="56.5" cy="31" r="1.3" fill="#5E6B2C" />
-          <path d="M49 37.5c2-1 4-1 6 0" {...sketch} />
-          <path d="M38 34c-4 6-2 14 4 16M66 34c4 6 2 14-4 16M34 66c2-10 8-15 18-15s16 5 18 15" {...sketch} />
-          <path d="M34 66l18-6 18 6M52 60v6" {...sketch} />
-          <path d="M26 16a4 4 0 1 1-5 6" {...sketch} strokeDasharray="2 2.5" />
-          <path d="M93 66V52M86 66h14l-2-6H88z" {...sketch} />
-          <path d="M93 54c-6-1-8-7-6-11 5 1 7 6 6 11zM93 51c2-5 7-7 11-5-1 5-6 7-11 5z" fill="#A7C66A" stroke="#5E6B2C" strokeWidth="1.3" />
-          <rect x="76" y="61" width="12" height="5" rx="1" {...sketch} />
-        </>
-      )}
-      {kind === 'drift' && (
-        <>
-          <rect x="16" y="12" width="28" height="54" rx="6" {...sketch} />
-          <path d="M27 61h6" {...sketch} />
-          <rect x="22" y="30" width="16" height="16" rx="3" fill="#C8DB8C" stroke="#5E6B2C" strokeWidth="1.3" />
-          <path d="M26.5 41a3.5 3.5 0 0 1 7 0c0 1.3.7 2 .7 2h-8.4s.7-.7.7-2zM29 43.6a1 1 0 0 0 2 0" {...sketch} strokeWidth={1.1} />
-          <circle cx="40" cy="28" r="4.5" fill="#2F8A3E" />
-          <path d="M52 39h16" {...sketch} strokeDasharray="3 3" />
-          <path d="M66 35l4 4-4 4" {...sketch} />
-          <circle cx="92" cy="38" r="13" {...sketch} />
-          <path d="M80 33c2-10 20-12 25-3M82 30c5 1 12 0 17-4" {...sketch} />
-          <circle cx="86" cy="39" r="1.3" fill="#5E6B2C" />
-          <path d="M80 42h-2M85 46c2 1 4 1 5 0M86 51c-6 3-10 9-11 15M98 51c6 3 10 9 11 15" {...sketch} />
-          <path d="M98 18l2-4M104 21l4-2M102 16l1-5" {...sketch} strokeWidth={1.3} />
-        </>
-      )}
-      {kind === 'momentum' && (
-        <>
-          <path d="M18 60 40 50 62 42 84 38" {...sketch} strokeDasharray="3 3" />
-          <circle cx="18" cy="60" r="5" fill="#4F9A3F" />
-          <circle cx="40" cy="50" r="5" fill="#A7C66A" stroke="#5E6B2C" strokeWidth="1.2" />
-          <circle cx="62" cy="42" r="5" fill="#4F9A3F" />
-          <circle cx="84" cy="38" r="5" fill="#FFF8EE" stroke="#5E6B2C" strokeWidth="1.4" />
-          <path d="M84 26v-5M91 28l3-4M77 28l-3-4" {...sketch} strokeWidth={1.3} />
-          <path d="M88 52l18 16M106 68l2 4-4-2M88 52l4-3 18 16-4 3z" {...sketch} />
-        </>
-      )}
-      {kind === 'doubt' && (
-        <>
-          <path d="M14 68h92" {...sketch} />
-          <circle cx="50" cy="38" r="13" {...sketch} />
-          <path d="M37 35c2-10 21-13 26-2M42 30c5 2 11 1 16-3" {...sketch} />
-          <path d="M45 40h3M53 40h3M48 46c1.5.7 3 .7 4.5 0" {...sketch} />
-          <path d="M62 44c4 1 6 6 4 12M66 56h-8M34 68c0-9 6-14 16-14M50 54c4 0 7 2 8 5" {...sketch} />
-          <path d="M80 26c-6 0-8-8-2-10-1-6 7-9 10-5 3-4 11-2 10 4 5 1 5 9-1 10-2 4-9 4-11 1-2 2-5 1-6 0z" fill="#E5F0B2" stroke="#5E6B2C" strokeWidth="1.4" />
-          <path d="M86.5 16.5a2.8 2.8 0 1 1 3.6 2.7c-.8.3-1.1.8-1.1 1.6v.6M89 24.3v.1" {...sketch} strokeWidth={1.4} />
-          <circle cx="74" cy="32" r="2" {...sketch} />
-          <circle cx="69" cy="37" r="1.2" {...sketch} />
-        </>
-      )}
+      <defs>
+        <radialGradient id={wash} cx="50%" cy="58%" r="62%">
+          <stop offset="0" stopColor="#FDEFD6" />
+          <stop offset="0.7" stopColor="#FDEFD6" stopOpacity="0.5" />
+          <stop offset="1" stopColor="#FDEFD6" stopOpacity="0" />
+        </radialGradient>
+        <radialGradient id={glow}>
+          <stop offset="0" stopColor="#DBEE7B" stopOpacity="0.95" />
+          <stop offset="1" stopColor="#DBEE7B" stopOpacity="0" />
+        </radialGradient>
+        <linearGradient id={beam} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="#FFE3A0" stopOpacity="0.9" />
+          <stop offset="1" stopColor="#FFE3A0" stopOpacity="0" />
+        </linearGradient>
+        <linearGradient id={cloud} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="#F4F1EA" />
+          <stop offset="1" stopColor="#C9CFD3" />
+        </linearGradient>
+        <linearGradient id={hill} x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0" stopColor="#E3ECD4" />
+          <stop offset="1" stopColor="#F3F0E4" />
+        </linearGradient>
+        <Grain id={grain} opacity={0.12} />
+      </defs>
+      <g filter={`url(#${grain})`}>
+        <ellipse cx="60" cy="44" rx="60" ry="38" fill={`url(#${wash})`} />
+
+        {kind === 'start' && (
+          <>
+            <polygon points="88,27 96,24 108,60 72,60" fill={`url(#${beam})`} />
+            <path d="M100 60V31l-8-9" fill="none" stroke={art.line} strokeWidth="1.5" strokeLinecap="round" />
+            <path d="M84 21.5 94 16l4.5 8.5-10 5.2z" fill="#24633E" />
+            <path d="M88.5 29.7 98.5 24.5" stroke="#FFE3A0" strokeWidth="1.2" strokeLinecap="round" />
+            <Desk />
+            <circle cx="22" cy="57" r="11" fill={`url(#${glow})`} />
+            <rect x="15" y="56" width="15" height="4" rx="1.6" fill="#1C1917" />
+            <rect x="17" y="56.8" width="8" height="1.2" rx="0.6" fill="#DBEE7B" />
+            <rect x="66" y="51" width="27" height="9" rx="1.2" fill="#F89200" />
+            <rect x="68" y="44" width="23" height="7" rx="1.2" fill="#24633E" />
+            <rect x="65" y="38" width="26" height="6" rx="1.2" fill="#FDD6A0" />
+            <path d="M68 55.5h22M70 47.5h18M67 41h21" stroke={art.paper} strokeWidth="0.7" opacity="0.8" />
+            <path d="M72 33.5v2.6M78 31.5v4.2M84 33.5v2.6" stroke={art.woodShade} strokeWidth="1.1" strokeLinecap="round" />
+            <path d="M30 60c1.6-11 9-17 19-17s16 6 18 17z" fill={art.hoodie} />
+            <path d="M44 44c3 5 9 6 14 3" fill="none" stroke={art.hoodieShade} strokeWidth="1.2" />
+            <path d="M31 58.5c7-3.2 17-3.4 25-.6" fill="none" stroke={art.hoodieShade} strokeWidth="5" strokeLinecap="round" />
+            <circle cx="46" cy="47" r="9" fill={art.skin} />
+            <path d="M37 46.5c-.5-7.5 6-11.5 12.4-10.2 5 1 8.2 5.2 7 9.4-3-3.2-8.4-4.4-12.4-3.2-3 1-5 2.8-7 4z" fill={art.hair} />
+            <path d="M41.6 49.4c1 .8 2.5.8 3.5 0" {...outline} strokeWidth={0.9} />
+            <circle cx="49.4" cy="51.2" r="1.6" fill={art.blush} opacity="0.55" />
+            <path d="M28 33c-3.4-1.6-2.6-6 .8-6 .2-3.2 4.6-4 5.8-1.2 2-1.6 5-.2 4.4 2.4" fill="none" stroke="#9DB3A6" strokeWidth="1" strokeDasharray="1.6 2" strokeLinecap="round" />
+          </>
+        )}
+
+        {kind === 'drift' && (
+          <>
+            <Desk />
+            <path d="M80 56c4-3 9-3 13 0 4-3 9-3 13 0v4c-4-3-9-3-13 0-4-3-9-3-13 0z" fill={art.paper} stroke="#C9B79C" strokeWidth="0.8" opacity="0.75" />
+            <path d="M93 56v4" stroke="#C9B79C" strokeWidth="0.6" />
+            <circle cx="24" cy="34" r="22" fill={`url(#${glow})`} />
+            <rect x="15" y="15" width="18" height="35" rx="4" fill="#1C1917" />
+            <rect x="17" y="18" width="14" height="28" rx="2.2" fill="#24633E" />
+            <rect x="18.4" y="21" width="11.2" height="4.2" rx="1.6" fill="#DBEE7B" />
+            <rect x="18.4" y="27.2" width="11.2" height="4.2" rx="1.6" fill="#FDD6A0" />
+            <rect x="18.4" y="33.4" width="7.6" height="4.2" rx="1.6" fill={art.paper} opacity="0.85" />
+            <circle cx="32.5" cy="16" r="3.4" fill="#F89200" stroke="#FFF8EE" strokeWidth="1" />
+            <path d="M38 22.5c2.8 2.2 2.8 6.4 0 8.6M41.4 19.4c5 3.8 5 11 0 14.8" fill="none" stroke="#F89200" strokeWidth="1.2" strokeLinecap="round" />
+            <path d="M36 37C47 34 53 28.5 61 31" fill="none" stroke="#F89200" strokeWidth="1.1" strokeDasharray="2 2.4" strokeLinecap="round" />
+            <path d="M56 60c1-10 7-16 15-16s13 6 14 16z" fill={art.hoodie} />
+            <path d="M64 46c2.4 3.6 7 4.6 11 2.4" fill="none" stroke={art.hoodieShade} strokeWidth="1.2" />
+            <circle cx="68" cy="36" r="9" fill={art.skin} />
+            <path d="M60 34.4c.8-7.4 8-10.4 14-8.4 4 1.4 6.2 5 5.2 8.4-3-3-7.2-3.4-10.4-2.2-3.8 1.4-6 2.2-8.8 2.2z" fill={art.hair} />
+            <circle cx="63.4" cy="37.2" r="1.15" fill={art.line} />
+            <path d="M62.6 41.4c1 .6 2.2.6 3 0" {...outline} strokeWidth={0.8} />
+            <circle cx="66.6" cy="40" r="1.5" fill={art.blush} opacity="0.5" />
+            <path d="M80.5 29.5 83.5 27.5M81.5 35h4M80.5 40.5l3 2" stroke="#9DB3A6" strokeWidth="1" strokeLinecap="round" />
+          </>
+        )}
+
+        {kind === 'momentum' && (
+          <>
+            <path d="M0 72C26 68 44 54 62 46s34-14 58-16v42z" fill={`url(#${hill})`} />
+            <path d="M2 71C28 67 45 53 62 46" fill="none" stroke="#4E8A5B" strokeWidth="1.2" strokeLinecap="round" />
+            <path d="M62 46c18-8 34-13 56-15" fill="none" stroke="#9DB3A6" strokeWidth="1" strokeDasharray="2 3" strokeLinecap="round" />
+            {[
+              [14, 68.6, '#24633E'],
+              [28, 64.6, '#24633E'],
+              [42, 58, '#4E8A5B'],
+              [55, 50.2, '#A7C66A'],
+            ].map(([x, y, c]) => (
+              <g key={String(x)}>
+                <ellipse cx={Number(x)} cy={Number(y) + 3} rx="5" ry="1.4" fill="#3D3A2E" opacity="0.1" />
+                <circle cx={Number(x)} cy={Number(y)} r="4.4" fill={String(c)} />
+                <path d={`M${Number(x) - 1.8} ${Number(y)}l1.3 1.3 2.4-2.6`} fill="none" stroke="#FFF8EE" strokeWidth="1" strokeLinecap="round" />
+              </g>
+            ))}
+            {[
+              [76, 40.4],
+              [90, 36.4],
+              [104, 33.4],
+            ].map(([x, y]) => (
+              <circle key={x} cx={x} cy={y} r="4" fill="none" stroke="#B7BFAF" strokeWidth="1" strokeDasharray="1.6 1.6" />
+            ))}
+            <path d="M64.5 41.5 67 45l-2 2.4 2.6 3" fill="none" stroke="#F89200" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+            <path d="M110 31V15" stroke={art.line} strokeWidth="1.2" strokeLinecap="round" />
+            <path d="M110 15.5c3.2-1.4 6 1.4 9.4 0v6.4c-3.4 1.4-6.2-1.4-9.4 0z" fill="#F89200" opacity="0.55" />
+            <circle cx="60" cy="38" r="3.6" fill={art.skin} />
+            <path d="M56.6 37c.4-3 3-4.4 5.6-3.6 1.6.6 2.2 2 1.8 3.2-1.4-1.2-3.4-1.4-4.6-.8-1.2.6-1.8 1-2.8 1.2z" fill={art.hair} />
+            <path d="M57.4 48.6c.2-3.6 1.4-6 2.8-6.6 1.6.4 2.6 2.8 2.6 6.2z" fill={art.hoodie} />
+            <path d="M58 44.6 54.4 47M62.4 44.4 66 46" stroke={art.hoodieShade} strokeWidth="1.4" strokeLinecap="round" />
+            <path d="M40 22l1 2.4 2.4 1-2.4 1-1 2.4-1-2.4-2.4-1 2.4-1zM24 34l.7 1.6 1.6.7-1.6.7-.7 1.6-.7-1.6-1.6-.7 1.6-.7z" fill="#A7C66A" opacity="0.8" />
+          </>
+        )}
+
+        {kind === 'doubt' && (
+          <>
+            <ellipse cx="48" cy="70" rx="30" ry="3.2" fill="#3D3A2E" opacity="0.1" />
+            <path d="M74 30c-7 0-9.4-8.4-2.6-10.6-1-6.4 7.6-9.6 11-4.8 3.4-4.4 12-2 10.6 4.6 5.6.8 5.4 9.8-1 10.8z" fill={`url(#${cloud})`} stroke="#AEB6BA" strokeWidth="0.9" />
+            <path d="M82 14.8a3 3 0 1 1 3.8 2.9c-.9.3-1.2.9-1.2 1.7v.8M84.6 23.4v.1" fill="none" stroke="#5E6B7A" strokeWidth="1.4" strokeLinecap="round" />
+            <path d="M76 34l-1.4 4M83 34l-1.4 4M90 34l-1.4 4M79.4 41l-1 3M86.4 41l-1 3" stroke="#8FB7D6" strokeWidth="1.1" strokeLinecap="round" />
+            <circle cx="66" cy="38" r="1.6" fill="#C9CFD3" />
+            <circle cx="61" cy="43" r="1" fill="#C9CFD3" />
+            <path d="M28 70c-2-12 4-22 16-23 10-.6 17 4 18 14l1 9z" fill={art.hoodie} />
+            <path d="M40 54c6-2 14-1 20 4l2 12H36z" fill={art.hoodieShade} />
+            <path d="M42 56c5-3 12-2 15 2" fill="none" stroke="#2F5E3B" strokeWidth="1.1" strokeLinecap="round" />
+            <circle cx="48" cy="44" r="9" fill={art.skin} />
+            <path d="M39 42c.4-7.4 7.4-11 13.6-9.2 4.6 1.4 7 5.6 5.6 9.4-3.2-3-8-3.8-11.8-2.6-3 1-5 1.6-7.4 2.4z" fill={art.hair} />
+            <path d="M43.4 46.2h2.6M50.4 46.2H53M46.4 50.4c1.2-.6 2.6-.6 3.8 0" {...outline} strokeWidth={0.9} />
+            <path d="M98 70v-6" stroke="#8A9A5B" strokeWidth="1.1" strokeLinecap="round" />
+            <path d="M98 65c-3.6.4-5.4-1.6-5.8-4.4 3.2-.4 5.4 1.4 5.8 4.4zM98 64.4c1.4-3 4-4 6.4-3.4-.8 3-3.4 4-6.4 3.4z" fill="#C6CF8F" stroke="#8A9A5B" strokeWidth="0.7" />
+            <path d="M92 70h12" stroke={art.woodShade} strokeWidth="1.4" strokeLinecap="round" />
+          </>
+        )}
+      </g>
     </svg>
   );
 }
 
-const face = 'Inter, system-ui, sans-serif';
-
 function HomeSchool() {
   const home = [
-    { icon: 'music', label: 'Short video' },
-    { icon: 'camera', label: 'Social' },
-    { icon: 'game', label: 'Games' },
+    { icon: 'music', label: 'Short video', x: 200, y: 98 },
+    { icon: 'camera', label: 'Social', x: 238, y: 168 },
+    { icon: 'game', label: 'Games', x: 196, y: 236 },
   ];
   const school = [
     { icon: 'book', label: 'Class' },
@@ -456,89 +601,252 @@ function HomeSchool() {
   ];
   return (
     <svg viewBox="0 0 760 300" className="w-full" role="img" aria-label="At home the evening is the phone. At school the day is class, friends, and movement.">
-      <rect x="8" y="8" width="360" height="284" rx="22" fill="#F8E6CD" />
-      <rect x="392" y="8" width="360" height="284" rx="22" fill="#E3ECD4" />
-      <text x="32" y="44" fill="#E59019" fontSize="18" fontWeight="800" fontFamily={face}>At home</text>
-      <text x="416" y="44" fill="#266B38" fontSize="18" fontWeight="800" fontFamily={face}>At school</text>
-      <rect x="36" y="68" width="86" height="168" rx="16" fill="#1C1917" />
-      <rect x="44" y="80" width="70" height="132" rx="10" fill="#FFF8EE" />
-      <circle cx="79" cy="214" r="4" fill="#1C1917" />
-      <circle cx="79" cy="128" r="18" fill="#F8E6CD" />
-      <SvgIcon name="phone" x={68} y={117} size={22} color="#E59019" />
-      {home.map((item, i) => (
-        <g key={item.label}>
-          <circle cx={168 + i * 72} cy="118" r="26" fill="#FFF8EE" />
-          <SvgIcon name={item.icon} x={156 + i * 72} y={106} size={24} color="#E59019" />
-          <text x={168 + i * 72} y="168" textAnchor="middle" fill="#47574C" fontSize="12" fontWeight="600" fontFamily={face}>{item.label}</text>
-        </g>
-      ))}
-      <text x="32" y="250" fill="#8A5A12" fontSize="13" fontFamily={face}>Alone with the phone</text>
-      <rect x="420" y="72" width="150" height="92" rx="12" fill="#FFF8EE" stroke="#266B38" strokeWidth="1.5" />
-      <path d="M436 148V92h118v56" fill="none" stroke="#266B38" strokeWidth="2" />
-      <path d="M495 92v56" stroke="#266B38" strokeWidth="1.2" />
-      {school.map((item, i) => (
-        <g key={item.label}>
-          <circle cx={600} cy={86 + i * 58} r="22" fill="#FFF8EE" />
-          <SvgIcon name={item.icon} x={589} y={75 + i * 58} size={22} color="#266B38" />
-          <text x="632" y={92 + i * 58} fill="#47574C" fontSize="13" fontWeight="600" fontFamily={face}>{item.label}</text>
-        </g>
-      ))}
+      <defs>
+        <linearGradient id="hs-home" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="#F6D3A4" />
+          <stop offset="1" stopColor="#FBEBD3" />
+        </linearGradient>
+        <linearGradient id="hs-school" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="#D9EAC6" />
+          <stop offset="1" stopColor="#F1F6E6" />
+        </linearGradient>
+        <linearGradient id="hs-night" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="#273257" />
+          <stop offset="1" stopColor="#5B5E8E" />
+        </linearGradient>
+        <radialGradient id="hs-glow">
+          <stop offset="0" stopColor="#FFE7B0" stopOpacity="0.95" />
+          <stop offset="0.6" stopColor="#FFD58A" stopOpacity="0.35" />
+          <stop offset="1" stopColor="#FFD58A" stopOpacity="0" />
+        </radialGradient>
+        <radialGradient id="hs-sun">
+          <stop offset="0" stopColor="#FFF4C2" />
+          <stop offset="1" stopColor="#FFF4C2" stopOpacity="0" />
+        </radialGradient>
+        <filter id="hs-soft" x="-20%" y="-20%" width="140%" height="140%">
+          <feDropShadow dx="0" dy="3" stdDeviation="3.5" floodColor="#5A3A12" floodOpacity="0.14" />
+        </filter>
+        <clipPath id="hs-clip-home">
+          <rect x="8" y="8" width="360" height="284" rx="22" />
+        </clipPath>
+        <clipPath id="hs-clip-school">
+          <rect x="392" y="8" width="360" height="284" rx="22" />
+        </clipPath>
+        <Grain id="hs-grain" opacity={0.1} />
+      </defs>
+
+      <g clipPath="url(#hs-clip-home)" filter="url(#hs-grain)">
+        <rect x="8" y="8" width="360" height="284" fill="url(#hs-home)" />
+        <rect x="8" y="246" width="360" height="46" fill="#EBC99A" />
+        <path d="M8 246h360" stroke="#D9AE76" strokeWidth="1.5" />
+        <rect x="268" y="22" width="78" height="62" rx="6" fill="url(#hs-night)" stroke="#C99A62" strokeWidth="4" />
+        <path d="M307 22v62M268 53h78" stroke="#C99A62" strokeWidth="3" />
+        <path d="M330 38a9 9 0 1 1-9-9 6.8 6.8 0 0 0 9 9z" fill="#FFF1C9" />
+        <circle cx="284" cy="36" r="1.4" fill="#FFF1C9" />
+        <circle cx="290" cy="72" r="1.1" fill="#FFF1C9" />
+        <circle cx="332" cy="74" r="1.3" fill="#FFF1C9" />
+        <circle cx="96" cy="152" r="104" fill="url(#hs-glow)" />
+        <ellipse cx="160" cy="166" rx="92" ry="74" fill="none" stroke="#E59019" strokeOpacity="0.45" strokeWidth="1.5" strokeDasharray="3 7" />
+        <ellipse cx="96" cy="244" rx="46" ry="6" fill="#5A3A12" opacity="0.14" />
+        <rect x="52" y="66" width="88" height="172" rx="18" fill="#1C1917" filter="url(#hs-soft)" />
+        <rect x="60" y="78" width="72" height="140" rx="11" fill="#FFF8EE" />
+        <rect x="80" y="70" width="32" height="4" rx="2" fill="#3A3634" />
+        <rect x="68" y="90" width="56" height="34" rx="7" fill="#F89200" opacity="0.85" />
+        <path d="M91 100v14l11-7z" fill="#FFF8EE" />
+        <rect x="68" y="132" width="56" height="8" rx="4" fill="#FDD6A0" />
+        <rect x="68" y="146" width="40" height="8" rx="4" fill="#FDD6A0" opacity="0.7" />
+        <rect x="68" y="166" width="25" height="25" rx="6" fill="#F8E6CD" />
+        <rect x="99" y="166" width="25" height="25" rx="6" fill="#F8E6CD" />
+        <circle cx="80.5" cy="178.5" r="5" fill="#E59019" opacity="0.6" />
+        <path d="M107 178.5h9M111.5 174v9" stroke="#E59019" strokeWidth="2" strokeLinecap="round" opacity="0.6" />
+        <circle cx="96" cy="208" r="3" fill="#1C1917" opacity="0.2" />
+        {home.map((item) => (
+          <g key={item.label}>
+            <path d={`M140 ${(item.y + 152) / 2} Q ${(140 + item.x) / 2} ${item.y} ${item.x - 26} ${item.y}`} fill="none" stroke="#E59019" strokeWidth="1.2" strokeOpacity="0.55" />
+            <circle cx={item.x} cy={item.y} r="26" fill="#FFF8EE" filter="url(#hs-soft)" />
+            <circle cx={item.x} cy={item.y} r="20" fill="#FCE3BF" />
+            <SvgIcon name={item.icon} x={item.x - 12} y={item.y - 12} size={24} color="#C26A0A" />
+            <text x={item.x + 34} y={item.y + 5} fill="#6B4410" fontSize="13" fontWeight="700" fontFamily={face}>{item.label}</text>
+          </g>
+        ))}
+      </g>
+      <text x="32" y="38" fill="#C26A0A" fontSize="18" fontWeight="800" fontFamily={face}>At home</text>
+      <text x="32" y="56" fill="#8A5A12" fontSize="12" fontFamily={face}>19:00, the room goes quiet</text>
+      <text x="32" y="276" fill="#8A5A12" fontSize="13" fontWeight="600" fontFamily={face}>Alone with the phone</text>
+
+      <g clipPath="url(#hs-clip-school)" filter="url(#hs-grain)">
+        <rect x="392" y="8" width="360" height="284" fill="url(#hs-school)" />
+        <circle cx="712" cy="44" r="46" fill="url(#hs-sun)" />
+        <circle cx="712" cy="44" r="13" fill="#FFE17A" />
+        <path d="M712 20v-6M712 74v-6M688 44h-6M742 44h-6M695 27l-4-4M733 65l-4-4M729 27l4-4M691 65l4-4" stroke="#F2C14E" strokeWidth="2" strokeLinecap="round" />
+        <path d="M392 252c40-14 90-16 140-6s120 8 220-8v54H392z" fill="#C9DDAF" />
+        <path d="M392 266c60-10 120-8 190 0s110 4 170-6v32H392z" fill="#B3CF92" />
+        <circle cx="720" cy="226" r="22" fill="#7FAF6A" />
+        <circle cx="704" cy="236" r="16" fill="#8FBC77" />
+        <path d="M716 246v20" stroke="#7A5A3A" strokeWidth="4" strokeLinecap="round" />
+        <rect x="418" y="70" width="160" height="104" rx="8" fill="#9A774F" filter="url(#hs-soft)" />
+        <rect x="425" y="77" width="146" height="90" rx="4" fill="#2F5D45" />
+        <text x="438" y="104" fill="#F1F6E6" fontSize="15" fontFamily="'Comic Sans MS', 'Marker Felt', cursive" opacity="0.9">a² + b² = c²</text>
+        <path d="M440 150l18-16 16 8 22-22 18 10" fill="none" stroke="#DBEE7B" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" opacity="0.9" />
+        <path d="M548 128l3 6 6.6 1-4.8 4.6 1.2 6.4-6-3.2-6 3.2 1.2-6.4-4.8-4.6 6.6-1z" fill="none" stroke="#FDD6A0" strokeWidth="1.5" />
+        <rect x="430" y="174" width="136" height="5" rx="2" fill="#7A5A3A" />
+        {[446, 484, 522, 560].map((x, i) => (
+          <g key={x}>
+            <path d={`M${x - 14} 232c0-14 6-22 14-22s14 8 14 22z`} fill={['#4E8A5B', '#F89200', '#4D7FCB', '#A57CC9'][i]} />
+            <circle cx={x} cy="200" r="10" fill={art.skin} />
+            <path d={`M${x - 10} 198c0-8 6-11 10-11s10 3 10 11c-3-3-6-4-10-4s-7 1-10 4z`} fill={art.hair} />
+          </g>
+        ))}
+        <rect x="424" y="232" width="152" height="8" rx="3" fill={art.wood} />
+        {school.map((item, i) => (
+          <g key={item.label}>
+            <circle cx={620} cy={92 + i * 54} r="22" fill="#FFF8EE" filter="url(#hs-soft)" />
+            <circle cx={620} cy={92 + i * 54} r="17" fill="#E3ECD4" />
+            <SvgIcon name={item.icon} x={609} y={81 + i * 54} size={22} color="#266B38" />
+            <text x="652" y={97 + i * 54} fill="#2F4A37" fontSize="13" fontWeight="700" fontFamily={face}>{item.label}</text>
+          </g>
+        ))}
+      </g>
+      <text x="416" y="38" fill="#266B38" fontSize="18" fontWeight="800" fontFamily={face}>At school</text>
+      <text x="416" y="56" fill="#47574C" fontSize="12" fontFamily={face}>08:00–16:30, a full room</text>
+      <text x="416" y="276" fill="#2F4A37" fontSize="13" fontWeight="600" fontFamily={face}>Structure, company, and motion</text>
     </svg>
   );
 }
 
 function HabitLoop() {
   const steps = [
-    { label: 'Open', icon: 'phone' },
-    { label: 'Notice', icon: 'bell' },
-    { label: 'Reply', icon: 'reply' },
-    { label: 'Browse', icon: 'scroll' },
-    { label: 'Lose it', icon: 'lost' },
+    { label: 'Open', icon: 'phone', time: '19:00' },
+    { label: 'Notice', icon: 'bell', time: '19:02' },
+    { label: 'Reply', icon: 'reply', time: '19:10' },
+    { label: 'Browse', icon: 'scroll', time: '19:40' },
+    { label: 'Lose it', icon: 'lost', time: '21:00' },
   ];
   return (
     <svg viewBox="0 0 880 240" className="w-full" role="img" aria-label="Habit loop: open the phone, notice a cue, reply, keep browsing, lose the task, then repeat">
       <defs>
+        <linearGradient id="hl-track" gradientUnits="userSpaceOnUse" x1="90" y1="0" x2="790" y2="0">
+          <stop offset="0" stopColor="#FDE3C4" />
+          <stop offset="1" stopColor="#F89200" />
+        </linearGradient>
+        <radialGradient id="hl-node" cx="40%" cy="35%" r="70%">
+          <stop offset="0" stopColor="#FFFFFF" />
+          <stop offset="1" stopColor="#FFEBD3" />
+        </radialGradient>
+        <radialGradient id="hl-last" cx="40%" cy="35%" r="70%">
+          <stop offset="0" stopColor="#F9A93C" />
+          <stop offset="1" stopColor="#C2410C" />
+        </radialGradient>
+        <radialGradient id="hl-halo">
+          <stop offset="0" stopColor="#F89200" stopOpacity="0.28" />
+          <stop offset="1" stopColor="#F89200" stopOpacity="0" />
+        </radialGradient>
         <filter id="pb-node" x="-30%" y="-30%" width="160%" height="160%">
-          <feDropShadow dx="0" dy="3" stdDeviation="3" floodColor="#C2410C" floodOpacity="0.16" />
+          <feDropShadow dx="0" dy="4" stdDeviation="4" floodColor="#C2410C" floodOpacity="0.2" />
         </filter>
+        <marker id="hl-arrow" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0 0 10 5 0 10z" fill="#F89200" />
+        </marker>
       </defs>
-      <path d="M90 86 H790" stroke="#F8D3B0" strokeWidth="10" strokeLinecap="round" />
-      <path d="M790 86 C820 86 840 150 700 178 H180 C70 178 50 150 70 110" fill="none" stroke="#F89200" strokeWidth="2" strokeDasharray="7 6" />
-      <polygon points="64,104 78,96 76,112" fill="#F89200" />
+      <path d="M90 86 H790" stroke="url(#hl-track)" strokeWidth="12" strokeLinecap="round" opacity="0.55" />
+      <path d="M90 86 H790" stroke="#FFF8EE" strokeWidth="2" strokeDasharray="1 14" strokeLinecap="round" />
+      <path d="M826 104 C866 146 846 196 726 196 H170 C70 196 36 156 50 114" fill="none" stroke="#F89200" strokeWidth="2" strokeDasharray="7 6" markerEnd="url(#hl-arrow)" />
+      {[220, 380, 540, 700].map((x, i) => (
+        <circle key={x} cx={x} cy={196} r={2.4 - i * 0.4} fill="#F89200" opacity={0.7 - i * 0.12} />
+      ))}
       {steps.map((step, i) => {
         const x = 90 + i * 175;
+        const last = i === steps.length - 1;
         return (
           <g key={step.label}>
-            <circle cx={x} cy="86" r="32" fill="#fff" stroke="#F89200" strokeWidth="2" filter="url(#pb-node)" />
-            <SvgIcon name={step.icon} x={x - 16} y={70} size={32} color="#C2410C" />
-            <text x={x} y="142" textAnchor="middle" fill="#3A3C38" fontSize="14" fontWeight="700" fontFamily={face}>{step.label}</text>
+            <circle cx={x} cy="86" r="50" fill="url(#hl-halo)" />
+            <circle cx={x} cy="86" r="33" fill={last ? 'url(#hl-last)' : 'url(#hl-node)'} stroke="#F89200" strokeWidth="2" filter="url(#pb-node)" />
+            <circle cx={x} cy="86" r="26" fill="none" stroke={last ? '#FFE3C4' : '#F89200'} strokeOpacity="0.35" strokeDasharray="2 3" />
+            <SvgIcon name={step.icon} x={x - 16} y={70} size={32} color={last ? '#FFF8EE' : '#C2410C'} />
+            <circle cx={x + 24} cy="60" r="10" fill="#1C1917" />
+            <text x={x + 24} y="64" textAnchor="middle" fill="#FFF8EE" fontSize="11" fontWeight="800" fontFamily={face}>{i + 1}</text>
+            <text x={x} y="144" textAnchor="middle" fill="#3A3C38" fontSize="14" fontWeight="800" fontFamily={face}>{step.label}</text>
+            <text x={x} y="162" textAnchor="middle" fill="#C2410C" fillOpacity={0.45 + i * 0.12} fontSize="11" fontFamily="ui-monospace, Menlo, monospace">{step.time}</text>
           </g>
         );
       })}
-      <text x="440" y="214" textAnchor="middle" fill="#F89200" fontSize="13" fontWeight="700" fontFamily={face}>The loop starts again</text>
+      <rect x="370" y="208" width="140" height="26" rx="13" fill="#FFF3E6" stroke="#F89200" strokeOpacity="0.5" />
+      <text x="440" y="225" textAnchor="middle" fill="#C2410C" fontSize="12" fontWeight="800" fontFamily={face}>The loop starts again</text>
     </svg>
   );
 }
 
 function SystemsMap() {
   const nodes = [
-    { cx: 170, cy: 150, color: '#7C63A7', wash: '#F4EEF8', title: 'Social', sub: 'mPFC · TPJ', icon: 'people' },
-    { cx: 400, cy: 230, color: '#E07A2F', wash: '#FFF3E8', title: 'Reward', sub: 'VTA → NAC', icon: 'spark' },
-    { cx: 630, cy: 150, color: '#266B38', wash: '#E8F3EA', title: 'Habit', sub: 'Striatum', icon: 'loop' },
+    { cx: 170, cy: 150, color: '#7C63A7', light: '#F4EEF8', mid: '#E3D7F0', title: 'Social', sub: 'mPFC · TPJ', icon: 'people' },
+    { cx: 400, cy: 262, color: '#E07A2F', light: '#FFF3E8', mid: '#FDDCC0', title: 'Reward', sub: 'VTA → NAC', icon: 'spark' },
+    { cx: 630, cy: 150, color: '#266B38', light: '#E8F3EA', mid: '#CDE5D2', title: 'Habit', sub: 'Striatum', icon: 'loop' },
+  ];
+  const links = [
+    { d: 'M240 190 C290 240 320 250 330 252', color: '#7C63A7', label: 'approval', x: 262, y: 246 },
+    { d: 'M470 252 C510 240 540 220 566 192', color: '#266B38', label: 'cue', x: 540, y: 248 },
+    { d: 'M236 112 C330 50 470 50 566 112', color: '#E07A2F', label: 'craving', x: 400, y: 52 },
   ];
   return (
-    <svg viewBox="0 0 800 390" className="w-full" role="img" aria-label="Three systems: social cognition, reward, and habit, linked in a triangle">
-      <ellipse cx="400" cy="190" rx="300" ry="140" fill="#F8D49C" fillOpacity="0.28" />
-      <path d="M230 175 C300 210 310 210 340 215" fill="none" stroke="#7C63A7" strokeWidth="1.6" strokeDasharray="5 4" />
-      <path d="M460 215 C500 200 540 175 570 160" fill="none" stroke="#266B38" strokeWidth="1.6" strokeDasharray="5 4" />
-      <path d="M220 120 C400 40 580 40 680 120" fill="none" stroke="#E07A2F" strokeWidth="1.6" strokeDasharray="5 4" />
+    <svg viewBox="0 0 800 390" className="w-full" role="img" aria-label="Three systems: social cognition, reward, and habit, linked in a triangle around the phone">
+      <defs>
+        <radialGradient id="sm-field" cx="50%" cy="50%" r="55%">
+          <stop offset="0" stopColor="#F8D49C" stopOpacity="0.55" />
+          <stop offset="1" stopColor="#F8D49C" stopOpacity="0" />
+        </radialGradient>
+        {nodes.map((node) => (
+          <radialGradient key={node.title} id={`sm-${node.title}`} cx="40%" cy="35%" r="75%">
+            <stop offset="0" stopColor="#FFFFFF" />
+            <stop offset="0.55" stopColor={node.light} />
+            <stop offset="1" stopColor={node.mid} />
+          </radialGradient>
+        ))}
+        <radialGradient id="sm-phone">
+          <stop offset="0" stopColor="#DBEE7B" stopOpacity="0.9" />
+          <stop offset="1" stopColor="#DBEE7B" stopOpacity="0" />
+        </radialGradient>
+        <filter id="sm-shadow" x="-30%" y="-30%" width="160%" height="160%">
+          <feDropShadow dx="0" dy="6" stdDeviation="8" floodColor="#3D3A2E" floodOpacity="0.14" />
+        </filter>
+        {links.map((link) => (
+          <marker key={link.label} id={`sm-a-${link.label}`} viewBox="0 0 10 10" refX="6" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+            <path d="M0 0 10 5 0 10z" fill={link.color} />
+          </marker>
+        ))}
+        <Grain id="sm-grain" opacity={0.08} />
+      </defs>
+      <g filter="url(#sm-grain)">
+        <ellipse cx="400" cy="195" rx="380" ry="190" fill="url(#sm-field)" />
+        <path
+          d="M400 66c-40-30-120-30-150 10-50-4-90 40-74 90-30 30-20 90 30 104 10 40 70 60 110 34 30 26 76 26 84 0 8 26 54 26 84 0 40 26 100 6 110-34 50-14 60-74 30-104 16-50-24-94-74-90-30-40-110-40-150-10z"
+          fill="none"
+          stroke="#C9A27A"
+          strokeOpacity="0.28"
+          strokeWidth="2"
+          strokeDasharray="1 7"
+          strokeLinecap="round"
+        />
+        <path d="M400 66v238" stroke="#C9A27A" strokeOpacity="0.2" strokeWidth="1.5" strokeDasharray="1 7" strokeLinecap="round" />
+      </g>
+      {links.map((link) => (
+        <g key={link.label}>
+          <path d={link.d} fill="none" stroke={link.color} strokeWidth="2" strokeDasharray="6 5" markerEnd={`url(#sm-a-${link.label})`} />
+          <rect x={link.x - 34} y={link.y - 13} width="68" height="22" rx="11" fill="#FFF8EE" stroke={link.color} strokeOpacity="0.4" />
+          <text x={link.x} y={link.y + 3} textAnchor="middle" fill={link.color} fontSize="12" fontWeight="700" fontFamily={face}>{link.label}</text>
+        </g>
+      ))}
+      <circle cx="400" cy="138" r="48" fill="url(#sm-phone)" />
+      <rect x="384" y="110" width="32" height="56" rx="7" fill="#1C1917" />
+      <rect x="388" y="116" width="24" height="42" rx="3" fill="#24633E" />
+      <circle cx="400" cy="137" r="6" fill="#DBEE7B" />
       {nodes.map((node) => (
-        <g key={node.title}>
-          <circle cx={node.cx} cy={node.cy} r="78" fill={node.wash} stroke={node.color} strokeWidth="2.5" />
-          <circle cx={node.cx} cy={node.cy - 20} r="28" fill="#fff" />
+        <g key={node.title} filter="url(#sm-shadow)">
+          <circle cx={node.cx} cy={node.cy} r="78" fill={`url(#sm-${node.title})`} stroke={node.color} strokeWidth="2.5" />
+          <circle cx={node.cx} cy={node.cy} r="68" fill="none" stroke={node.color} strokeOpacity="0.25" strokeDasharray="2 5" />
+          <circle cx={node.cx} cy={node.cy - 20} r="28" fill="#fff" stroke={node.color} strokeOpacity="0.2" />
           <SvgIcon name={node.icon} x={node.cx - 17} y={node.cy - 37} size={34} color={node.color} />
-          <text x={node.cx} y={node.cy + 22} textAnchor="middle" fill={node.color} fontSize="16" fontWeight="800" fontFamily={face}>{node.title}</text>
-          <text x={node.cx} y={node.cy + 42} textAnchor="middle" fill="#47574C" fontSize="12" fontFamily={face}>{node.sub}</text>
+          <text x={node.cx} y={node.cy + 24} textAnchor="middle" fill={node.color} fontSize="17" fontWeight="800" fontFamily={face}>{node.title}</text>
+          <text x={node.cx} y={node.cy + 44} textAnchor="middle" fill="#47574C" fontSize="12" fontFamily={face}>{node.sub}</text>
         </g>
       ))}
     </svg>
@@ -546,20 +854,28 @@ function SystemsMap() {
 }
 
 function ConstantlyChart() {
+  const person = (x: number, y: number, fill: string) => (
+    <g key={`${x}-${y}`}>
+      <circle cx={x} cy={y - 5} r="3.3" fill={fill} />
+      <path d={`M${x - 5} ${y + 8}c0-5.2 2.2-7.6 5-7.6s5 2.4 5 7.6z`} fill={fill} />
+    </g>
+  );
+  const rows = [
+    { label: 'Then', y: 72, filled: 6, color: '#A7C66A', value: '24%' },
+    { label: '2024', y: 116, filled: 12, color: '#266B38', value: '46%' },
+  ];
   return (
     <svg viewBox="0 0 640 180" className="w-full max-w-2xl" role="img" aria-label="U.S. teens online almost constantly: 24 percent a decade ago, 46 percent in 2024">
       <text x="0" y="22" fill="#266B38" fontSize="15" fontWeight="800" fontFamily={face}>Online almost constantly</text>
-      <line x1="150" y1="48" x2="150" y2="140" stroke="#D9D1C5" />
-      <line x1="150" y1="140" x2="560" y2="140" stroke="#D9D1C5" />
-      <text x="140" y="78" textAnchor="end" fill="#47574C" fontSize="13" fontFamily={face}>Then</text>
-      <text x="140" y="118" textAnchor="end" fill="#47574C" fontSize="13" fontFamily={face}>2024</text>
-      <rect x="158" y="62" width="360" height="22" rx="11" fill="#EFE8DC" />
-      <rect x="158" y="62" width="86" height="22" rx="11" fill="#B5C578" />
-      <text x="254" y="78" fill="#3A3C38" fontSize="12" fontWeight="700" fontFamily={face}>24%</text>
-      <rect x="158" y="102" width="360" height="22" rx="11" fill="#EFE8DC" />
-      <rect x="158" y="102" width="166" height="22" rx="11" fill="#266B38" />
-      <text x="334" y="118" fill="#fff" fontSize="12" fontWeight="700" fontFamily={face}>46%</text>
-      <text x="158" y="168" fill="#7C807D" fontSize="12" fontFamily={face}>Pew Research Center · U.S. teens 13–17</text>
+      {rows.map((row) => (
+        <g key={row.label}>
+          <rect x="150" y={row.y - 15} width="370" height="30" rx="15" fill="#F4ECDD" />
+          <text x="138" y={row.y + 4} textAnchor="end" fill="#47574C" fontSize="13" fontWeight="600" fontFamily={face}>{row.label}</text>
+          {Array.from({ length: 25 }, (_, i) => person(164 + i * 14.4, row.y, i < row.filled ? row.color : '#DCD2C1'))}
+          <text x="534" y={row.y + 6} fill={row.color} fontSize="18" fontWeight="800" fontFamily={face}>{row.value}</text>
+        </g>
+      ))}
+      <text x="150" y="166" fill="#7C807D" fontSize="12" fontFamily={face}>Pew Research Center · U.S. teens 13–17 · each figure ≈ 4%</text>
     </svg>
   );
 }
@@ -571,24 +887,56 @@ function Architecture() {
     { title: 'Progress', icon: 'plant', items: [{ t: 'Streak', icon: 'spark' }, { t: 'Garden', icon: 'plant' }] },
     { title: 'Profile', icon: 'user', items: [{ t: 'Length', icon: 'hourglass' }, { t: 'Settings', icon: 'settings' }] },
   ];
+  const leaf = (x: number, y: number, flip = 1) => (
+    <path
+      key={`${x}-${y}`}
+      d={`M${x} ${y}c${6 * flip}-8 ${16 * flip}-8 ${20 * flip}-4-${6 * flip} 8-${14 * flip} 8-${20 * flip} 4z`}
+      fill="#A7C66A"
+      stroke="#4E8A5B"
+      strokeWidth="1"
+    />
+  );
   return (
     <svg viewBox="0 0 840 280" className="w-full" role="img" aria-label="Pull It branches into Home, Learning, Progress, and Profile">
-      <rect x="330" y="8" width="180" height="44" rx="12" fill="#266B38" />
-      <text x="420" y="36" textAnchor="middle" fill="#FFF8EE" fontSize="16" fontWeight="700" fontFamily={face}>Pull It</text>
-      <path d="M420 52 V78 M100 78 H740" stroke="#266B38" strokeWidth="1.6" fill="none" />
+      <defs>
+        <linearGradient id="ia-root" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="#2F7A4A" />
+          <stop offset="1" stopColor="#1E5233" />
+        </linearGradient>
+        <linearGradient id="ia-col" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="#EAF6A6" />
+          <stop offset="1" stopColor="#CFE36A" />
+        </linearGradient>
+        <filter id="ia-shadow" x="-20%" y="-30%" width="140%" height="180%">
+          <feDropShadow dx="0" dy="3" stdDeviation="3.5" floodColor="#24633E" floodOpacity="0.16" />
+        </filter>
+      </defs>
+      {cols.map((col, i) => {
+        const cx = 24 + i * 204 + 90;
+        return <path key={col.title} d={`M420 52 C420 84 ${cx} 72 ${cx} 104`} fill="none" stroke="#4E8A5B" strokeWidth="2.4" strokeLinecap="round" />;
+      })}
+      {leaf(267, 78, -1)}
+      {leaf(369, 78, -1)}
+      {leaf(471, 78)}
+      {leaf(573, 78)}
+      <rect x="330" y="8" width="180" height="44" rx="22" fill="url(#ia-root)" filter="url(#ia-shadow)" />
+      <SvgIcon name="sprout" x={352} y={18} size={24} color="#DBEE7B" />
+      <text x="430" y="36" textAnchor="middle" fill="#FFF8EE" fontSize="16" fontWeight="800" fontFamily={face}>Pull It</text>
       {cols.map((col, i) => {
         const x = 24 + i * 204;
         return (
           <g key={col.title}>
-            <path d={`M${x + 90} 78 V104`} stroke="#266B38" strokeWidth="1.6" />
-            <rect x={x} y="104" width="180" height="44" rx="12" fill="#DBEE7B" />
-            <SvgIcon name={col.icon} x={x + 14} y={115} size={22} color="#266B38" />
-            <text x={x + 104} y="132" textAnchor="middle" fill="#266B38" fontSize="15" fontWeight="800" fontFamily={face}>{col.title}</text>
+            <rect x={x} y="104" width="180" height="44" rx="14" fill="url(#ia-col)" filter="url(#ia-shadow)" />
+            <circle cx={x + 26} cy="126" r="15" fill="#FFF8EE" />
+            <SvgIcon name={col.icon} x={x + 15} y={115} size={22} color="#266B38" />
+            <text x={x + 106} y="132" textAnchor="middle" fill="#1E5233" fontSize="15" fontWeight="800" fontFamily={face}>{col.title}</text>
+            <path d={`M${x + 20} 148 V${230}`} stroke="#4E8A5B" strokeOpacity="0.4" strokeWidth="1.5" strokeDasharray="2 4" />
             {col.items.map((item, j) => (
               <g key={item.t}>
-                <rect x={x + 10} y={164 + j * 46} width="160" height="38" rx="10" fill="#FFF8EE" stroke="#47574C" strokeOpacity="0.2" />
-                <SvgIcon name={item.icon} x={x + 22} y={172 + j * 46} size={20} color="#47574C" />
-                <text x={x + 96} y={188 + j * 46} textAnchor="middle" fill="#3A3C38" fontSize="13" fontWeight="600" fontFamily={face}>{item.t}</text>
+                <circle cx={x + 20} cy={183 + j * 46} r="3" fill="#4E8A5B" />
+                <rect x={x + 30} y={164 + j * 46} width="140" height="38" rx="12" fill="#FFF8EE" stroke="#47574C" strokeOpacity="0.12" filter="url(#ia-shadow)" />
+                <SvgIcon name={item.icon} x={x + 42} y={172 + j * 46} size={20} color="#4E8A5B" />
+                <text x={x + 108} y={188 + j * 46} textAnchor="middle" fill="#3A3C38" fontSize="13" fontWeight="600" fontFamily={face}>{item.t}</text>
               </g>
             ))}
           </g>
@@ -601,18 +949,54 @@ function Architecture() {
 function DayLine() {
   const icons = ['alarm', 'school', 'home', 'phone', 'openBook', 'moon'];
   return (
-    <svg viewBox="0 0 900 170" className="w-full" role="img" aria-label="Weekday from waking at 7 to still being awake after 10">
-      <path d="M80 62 H820" stroke="#9DB3A6" strokeWidth="2" strokeDasharray="2 6" strokeLinecap="round" />
+    <svg viewBox="0 0 900 170" className="w-full" role="img" aria-label="Weekday from waking at 7 to still being awake after 10, from morning light to night">
+      <defs>
+        <linearGradient id="dl-sky" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0" stopColor="#FCE3BE" />
+          <stop offset="0.22" stopColor="#E2F0F4" />
+          <stop offset="0.42" stopColor="#EAF2DA" />
+          <stop offset="0.6" stopColor="#FBD3A6" />
+          <stop offset="0.78" stopColor="#5C5F8E" />
+          <stop offset="1" stopColor="#232B4F" />
+        </linearGradient>
+        <radialGradient id="dl-hot">
+          <stop offset="0" stopColor="#FFD58A" stopOpacity="0.9" />
+          <stop offset="1" stopColor="#FFD58A" stopOpacity="0" />
+        </radialGradient>
+        <clipPath id="dl-clip">
+          <rect x="20" y="4" width="860" height="100" rx="24" />
+        </clipPath>
+        <Grain id="dl-grain" opacity={0.1} />
+      </defs>
+      <g clipPath="url(#dl-clip)" filter="url(#dl-grain)">
+        <rect x="20" y="4" width="860" height="100" fill="url(#dl-sky)" />
+        <path d="M20 92c90-14 170-12 260-2s180 8 260-4 200-10 340 2v20H20z" fill="#FFFFFF" opacity="0.28" />
+        <circle cx="210" cy="22" r="12" fill="#FFE17A" opacity="0.9" />
+        <circle cx="210" cy="22" r="20" fill="#FFE17A" opacity="0.2" />
+        <path d="M826 20a9 9 0 1 1-9-9 6.6 6.6 0 0 0 9 9z" fill="#FFF1C9" />
+        {[
+          [700, 18],
+          [748, 30],
+          [778, 14],
+          [860, 40],
+          [688, 44],
+        ].map(([x, y]) => (
+          <circle key={`${x}-${y}`} cx={x} cy={y} r="1.4" fill="#FFF1C9" />
+        ))}
+      </g>
+      <path d="M80 62 H820" stroke="#FFFFFF" strokeOpacity="0.7" strokeWidth="2" strokeDasharray="2 6" strokeLinecap="round" />
       {day.map((item, i) => {
         const x = 80 + i * 148;
         const hot = item.label === 'Try to study';
+        const night = i >= 4;
         return (
           <g key={item.time}>
-            <circle cx={x} cy="62" r="34" fill={hot ? '#F6D9B4' : '#D6E2D9'} />
-            <circle cx={x} cy="62" r="27" fill={hot ? '#C79A3E' : '#4D6F5F'} />
+            {hot && <circle cx={x} cy="62" r="52" fill="url(#dl-hot)" />}
+            <circle cx={x} cy="62" r="34" fill={hot ? '#F6D9B4' : night ? '#3A4170' : '#FFF8EE'} opacity={night && !hot ? 0.8 : 0.95} />
+            <circle cx={x} cy="62" r="27" fill={hot ? '#C79A3E' : night ? '#262D52' : '#4D6F5F'} />
             <SvgIcon name={icons[i]} x={x - 14} y={48} size={28} color="#FFF4E2" />
-            <text x={x} y="120" textAnchor="middle" fill="#266B38" fontSize="12" fontWeight="800" fontFamily={face}>{item.time}</text>
-            <text x={x} y="140" textAnchor="middle" fill="#47574C" fontSize="13" fontWeight="600" fontFamily={face}>{item.label}</text>
+            <text x={x} y="126" textAnchor="middle" fill="#266B38" fontSize="12" fontWeight="800" fontFamily="ui-monospace, Menlo, monospace">{item.time}</text>
+            <text x={x} y="146" textAnchor="middle" fill={hot ? '#A06A12' : '#47574C'} fontSize="13" fontWeight="700" fontFamily={face}>{item.label}</text>
           </g>
         );
       })}
@@ -623,11 +1007,45 @@ function DayLine() {
 function TimerRing() {
   return (
     <svg viewBox="0 0 220 180" className="w-full max-w-[220px]" role="img" aria-label="Focus timer showing 8 minutes 32 seconds remaining">
-      <rect x="8" y="8" width="204" height="164" rx="18" fill="#0B0B0F" />
-      <circle cx="110" cy="86" r="48" fill="none" stroke="#30303A" strokeWidth="8" />
-      <circle cx="110" cy="86" r="48" fill="none" stroke="#8BE28B" strokeWidth="8" strokeDasharray="210 302" strokeLinecap="round" transform="rotate(-90 110 86)" />
-      <text x="110" y="92" textAnchor="middle" fill="#fff" fontSize="22" fontFamily="ui-monospace, Menlo, monospace" fontWeight="700">08:32</text>
-      <text x="110" y="148" textAnchor="middle" fill="#8BE28B" fontSize="12">Focus mode</text>
+      <defs>
+        <linearGradient id="tr-bg" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="#15151C" />
+          <stop offset="1" stopColor="#0B0B0F" />
+        </linearGradient>
+        <linearGradient id="tr-ring" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stopColor="#DBEE7B" />
+          <stop offset="1" stopColor="#5FC56F" />
+        </linearGradient>
+        <filter id="tr-glow" x="-30%" y="-30%" width="160%" height="160%">
+          <feGaussianBlur stdDeviation="3" result="b" />
+          <feMerge>
+            <feMergeNode in="b" />
+            <feMergeNode in="SourceGraphic" />
+          </feMerge>
+        </filter>
+      </defs>
+      <rect x="8" y="8" width="204" height="164" rx="20" fill="url(#tr-bg)" />
+      {Array.from({ length: 60 }, (_, i) => {
+        const a = (i / 60) * Math.PI * 2;
+        const r1 = i % 5 === 0 ? 58 : 60;
+        return (
+          <line
+            key={i}
+            x1={110 + Math.sin(a) * r1}
+            y1={86 - Math.cos(a) * r1}
+            x2={110 + Math.sin(a) * 63}
+            y2={86 - Math.cos(a) * 63}
+            stroke="#3A3A46"
+            strokeWidth={i % 5 === 0 ? 1.6 : 0.8}
+          />
+        );
+      })}
+      <circle cx="110" cy="86" r="48" fill="none" stroke="#24242E" strokeWidth="8" />
+      <circle cx="110" cy="86" r="48" fill="none" stroke="url(#tr-ring)" strokeWidth="8" strokeDasharray="210 302" strokeLinecap="round" transform="rotate(-90 110 86)" filter="url(#tr-glow)" />
+      <text x="110" y="90" textAnchor="middle" fill="#fff" fontSize="22" fontFamily="ui-monospace, Menlo, monospace" fontWeight="700">08:32</text>
+      <path d="M110 112v-8" stroke="#8BE28B" strokeWidth="1.4" strokeLinecap="round" />
+      <path d="M110 106c-4 0-6-2.4-6-5.4 3.6 0 6 2.2 6 5.4zM110 105c0-3.2 2.4-5.4 6-5.4 0 3-2 5.4-6 5.4z" fill="#8BE28B" />
+      <text x="110" y="156" textAnchor="middle" fill="#8BE28B" fontSize="12" fontWeight="600">Focus mode</text>
     </svg>
   );
 }
@@ -648,8 +1066,7 @@ export default function PullBackStudy() {
           <img
             src="./pullback/hero.jpg"
             alt="A student at a desk, phone open to Pull It, notebook and lamp nearby"
-            className="w-full rounded-xl object-cover"
-            style={{ aspectRatio: '4 / 3' }}
+            className="w-full aspect-video rounded-3xl object-cover"
           />
         </div>
       </div>
@@ -697,10 +1114,10 @@ export default function PullBackStudy() {
         <p className="text-[1.15rem] leading-relaxed max-w-3xl mb-[var(--space-lg)]">
           Children come home without the structure of school. There is no classroom atmosphere, no teacher nearby, and no classmates around the table. Homework becomes something they manage alone.
         </p>
-        <HomeSchool />
-        <div className="mt-[var(--space-lg)]">
+        <Frame>
+          <HomeSchool />
           <ConstantlyChart />
-        </div>
+        </Frame>
       </Block>
 
       <Block title="Design scope">
@@ -721,27 +1138,29 @@ export default function PullBackStudy() {
               <p className="m-0 px-4 py-2 text-[0.9rem] font-bold text-[#24633E] bg-gradient-to-r from-[#E4EBA4] to-[#F5D9A6]">
                 {index + 1}. {item.label}
               </p>
-              <div className="px-3 pt-3">
+              <div className="mx-3 mt-3 aspect-video flex items-center justify-center [&>svg]:h-full [&>svg]:w-auto">
                 <ImpactArt kind={item.kind} />
               </div>
               <p className="m-0 px-4 pb-4 pt-1 text-[0.9rem] leading-snug text-[#5A5244]">{item.text}</p>
             </article>
           ))}
         </div>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-[var(--space-md)] mb-[var(--space-xl)]">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-[var(--space-md)] mb-[var(--space-md)]">
           {loopArt.map((item) => (
             <figure key={item.label} className="m-0">
-              <img src={item.src} alt="" className="w-full h-auto rounded-2xl bg-[#F7F3EA]" />
+              <div className="aspect-video rounded-2xl bg-[#F7F3EA] flex items-center justify-center p-[6%]">
+                <img src={item.src} alt="" className="h-full! w-auto max-w-full object-contain" />
+              </div>
               <figcaption className="mt-2 text-[0.95rem] font-medium text-[#24633E]">{item.label}</figcaption>
             </figure>
           ))}
         </div>
-        <div className="mb-[var(--space-xl)] overflow-x-auto rounded-3xl bg-[#FFF8F1] px-2 py-4">
+        <Frame ratio="wide" className="mb-[var(--space-md)]">
           <HabitLoop />
-        </div>
-        <div className="rounded-3xl bg-[#FFF8F1] px-2 py-2">
+        </Frame>
+        <Frame>
           <SystemsMap />
-        </div>
+        </Frame>
       </Block>
 
       <Block title="What families already try">
@@ -842,14 +1261,16 @@ export default function PullBackStudy() {
       </Block>
 
       <Block title="Information architecture">
-        <div className="overflow-x-auto rounded-3xl bg-[#FFF8F1] px-2 py-4">
+        <Frame ratio="wide">
           <Architecture />
-        </div>
+        </Frame>
       </Block>
 
       <Block title="Persona">
-        <div className="grid grid-cols-1 md:grid-cols-[220px_1fr] gap-[var(--space-lg)] items-start mb-[var(--space-xl)]">
-          <img src="./pullback/pieces/portrait.png" alt="Chen Yuxuan writing at a desk" className="w-full rounded-2xl object-cover" style={{ aspectRatio: '1 / 1' }} />
+        <div className="grid grid-cols-1 md:grid-cols-[1fr_1fr] md:aspect-[32/9] gap-[var(--space-lg)] items-center mb-[var(--space-md)] rounded-3xl bg-[#FFF8F1] p-[var(--space-md)] md:p-[2.5%]">
+          <div className="relative aspect-video md:aspect-auto md:h-full rounded-2xl overflow-hidden">
+            <img src="./pullback/pieces/portrait.png" alt="Chen Yuxuan writing at a desk" className="absolute inset-0 w-full h-full! object-cover" />
+          </div>
           <div>
             <p className="text-[1.6rem] font-medium leading-tight">Chen Yuxuan</p>
             <p className="type-caption mb-[var(--space-md)]">17 · High school · Lives with parents</p>
@@ -870,9 +1291,9 @@ export default function PullBackStudy() {
             </div>
           ))}
         </div>
-        <div className="mb-[var(--space-lg)] overflow-x-auto rounded-3xl bg-[#FFF8F1] px-2 py-4">
+        <Frame ratio="wide">
           <DayLine />
-        </div>
+        </Frame>
       </Block>
 
       <Block title="Weekday evening">
@@ -906,9 +1327,11 @@ export default function PullBackStudy() {
             </div>
           ))}
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-[220px_1fr] gap-[var(--space-lg)] items-center mb-[var(--space-md)]">
-          <TimerRing />
-          <p className="max-w-3xl leading-relaxed">
+        <div className="grid grid-cols-1 md:grid-cols-[1fr_1fr] md:aspect-[32/9] gap-[var(--space-lg)] items-center mb-[var(--space-md)] rounded-3xl bg-[#FFF8F1] p-[var(--space-md)] md:p-[2.5%]">
+          <div className="aspect-video md:aspect-auto md:h-full flex items-center justify-center rounded-2xl bg-[#F1ECE2] [&>svg]:h-[80%] [&>svg]:w-auto">
+            <TimerRing />
+          </div>
+          <p className="max-w-3xl leading-relaxed text-[1.15rem]">
             Calm, minimal, focused, and gently in control. Type is Inter. Motion runs 300–500ms, ease-in-out, with no aggressive alerts. The timer uses a 6px stroke: active green on a dark track.
           </p>
         </div>
@@ -928,14 +1351,14 @@ export default function PullBackStudy() {
       </Block>
 
       <Block title="Interface">
-        <div className="flex gap-[var(--space-lg)] overflow-x-auto items-start pb-2 mb-[var(--space-xl)]">
+        <Frame tone="#F1ECE2" className="mb-[var(--space-xl)] flex-row! items-start! justify-between! gap-[2%]! px-[4%]!">
           {screens.map((screen, index) => (
-            <figure key={screen.label} className="m-0 shrink-0" style={{ marginTop: index % 2 === 0 ? 0 : 36 }}>
-              <img src={screen.src} alt={screen.label} className="w-[168px] h-auto" />
-              <figcaption className="type-caption mt-3 max-w-[10rem]">{screen.label}</figcaption>
+            <figure key={screen.label} className="m-0 flex-1 min-w-0 h-[86%] flex flex-col items-center" style={{ marginTop: index % 2 === 0 ? 0 : '3%' }}>
+              <img src={screen.src} alt={screen.label} className="min-h-0 flex-1 w-auto max-w-full object-contain" />
+              <figcaption className="type-caption mt-2 text-center leading-tight">{screen.label}</figcaption>
             </figure>
           ))}
-        </div>
+        </Frame>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-[var(--space-lg)]">
           {setup.map((item, index) => (
             <div key={item.title} className="flex gap-[var(--space-md)]">
