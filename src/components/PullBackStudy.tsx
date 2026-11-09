@@ -1,4 +1,4 @@
-import { useId, type ReactNode } from 'react';
+import { useId, useRef, type PointerEvent as ReactPointerEvent, type ReactNode } from 'react';
 import { motion } from 'framer-motion';
 
 const ease = [0.25, 0.1, 0.25, 1] as const;
@@ -6,13 +6,15 @@ const ease = [0.25, 0.1, 0.25, 1] as const;
 function Block({
   title,
   children,
+  className = '',
 }: {
   title: string;
   children: ReactNode;
+  className?: string;
 }) {
   return (
     <motion.section
-      className="mb-[var(--space-xxxl)]"
+      className={`mb-[var(--space-xxxl)] ${className}`}
       initial={{ opacity: 0, y: 40 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: '-10% 0px' }}
@@ -21,6 +23,90 @@ function Block({
       <h3 className="type-caption text-[1.1rem] tracking-wider mb-[var(--space-lg)]">{title}</h3>
       {children}
     </motion.section>
+  );
+}
+
+function PullTab({ width = 168 }: { width?: number }) {
+  const stringLength = 28;
+  const reach = 72;
+  const lineRef = useRef<SVGLineElement>(null);
+  const pendantRef = useRef<SVGGElement>(null);
+  const drag = useRef({ dragging: false, startY: 0, offset: 0, velocity: 0, frame: 0 });
+  const height = stringLength + 36;
+
+  const place = (y: number) => {
+    pendantRef.current?.setAttribute('transform', `translate(0, ${y})`);
+    lineRef.current?.setAttribute('y2', String(stringLength + y));
+  };
+  const onPointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
+    const state = drag.current;
+    state.dragging = true;
+    state.startY = event.clientY;
+    if (state.frame) cancelAnimationFrame(state.frame);
+    try {
+      event.currentTarget.setPointerCapture(event.pointerId);
+    } catch {
+      /* A synthetic pointer has nothing to capture. Real drags still capture. */
+    }
+  };
+  const onPointerMove = (event: ReactPointerEvent<HTMLDivElement>) => {
+    const state = drag.current;
+    if (!state.dragging) return;
+    const travel = Math.max(0, event.clientY - state.startY);
+    state.offset = reach * (1 - Math.exp(-travel / reach));
+    place(state.offset);
+  };
+  const onPointerUp = () => {
+    const state = drag.current;
+    if (!state.dragging) return;
+    state.dragging = false;
+    state.velocity = 0;
+    const spring = () => {
+      state.velocity = (state.velocity + (0 - state.offset) * 0.18) * 0.78;
+      state.offset += state.velocity;
+      place(state.offset);
+      if (Math.abs(state.velocity) < 0.3 && Math.abs(state.offset) < 0.3) {
+        state.offset = 0;
+        place(0);
+        state.frame = 0;
+      } else {
+        state.frame = requestAnimationFrame(spring);
+      }
+    };
+    state.frame = requestAnimationFrame(spring);
+  };
+
+  return (
+    <div
+      onPointerDown={onPointerDown}
+      onPointerMove={onPointerMove}
+      onPointerUp={onPointerUp}
+      onPointerCancel={onPointerUp}
+      className="w-[180px] max-w-full justify-self-center cursor-grab touch-none select-none active:cursor-grabbing"
+      role="img"
+      aria-label="Pull tab from the welcome screen. Drag it down and it springs back."
+    >
+      <svg
+        width={width}
+        height={width * (height / 40)}
+        viewBox={`0 0 40 ${height}`}
+        overflow="visible"
+        className="mx-auto block"
+        aria-hidden
+      >
+        <line ref={lineRef} x1="20" y1="4" x2="20" y2={stringLength} stroke="#7a8078" strokeWidth="1.6" strokeLinecap="round" />
+        <g ref={pendantRef}>
+          <g transform={`translate(20, ${stringLength})`}>
+            <ellipse cx="0" cy="32" rx="13" ry="2.4" fill="#000" opacity="0.07" />
+            <path
+              d="M 0 0 C -10 0 -14 7 -14 14 C -14 23 -8 28 0 28 C 8 28 14 23 14 14 C 14 7 10 0 0 0 Z"
+              fill="#3a4a38"
+            />
+            <circle cx="0" cy="15" r="3.5" fill="#eae8e3" opacity="0.82" />
+          </g>
+        </g>
+      </svg>
+    </div>
   );
 }
 
@@ -90,9 +176,9 @@ const screens = [
 ];
 
 const limits = [
-  { icon: 'game', title: 'No intrinsic motivation design', text: 'They control behavior but do not change desire.' },
-  { icon: 'gift', title: 'No reward substitution', text: 'They remove the phone reward and do not replace it.' },
-  { icon: 'lock', title: 'No autonomy support', text: 'The child is managed instead of choosing.' },
+  { icon: 'game', title: 'No inner motivation' },
+  { icon: 'gift', title: 'No reward swap' },
+  { icon: 'lock', title: 'No autonomy' },
 ];
 
 const oppStyle = [
@@ -104,21 +190,48 @@ const oppStyle = [
 const interventions = [
   {
     title: 'Screen time limits',
-    now: ['App usage timers', 'Parental lock', 'Scheduled downtime', 'Block entertainment apps'],
-    limit: 'Control creates dependency and rebound. The reward system stays the same.',
-    next: 'Move from time control to reward design, with scaffolding for self-regulation.',
+    kind: 'Restrict',
+    icon: 'hourglass',
+    tone: '#4D7FCB',
+    wash: '#E4ECF8',
+    now: [
+      { icon: 'timer', label: 'Usage timers' },
+      { icon: 'lock', label: 'Parental lock' },
+      { icon: 'moon', label: 'Downtime' },
+      { icon: 'x', label: 'Block apps' },
+    ],
+    limit: 'Control, then rebound',
+    next: 'Reward design',
   },
   {
     title: 'Physical separation',
-    now: ['Phone in another room', 'Device handover', 'Phone-free study', 'App blocker and locker'],
-    limit: 'Removing the phone does not replace the feedback the phone was giving.',
-    next: 'Build a substitute loop: instant progress, and a quieter environmental reward.',
+    kind: 'Remove',
+    icon: 'door',
+    tone: '#C46A2E',
+    wash: '#F8E6D6',
+    now: [
+      { icon: 'door', label: 'Other room' },
+      { icon: 'move', label: 'Hand it over' },
+      { icon: 'book', label: 'Phone-free study' },
+      { icon: 'box', label: 'Phone locker' },
+    ],
+    limit: 'Feedback is gone',
+    next: 'Substitute loop',
   },
   {
     title: 'Punishment and reward',
-    now: ['Game time for finished homework', 'Less entertainment if unfinished', 'Stickers and points', 'Verbal reward or punishment'],
-    limit: 'External rewards stay in charge. The learning process itself is not reinforced.',
-    next: 'Give micro-feedback during the work, not only a prize at the end.',
+    kind: 'Reward / punish',
+    icon: 'gift',
+    tone: '#4E8A5B',
+    wash: '#E3EFE1',
+    now: [
+      { icon: 'game', label: 'Game time' },
+      { icon: 'down', label: 'Less fun' },
+      { icon: 'star', label: 'Stickers' },
+      { icon: 'chat', label: 'Praise / scold' },
+    ],
+    limit: 'Prize only at the end',
+    next: 'Micro-feedback',
   },
 ];
 
@@ -152,15 +265,51 @@ const clusters = [
 ];
 
 const competitors = [
-  { name: 'Google Family Link', kind: 'Parental control', items: ['App approval', 'Usage tracking', 'Remote lock'], gap: 'Over-monitoring lowers trust. The child is managed, not designing their own study.' },
-  { name: 'Forest / Focus Plant', kind: 'Pomodoro', items: ['25-minute focus', 'Grow a plant if the phone stays down', 'Phone use fails the task'], gap: 'Time control only. The reward is a plant, and failure feels like punishment.' },
-  { name: 'Apple Screen Time', kind: 'System control', items: ['App limits', 'Downtime schedule', 'Parental controls'], gap: 'Strong restriction raises reactance. It never answers why the phone is opened.' },
+  {
+    name: 'Google Family Link',
+    kind: 'Parental control',
+    icon: 'shield',
+    tone: '#4D7FCB',
+    wash: '#E4ECF8',
+    items: [
+      { icon: 'check', label: 'App approval' },
+      { icon: 'chartUp', label: 'Usage tracking' },
+      { icon: 'lock', label: 'Remote lock' },
+    ],
+    gap: 'Lowers trust',
+  },
+  {
+    name: 'Forest',
+    kind: 'Pomodoro',
+    icon: 'sproutPot',
+    tone: '#4E8A5B',
+    wash: '#E3EFE1',
+    items: [
+      { icon: 'timer', label: '25 min focus' },
+      { icon: 'plant', label: 'Grow a plant' },
+      { icon: 'phone', label: 'Phone = fail' },
+    ],
+    gap: 'Failure feels like punishment',
+  },
+  {
+    name: 'Apple Screen Time',
+    kind: 'System control',
+    icon: 'hourglass',
+    tone: '#7C63A7',
+    wash: '#ECE5F5',
+    items: [
+      { icon: 'hourglass', label: 'App limits' },
+      { icon: 'moon', label: 'Downtime' },
+      { icon: 'settings', label: 'Parent settings' },
+    ],
+    gap: 'Raises reactance',
+  },
 ];
 
 const opportunities = [
-  { n: '1', title: 'Replace the reward', text: 'Learning gets its own immediate feedback, micro-rewards, and a sense of progression.' },
-  { n: '2', title: 'Let the child choose', text: 'A flexible path, goals they set, and progress they can see themselves.' },
-  { n: '3', title: 'Light company', text: 'Peer visibility and shared sessions, so study does not feel like being alone.' },
+  { n: '1', title: 'Replace the reward' },
+  { n: '2', title: 'Let the child choose' },
+  { n: '3', title: 'Light company' },
 ];
 
 const day = [
@@ -1093,11 +1242,11 @@ export default function PullBackStudy() {
             <p className="font-bold leading-[1.1] tracking-tight text-[#24633E]" style={{ fontSize: 'clamp(2.5rem, 8vw, 6rem)' }}>A powerful reset.</p>
             <p className="font-bold leading-[1.05] tracking-tight" style={{ fontSize: 'clamp(2.5rem, 8vw, 6rem)' }}>Small wins grow into a garden.</p>
           </div>
-          <img src="./pullback/pieces/break.png" alt="Break screen. Pull the bell to come back to the session." className="w-[180px] max-w-full h-auto justify-self-center" />
+          <PullTab />
         </div>
       </motion.div>
 
-      <Block title="The offer">
+      <Block title="The offer" className="mt-[297px]">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-[var(--space-lg)]">
           {principles.map((item, index) => (
             <div key={item.n} className="border border-[#24633E]/10 rounded-2xl px-[var(--space-lg)] py-[var(--space-md)] bg-[#F7F3EA]">
@@ -1164,23 +1313,55 @@ export default function PullBackStudy() {
       </Block>
 
       <Block title="What families already try">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-[var(--space-lg)]">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-[var(--space-md)]">
           {interventions.map((item) => (
-            <article key={item.title} className="border border-black/10 rounded-2xl px-[var(--space-lg)] py-[var(--space-md)]">
-              <p className="font-medium mb-[var(--space-sm)]">{item.title}</p>
-              <ul className="m-0 pl-4 mb-[var(--space-sm)] text-[var(--color-text-muted)]">
-                {item.now.map((line) => <li key={line} className="mb-1">{line}</li>)}
-              </ul>
-              <p className="type-caption mb-[var(--space-xs)]">Limit</p>
-              <p className="type-body leading-relaxed mb-[var(--space-sm)]">{item.limit}</p>
-              <p className="type-caption text-[var(--color-accent-secondary)] mb-[var(--space-xs)]">Direction</p>
-              <p className="type-body leading-relaxed">{item.next}</p>
+            <article key={item.title} className="rounded-3xl p-[var(--space-md)] flex flex-col gap-4" style={{ background: item.wash }}>
+              <div className="flex items-center gap-3">
+                <Badge name={item.icon} bg={item.tone} fg="#FFFFFF" size="w-12 h-12" ring={`${item.tone}2A`} />
+                <div className="min-w-0">
+                  <p className="m-0 type-caption" style={{ color: item.tone }}>{item.kind}</p>
+                  <p className="m-0 font-semibold leading-tight text-[#1C1917]">{item.title}</p>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                {item.now.map((tile) => (
+                  <div key={tile.label} className="flex items-center gap-2 rounded-2xl bg-white/70 px-3 py-2.5">
+                    <Icon name={tile.icon} className="w-6 h-6 shrink-0" />
+                    <span className="text-[0.8rem] font-medium leading-tight text-[#3A3C38]">{tile.label}</span>
+                  </div>
+                ))}
+              </div>
+              <div className="mt-auto flex flex-col gap-1.5">
+                <div className="flex items-center gap-2 rounded-full bg-[#FDD6A0]/70 px-3 py-1.5 text-[#8A4B12]">
+                  <Icon name="x" className="w-4 h-4 shrink-0" />
+                  <span className="text-[0.85rem] font-semibold leading-tight">{item.limit}</span>
+                </div>
+                <svg viewBox="0 0 16 20" className="w-3 h-4 ml-5 text-[#24633E]/50" aria-hidden>
+                  <path d="M8 2v14M3 11l5 6 5-6" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+                <div className="flex items-center gap-2 rounded-full bg-[#24633E] px-3 py-1.5 text-white">
+                  <Icon name="sprout" className="w-4 h-4 shrink-0" />
+                  <span className="text-[0.85rem] font-semibold leading-tight">{item.next}</span>
+                </div>
+              </div>
             </article>
           ))}
         </div>
-        <p className="mt-[var(--space-lg)] text-[1.15rem] leading-relaxed max-w-4xl">
-          Current interventions mainly restrict, remove, or reward and punish. They do not change the reward and attention systems underneath.
-        </p>
+        <div className="mt-[var(--space-md)] flex flex-wrap items-center justify-center gap-3 rounded-3xl bg-[#FFF8F1] px-[4%] py-[var(--space-md)]">
+          {interventions.map((item) => (
+            <span key={item.kind} className="flex items-center gap-2 rounded-full pl-1 pr-3 py-1 text-[0.85rem] font-semibold" style={{ background: `${item.tone}1F`, color: item.tone }}>
+              <Badge name={item.icon} bg={item.tone} fg="#FFFFFF" size="w-8 h-8" />
+              {item.kind}
+            </span>
+          ))}
+          <svg viewBox="0 0 48 16" className="w-12 h-auto text-[#24633E]/50" aria-hidden>
+            <path d="M2 8h40M36 3l6 5-6 5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+          <span className="flex items-center gap-2 rounded-full border border-dashed border-[#E9A77A] bg-[#FBEBD3] px-3 py-1.5 text-[0.85rem] font-semibold text-[#8A4B12]">
+            <Icon name="brain" className="w-5 h-5" />
+            Reward system unchanged
+          </span>
+        </div>
       </Block>
 
       <Block title="Depth interviews">
@@ -1208,54 +1389,60 @@ export default function PullBackStudy() {
       </Block>
 
       <Block title="Competitor analysis">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-[var(--space-lg)] mb-[var(--space-xl)]">
-          {competitors.map((item, index) => (
-            <article key={item.name} className="border border-black/10 rounded-2xl px-[var(--space-lg)] py-[var(--space-md)]">
-              <p className="type-caption mb-[var(--space-xs)]">0{index + 1} · {item.kind}</p>
-              <p className="text-[1.15rem] font-medium mb-[var(--space-sm)]">{item.name}</p>
-              <ul className="m-0 pl-4 mb-[var(--space-sm)]">
-                {item.items.map((line) => <li key={line}>{line}</li>)}
-              </ul>
-              <p className="type-body text-[var(--color-text-muted)] leading-relaxed">{item.gap}</p>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-[var(--space-md)] mb-[var(--space-md)]">
+          {competitors.map((item) => (
+            <article key={item.name} className="rounded-3xl p-[var(--space-md)] flex flex-col gap-4" style={{ background: item.wash }}>
+              <div className="flex items-center gap-3">
+                <Badge name={item.icon} bg={item.tone} fg="#FFFFFF" size="w-12 h-12" ring={`${item.tone}2A`} />
+                <div className="min-w-0">
+                  <p className="m-0 type-caption" style={{ color: item.tone }}>{item.kind}</p>
+                  <p className="m-0 font-semibold leading-tight text-[#1C1917]">{item.name}</p>
+                </div>
+              </div>
+              <div className="grid grid-cols-3 gap-2">
+                {item.items.map((feat) => (
+                  <div key={feat.label} className="flex flex-col items-center text-center gap-1.5 rounded-2xl bg-white/70 px-1 py-3">
+                    <Icon name={feat.icon} className="w-7 h-7" />
+                    <span className="text-[0.78rem] font-medium leading-tight text-[#3A3C38]">{feat.label}</span>
+                  </div>
+                ))}
+              </div>
+              <div className="mt-auto flex items-center gap-2 rounded-full bg-[#FDD6A0]/70 px-3 py-1.5 text-[#8A4B12]">
+                <Icon name="x" className="w-4 h-4 shrink-0" />
+                <span className="text-[0.85rem] font-semibold leading-tight">{item.gap}</span>
+              </div>
             </article>
           ))}
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-[var(--space-lg)]">
-          <div>
-            <p className="font-bold text-[#24633E] mb-[var(--space-sm)]">Competitor limitations</p>
-            <div className="flex flex-col gap-3">
-              {limits.map((item, index) => (
-                <div key={item.title} className="flex items-center gap-4 rounded-2xl px-4 py-3 bg-[#FBEBD3]">
-                  <span className="w-14 h-14 shrink-0 rounded-full border border-dashed border-[#E9A77A] bg-[#FDF3D8] flex items-center justify-center text-[#D9763A]">
-                    <Icon name={item.icon} className="w-9 h-9" />
+        <div className="w-full rounded-3xl bg-[#FFF8F1] md:aspect-[32/9] px-[4%] py-[var(--space-md)] md:py-[2.5%] flex">
+          <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-x-[3%] gap-y-3 w-full content-center">
+            <p className="m-0 type-caption text-[#C2410C]">Their limit</p>
+            <span />
+            <p className="m-0 type-caption text-[#24633E]">Our opportunity</p>
+            {limits.map((limit, index) => (
+              <div key={limit.title} className="contents">
+                <div className="flex items-center gap-3 rounded-full bg-[#FBEBD3] pl-1.5 pr-4 py-1.5">
+                  <span className="w-[clamp(2rem,3.2vw,2.75rem)] h-[clamp(2rem,3.2vw,2.75rem)] shrink-0 rounded-full border border-dashed border-[#E9A77A] bg-[#FDF3D8] flex items-center justify-center text-[#D9763A]">
+                    <Icon name={limit.icon} className="w-[72%] h-[72%]" />
                   </span>
-                  <div>
-                    <p className="m-0 font-semibold text-[#24633E] leading-tight">
-                      <span className="inline-flex w-5 h-5 mr-2 rounded bg-[#F2B455] text-white text-[0.75rem] items-center justify-center align-[2px]">{index + 1}</span>
-                      {item.title}
-                    </p>
-                    <p className="m-0 mt-1 text-[0.9rem] text-[#5A5244]">{item.text}</p>
-                  </div>
+                  <span className="text-[clamp(0.8rem,1.15vw,1rem)] font-semibold leading-tight text-[#8A4B12]">{limit.title}</span>
                 </div>
-              ))}
-            </div>
-          </div>
-          <div>
-            <p className="font-bold text-[#24633E] mb-[var(--space-sm)]">Our design opportunities</p>
-            <div className="flex flex-col gap-3">
-              {opportunities.map((item, index) => (
-                <div key={item.n} className="flex items-center gap-4 rounded-2xl px-4 py-3 bg-[#F7EBC4]">
-                  <Badge name={oppStyle[index].icon} bg={oppStyle[index].bg} fg="#FFFFFF" ring={`${oppStyle[index].bg}33`} />
-                  <div>
-                    <p className="m-0 font-semibold leading-tight" style={{ color: oppStyle[index].bg }}>
-                      <span className="inline-flex w-5 h-5 mr-2 rounded text-white text-[0.75rem] items-center justify-center align-[2px]" style={{ background: oppStyle[index].bg }}>{item.n}</span>
-                      {item.title}
-                    </p>
-                    <p className="m-0 mt-1 text-[0.9rem] text-[#5A5244]">{item.text}</p>
-                  </div>
+                <svg viewBox="0 0 48 16" className="w-[clamp(2.5rem,5vw,4rem)] h-auto text-[#24633E]/50" aria-hidden>
+                  <path d="M2 8h40M36 3l6 5-6 5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+                <div className="flex items-center gap-3 rounded-full pl-1.5 pr-4 py-1.5" style={{ background: `${oppStyle[index].bg}1F` }}>
+                  <Badge
+                    name={oppStyle[index].icon}
+                    bg={oppStyle[index].bg}
+                    fg="#FFFFFF"
+                    size="w-[clamp(2rem,3.2vw,2.75rem)] h-[clamp(2rem,3.2vw,2.75rem)]"
+                  />
+                  <span className="text-[clamp(0.8rem,1.15vw,1rem)] font-semibold leading-tight" style={{ color: oppStyle[index].bg }}>
+                    {opportunities[index].title}
+                  </span>
                 </div>
-              ))}
-            </div>
+              </div>
+            ))}
           </div>
         </div>
       </Block>
