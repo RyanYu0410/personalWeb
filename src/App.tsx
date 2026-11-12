@@ -246,6 +246,7 @@ function App() {
   });
   const [isAboutView, setIsAboutView] = useState(() => window.location.hash === '#page-01');
   const [isResumeView, setIsResumeView] = useState(() => window.location.hash === '#page-08');
+  const [resumeActionsOpen, setResumeActionsOpen] = useState(false);
   const [bottomNavOpen, setBottomNavOpen] = useState(false);
   const [bottomNavScrollTriggered, setBottomNavScrollTriggered] = useState(false);
   const bottomNavTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -773,8 +774,11 @@ function App() {
                 ]}
               />
             </header>
-            <div className="spine-body">
-              <div className="flex flex-wrap gap-[var(--space-sm)] mb-[var(--space-md)]">
+            <div
+              className="resume-reveal"
+              onMouseLeave={() => setResumeActionsOpen(false)}
+            >
+              <div className={`resume-actions${resumeActionsOpen ? ' is-open' : ''}`}>
                 <a
                   href={publicUrl('Ryan_Yu_Resume.pdf')}
                   download="Ryan_Yu_Resume.pdf"
@@ -794,6 +798,10 @@ function App() {
                   {t('navAbout')}
                 </a>
               </div>
+              <div
+                className="spine-body resume-layout"
+                onMouseEnter={() => setResumeActionsOpen(true)}
+              >
               <div className="resume-stage">
                 <div className="resume-sheet">
                   <img
@@ -802,6 +810,7 @@ function App() {
                   />
                 </div>
               </div>
+            </div>
             </div>
           </PageAppear>
         ) : workDetailId ? (

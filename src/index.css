@@ -861,8 +861,42 @@ button:focus-visible {
   background: linear-gradient(160deg, rgb(255 255 255 / 0.9), rgb(232 232 230 / 0.75));
 }
 
-.resume-stage {
+.resume-reveal {
+  display: flex;
+  flex-direction: column;
+}
+
+.resume-actions {
+  order: -1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-md);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.22s ease;
+}
+
+.resume-actions.is-open,
+.resume-actions:focus-within {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+@media (hover: none) {
+  .resume-actions {
+    opacity: 1;
+    pointer-events: auto;
+  }
+}
+
+.resume-layout {
   width: min(100%, 760px);
+  margin-inline: auto;
+}
+
+.resume-stage {
+  width: 100%;
   perspective: 1600px;
   perspective-origin: center bottom;
 }
