@@ -773,23 +773,36 @@ function App() {
                 ]}
               />
             </header>
-            <motion.div
-              className="spine-body"
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
-            >
-              <div className="image-block h-72 mb-[var(--space-sm)]" />
-              <div className="flex gap-[var(--space-sm)] mb-[var(--space-sm)]">
-                <a href="#" className="spine-open">
+            <div className="spine-body">
+              <div className="flex flex-wrap gap-[var(--space-sm)] mb-[var(--space-md)]">
+                <a
+                  href={publicUrl('Ryan_Yu_Resume.pdf')}
+                  download="Ryan_Yu_Resume.pdf"
+                  className="spine-open"
+                >
                   {t('downloadResume')}
+                </a>
+                <a
+                  href={publicUrl('Ryan_Yu_Resume.pdf')}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="spine-open"
+                >
+                  {t('openResume')}
                 </a>
                 <a href="#page-01" className="spine-open">
                   {t('navAbout')}
                 </a>
               </div>
-              <div className="pt-[var(--space-md)] pb-[var(--space-md)]" aria-hidden="true" />
-            </motion.div>
+              <div className="resume-stage">
+                <div className="resume-sheet">
+                  <img
+                    src={publicUrl('Ryan_Yu_Resume.png')}
+                    alt="Ryan Yu resume"
+                  />
+                </div>
+              </div>
+            </div>
           </PageAppear>
         ) : workDetailId ? (
           <section id={workDetailId} aria-label="Work detail" className="system-shell section-shell py-[var(--space-xxxl)]">

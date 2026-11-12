@@ -56,8 +56,9 @@ const translations = {
 
     // Resume
     resumeTitle: 'Resume',
-    resumePurpose: 'Fast review and download node for hiring contexts with optional highlights.',
+    resumePurpose: 'One page. Read it here, or download the PDF.',
     downloadResume: 'Download Resume',
+    openResume: 'Open PDF',
 
     // Work Index
     workIndexTitle: 'Work Index',
@@ -327,8 +328,9 @@ const translations = {
     otherFold: '其他作品',
 
     resumeTitle: '简历',
-    resumePurpose: '为招聘场景提供快速浏览和下载。',
+    resumePurpose: '一页简历。可在此阅读，或下载 PDF。',
     downloadResume: '下载简历',
+    openResume: '打开 PDF',
 
     workIndexTitle: '作品索引',
     workIndexPurpose: '目录节点，而非项目墙。脊柱展开为基于行的项目列表。',
