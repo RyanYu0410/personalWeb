@@ -111,14 +111,14 @@ export const about = {
 
 export const workIndex = {
   ui: [
-    { title: 'PullBack', outcome: 'A virtual study room where a simple pull resets focus and small wins grow a garden.', role: 'UI/UX · Vibe Coding', href: '#page-pullback', thumb: './pullback/card.jpg', featured: true },
-    { title: 'MTA Live Arrivals', outcome: 'Real-time transit data visualization for NYC subway riders.', role: 'UI System + Data Viz', href: '#page-train', thumb: './train-hero.png', featured: true },
+    { title: 'PullBack', outcome: 'A virtual study room where a simple pull resets focus and small wins grow a garden.', role: 'UI/UX · Vibe Coding', href: '#page-pullback', thumb: './cards/pullback.jpg', featured: true },
+    { title: 'MTA Live Arrivals', outcome: 'Real-time transit data visualization for NYC subway riders.', role: 'UI System + Data Viz', href: '#page-train', thumb: './cards/train.jpg', featured: true },
     { title: 'Housing Solutions', outcome: 'Tools and Insights for a Smoother Housing Searching Experiences', role: 'UI System + UX', href: '#page-housing', thumb: './housing-hero.png', featured: true },
   ],
   interactive: [
-    { title: 'Unstable Mirror', outcome: 'A browser mirror that turns a live portrait into a botanical AI reflection.', role: 'Interactive / AI', href: '#page-mirror', thumb: 'https://raw.githubusercontent.com/RyanYu0410/unstableMirror/main/docs/images/frontend-desktop.png', featured: true },
-    { title: 'NoteBlock', outcome: 'A clock-table instrument where colored fruits play Euclidean rhythms.', role: 'p5.js + Tone.js', href: '#page-noteblock', thumb: 'https://raw.githubusercontent.com/RyanYu0410/NoteBlock/main/docs/screenshots/00-empty-table.png', featured: true },
-    { title: 'Zero-kit AR Poker', outcome: 'Face-to-face multiplayer AR poker on shared table.', role: 'Unity/AR', href: '#page-poker', thumb: './poker-hero.png', featured: true },
+    { title: 'Unstable Mirror', outcome: 'A browser mirror that turns a live portrait into a botanical AI reflection.', role: 'Interactive / AI', href: '#page-mirror', thumb: './cards/mirror.jpg', featured: true },
+    { title: 'NoteBlock', outcome: 'A clock-table instrument where colored fruits play Euclidean rhythms.', role: 'p5.js + Tone.js', href: '#page-noteblock', thumb: './cards/noteblock.jpg', featured: true },
+    { title: 'Zero-kit AR Poker', outcome: 'Face-to-face multiplayer AR poker on shared table.', role: 'Unity/AR', href: '#page-poker', thumb: './cards/poker.jpg', featured: true },
   ],
   research: [
   ],
